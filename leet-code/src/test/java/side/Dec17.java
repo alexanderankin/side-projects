@@ -165,25 +165,31 @@ class Dec17 {
      */
     List<List<Integer>> threeSum(int[] nums) {
         Arrays.sort(nums);
-        Set<List<Integer>> solutionSets = new HashSet<>();
+        var ans = new ArrayList<List<Integer>>();
 
         for (int i = 0; i < nums.length - 2; i++) {
+            // remove the need for set:
+            if (i > 0 && nums[i] == nums[i - 1]) continue;
             int k = nums.length - 1;
             for (int j = i + 1; j < k; ) {
                 var sum = nums[i] + nums[j] + nums[k];
-                if (sum == 0) {
-                    solutionSets.add(List.of(nums[i], nums[j], nums[k]));
+                if (sum < 0) {
                     j++;
+                } else if (sum > 0) {
                     k--;
-                } else if (sum < 0) {
-                    j++;
                 } else {
+                    ans.add(List.of(nums[i], nums[j], nums[k]));
+                    j++;
                     k--;
+
+                    // remove the need for set:
+                    while (k > j && nums[k] == nums[k + 1]) k--;
+                    while (k > j && nums[j] == nums[j - 1]) j++;
                 }
             }
         }
 
-        return new ArrayList<>(solutionSets);
+        return ans;
     }
 
     @ParameterizedTest
@@ -191,6 +197,7 @@ class Dec17 {
             "'-1,0,1,2,-1,-4','[[-1,-1,2],[-1,0,1]]'",
             "'0,1,1','[]'",
             "'0,0,0','[[0,0,0]]'",
+            "'-2,0,0,2,2','[[-2,0,2]]'",
     })
     void test_threeSum(String inputString, String expectedString) {
         int[] nums = Arrays.stream(inputString.split(",")).mapToInt(Integer::parseInt).toArray();
