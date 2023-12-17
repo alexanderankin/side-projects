@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("NewClassNamingConvention")
@@ -61,5 +62,61 @@ class Dec17 {
             int ii = inputArray[i];
             assertEquals(expectedArray[i], spanner.next(ii));
         }
+    }
+
+    /**
+     * #496
+     * <p>
+     * The next greater element of some element {@code x} in an array is the first greater element that is to the right
+     * of {@code x} in the same array.
+     * <p>
+     * You are given two distinct 0-indexed integer arrays {@code nums1} and {@code nums2}, where {@code nums1} is a
+     * subset of {@code nums2}.
+     * <p>
+     * For each {@code 0 <= i < nums1.length}, find the index {@code j} such that {@code nums1[i] == nums2[j]} and
+     * determine the next greater element of {@code nums2[j]} in {@code nums2}. If there is no next greater element,
+     * then the answer for this query is {@code -1}.
+     * <p>
+     * Return an array {@code ans} of length {@code nums1.length} such that {@code ans[i]} is the next greater element
+     * as described above.
+     */
+    public int[] nextGreaterElement(int[] nums1, int[] nums2) {
+        int[] result = new int[nums1.length];
+        for (int i = 0; i < nums1.length; i++) {
+            int n1 = nums1[i];
+
+            boolean found = false;
+            int j = 0;
+            for (; j < nums2.length; j++) {
+                int n2 = nums2[j];
+                if (n2 == n1) break;
+            }
+            for (; j < nums2.length; j++) {
+                int n2 = nums2[j];
+                if (n2 > n1) {
+                    found = true;
+                    result[i] = n2;
+                    break;
+                }
+            }
+            if (!found) {
+                result[i] = -1;
+            }
+        }
+        return result;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'4,1,2', '1,3,4,2', '-1,3,-1'",
+            "'2,4', '1,2,3,4', '3,-1'",
+    })
+    void test_nextGreaterElement(String nums1String, String nums2String, String expectedString) {
+        int[] nums1 = Arrays.stream(nums1String.split(",")).mapToInt(Integer::parseInt).toArray();
+        int[] nums2 = Arrays.stream(nums2String.split(",")).mapToInt(Integer::parseInt).toArray();
+        int[] expected = Arrays.stream(expectedString.split(",")).mapToInt(Integer::parseInt).toArray();
+
+        System.out.println(Arrays.toString(nextGreaterElement(nums1, nums2)));
+        assertArrayEquals(expected, nextGreaterElement(nums1, nums2));
     }
 }
