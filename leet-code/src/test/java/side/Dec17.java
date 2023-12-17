@@ -31,27 +31,42 @@ class Dec17 {
      */
     static class StockSpanner {
         ArrayList<Integer> data = new ArrayList<>();
+        java.util.HashMap<Integer, Integer> spans = new java.util.HashMap<>();
 
         public StockSpanner() {
         }
 
         public int next(int price) {
+            int thisIndex = data.size();
             data.add(price);
-            int j = 0;
-            for (int i = data.size() - 1; i >= 0; i--) {
+            int j = 1;
+            for (int i = data.size() - 2; i >= 0; i--) {
+                int delta = spans.getOrDefault(i, 1);
                 Integer d = data.get(i);
                 if (d > price) break;
-                j += 1;
+                j += delta;
+
+                while (true) {
+                    i -= delta;
+                    if (i <= 0) break;
+                    d = data.get(i);
+                    if (d > price) break;
+                    delta = spans.get(i);
+                    j += delta;
+                }
+                break;
             }
+            spans.put(thisIndex, j);
             return j;
         }
     }
 
     @ParameterizedTest
     @CsvSource({
-            "'7,2,1,2,2', '1,1,1,3,4'",
-            "'7,34,1,2,8', '1,2,1,2,3'",
-            "'100,80,60,70,60,75,85', '1,1,1,2,1,4,6'",
+            // "'7,2,1,2,2', '1,1,1,3,4'",
+            // "'7,34,1,2,8', '1,2,1,2,3'",
+            // "'100,80,60,70,60,75,85', '1,1,1,2,1,4,6'",
+            "'58,45,59,39,60', '1,1,3,1,5'",
     })
     void test_stockSpanner(String input, String expected) {
         int[] inputArray = Arrays.stream(input.split(",")).mapToInt(Integer::parseInt).toArray();
@@ -60,7 +75,9 @@ class Dec17 {
         var spanner = new StockSpanner();
         for (int i = 0; i < inputArray.length; i++) {
             int ii = inputArray[i];
-            assertEquals(expectedArray[i], spanner.next(ii));
+            int actual = spanner.next(ii);
+            int expectedNext = expectedArray[i];
+            assertEquals(expectedNext, actual, "element comparison at i = " + i);
         }
     }
 

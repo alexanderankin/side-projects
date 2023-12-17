@@ -77,7 +77,7 @@ class Dec15 {
 
         // System.out.println(Arrays.toString(inputArray));
         // System.out.println(Arrays.toString(expectedArray));
-        System.out.println(Arrays.toString(dailyTemperatures(inputArray)));
+        // System.out.println(Arrays.toString(dailyTemperatures(inputArray)));
         assertArrayEquals(expectedArray, dailyTemperatures(inputArray));
     }
 
