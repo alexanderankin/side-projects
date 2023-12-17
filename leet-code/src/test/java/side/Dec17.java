@@ -164,6 +164,29 @@ class Dec17 {
      * Notice that the solution set must not contain duplicate triplets.
      */
     List<List<Integer>> threeSum(int[] nums) {
+        return new AbstractList<List<Integer>>() {
+            List<List<Integer>> data;
+
+            @Override
+            public List<Integer> get(int index) {
+                init();
+                return data.get(index);
+            }
+
+            @Override
+            public int size() {
+                init();
+                return data.size();
+            }
+
+            void init() {
+                if (data != null) return;
+                data = Dec17.this.calculateThreeSum(nums);
+            }
+        };
+    }
+
+    List<List<Integer>> calculateThreeSum(int[] nums) {
         Arrays.sort(nums);
         var ans = new ArrayList<List<Integer>>();
 
