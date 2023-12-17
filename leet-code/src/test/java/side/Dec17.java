@@ -164,37 +164,26 @@ class Dec17 {
      * Notice that the solution set must not contain duplicate triplets.
      */
     List<List<Integer>> threeSum(int[] nums) {
+        Arrays.sort(nums);
         Set<List<Integer>> solutionSets = new HashSet<>();
 
-        Map<Integer, Set<Map.Entry<Set<Integer>, List<Integer>>>> twoSums = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
-            for (int j = 0; j < nums.length; j++) {
-                if (j == i) continue;
-                var sum = nums[i] + nums[j];
-                var two = Arrays.asList(
-                        Math.min(nums[i], nums[j]),
-                        Math.max(nums[i], nums[j])
-                );
-                twoSums.computeIfAbsent(sum, s -> new HashSet<>()).add(Map.entry(Set.of(i, j), two));
-            }
-        }
-        Set<Integer> twoSumSums = twoSums.keySet();
-        for (int i = 0; i < nums.length; i++) {
-            for (Integer twoSumSum : twoSumSums) {
-                if (nums[i] + twoSumSum == 0) {
-                    // two sum instance
-                    for (var inst : twoSums.get(twoSumSum)) {
-                        if (inst.getKey().contains(i)) continue;
-                        List<Integer> tsi = inst.getValue();
-                        List<Integer> num = Arrays.asList(nums[i], tsi.get(0), tsi.get(1));
-                        Collections.sort(num);
-                        solutionSets.add(num);
-                    }
+        for (int i = 0; i < nums.length - 2; i++) {
+            int k = nums.length - 1;
+            for (int j = i + 1; j < k; ) {
+                var sum = nums[i] + nums[j] + nums[k];
+                if (sum == 0) {
+                    solutionSets.add(List.of(nums[i], nums[j], nums[k]));
+                    j++;
+                    k--;
+                } else if (sum < 0) {
+                    j++;
+                } else {
+                    k--;
                 }
             }
         }
 
-        return solutionSets.stream().map(s -> (List<Integer>) new ArrayList<>(s)).toList();
+        return new ArrayList<>(solutionSets);
     }
 
     @ParameterizedTest
