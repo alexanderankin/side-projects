@@ -119,4 +119,37 @@ class Dec17 {
         System.out.println(Arrays.toString(nextGreaterElement(nums1, nums2)));
         assertArrayEquals(expected, nextGreaterElement(nums1, nums2));
     }
+
+    // # 14
+    String longestCommonPrefix(String[] strs) {
+        // too memory hungry for top scoring?
+        // int minLength = Arrays.stream(strs).mapToInt(String::length).min().orElseThrow();
+        int minLength = Integer.MAX_VALUE;
+        for (String str : strs) {
+            if (str.length() < minLength) {
+                minLength = str.length();
+            }
+        }
+
+        int i = 0;
+        outer:
+        for (; i < minLength; i++) {
+            char ref = strs[0].charAt(i);
+            for (String str : strs) {
+                if (str.charAt(i) != ref) break outer;
+            }
+        }
+        return strs[0].substring(0, i);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "fl, 'flower,flow,flight'",
+            "'', 'dog,racecar,car'",
+    })
+    void test_longestCommonPrefix(String expected, String example) {
+        String[] input = example.split(",");
+        System.out.println(Arrays.toString(input));
+        assertEquals(expected, longestCommonPrefix(input));
+    }
 }
