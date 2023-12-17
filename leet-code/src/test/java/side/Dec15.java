@@ -26,8 +26,7 @@ class Dec15 {
         int[] result = new int[temperatures.length];
 
         // we are storing the number and its index, 2 spaces each "item"
-        int[] stack = new int[temperatures.length + temperatures.length + 1];
-        int stackPointer = 0;
+        var stack = new java.util.PriorityQueue<ComparableDailyTemp>();
 
         for (int i = 0; i < temperatures.length; i++) {
             var thisI = temperatures[i];
@@ -36,27 +35,35 @@ class Dec15 {
             if (nextI > thisI) {
                 result[i] = 1;
 
-                if (stackPointer > 0) {
-                    for (int j = stackPointer - 1; j >= 0; j -= 2) {
-                        var stackIndex = stack[stackPointer - 1];
-                        var stackValue = stack[stackPointer - 2];
-                        if (nextI > stackValue) {
-                            result[stackIndex] = i - stackIndex + 1;
-                            stackPointer -=2;
-                        }
-                    }
+                while (!stack.isEmpty()) {
+                    var next = stack.peek();
+                    if (next.value >= nextI) break;
+                    stack.remove();
+                    result[next.i] = i - next.i  + 1;
                 }
             } else {
-                stack[stackPointer] = thisI;
-                stack[stackPointer + 1] = i;
-                stackPointer += 2;
+                var thing = new ComparableDailyTemp();
+                thing.i = i;
+                thing.value = thisI;
+                stack.add(thing);
             }
         }
         return result;
     }
 
+    static class ComparableDailyTemp implements Comparable<ComparableDailyTemp> {
+        int i;
+        int value;
+
+        @Override
+        public int compareTo(ComparableDailyTemp o) {
+            return Integer.compare(value, o.value);
+        }
+    }
+
     @ParameterizedTest
     @CsvSource({
+            "'34,80,80,34,34,80,80,80,80,34', '1,0,0,2,1,0,0,0,0,0'",
             "'89,62,70,58,47,47,46,76,100,70', '8,1,5,4,3,2,1,1,0,0'",
             "'73,74,75,71,69,72,76,73', '1,1,4,2,1,1,0,0'",
             "'30,40,50,60', '1,1,1,0'",
@@ -68,7 +75,7 @@ class Dec15 {
 
         // System.out.println(Arrays.toString(inputArray));
         // System.out.println(Arrays.toString(expectedArray));
-        // System.out.println(Arrays.toString(dailyTemperatures(inputArray)));
+        System.out.println(Arrays.toString(dailyTemperatures(inputArray)));
         assertArrayEquals(expectedArray, dailyTemperatures(inputArray));
     }
 
