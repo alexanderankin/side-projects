@@ -3,8 +3,8 @@ package side;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -151,5 +151,58 @@ class Dec17 {
         String[] input = example.split(",");
         System.out.println(Arrays.toString(input));
         assertEquals(expected, longestCommonPrefix(input));
+    }
+
+    /**
+     * #15
+     * <p>
+     * Given an integer array nums,
+     * return all the triplets [nums[i], nums[j], nums[k]]
+     * such that i != j, i != k, and j != k,
+     * and nums[i] + nums[j] + nums[k] == 0.
+     * <p>
+     * Notice that the solution set must not contain duplicate triplets.
+     */
+    List<List<Integer>> threeSum(int[] nums) {
+        Set<List<Integer>> solutionSets = new HashSet<>();
+
+        for (int i = 0; i < nums.length; i++) {
+            for (int j = 0; j < nums.length; j++) {
+                for (int k = 0; k < nums.length; k++) {
+                    if (nums[i] + nums[j] + nums[k] == 0) {
+                        // if (nums[i] != nums[j] && nums[j] != nums[k] && nums[i] != nums[k])
+                        if (!(i != j && j != k && i != k)) continue;
+                        List<Integer> num = Arrays.asList(nums[i], nums[j], nums[k]);
+                        Collections.sort(num);
+                        solutionSets.add(num);
+                    }
+                }
+            }
+        }
+
+        return solutionSets.stream().map(s -> (List<Integer>) new ArrayList<>(s)).toList();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'-1,0,1,2,-1,-4','[[-1,-1,2],[-1,0,1]]'",
+            "'0,1,1','[]'",
+            "'0,0,0','[[0,0,0]]'",
+    })
+    void test_threeSum(String inputString, String expectedString) {
+        int[] nums = Arrays.stream(inputString.split(",")).mapToInt(Integer::parseInt).toArray();
+
+        expectedString = expectedString
+                .replaceAll("^\\[\\[?", "")
+                .replaceAll("]?]$", "");
+        var expected = Arrays.stream(expectedString.split("],\\["))
+                .map(s -> Arrays.stream(s.split(","))
+                        .filter(Predicate.not(String::isEmpty))
+                        .map(Integer::parseInt)
+                        .toList())
+                .filter(Predicate.not(List::isEmpty))
+                .toList();
+
+        assertEquals(expected, threeSum(nums));
     }
 }
