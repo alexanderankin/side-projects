@@ -166,13 +166,27 @@ class Dec17 {
     List<List<Integer>> threeSum(int[] nums) {
         Set<List<Integer>> solutionSets = new HashSet<>();
 
+        Map<Integer, Set<Map.Entry<Set<Integer>, List<Integer>>>> twoSums = new HashMap<>();
         for (int i = 0; i < nums.length; i++) {
             for (int j = 0; j < nums.length; j++) {
-                for (int k = 0; k < nums.length; k++) {
-                    if (nums[i] + nums[j] + nums[k] == 0) {
-                        // if (nums[i] != nums[j] && nums[j] != nums[k] && nums[i] != nums[k])
-                        if (!(i != j && j != k && i != k)) continue;
-                        List<Integer> num = Arrays.asList(nums[i], nums[j], nums[k]);
+                if (j == i) continue;
+                var sum = nums[i] + nums[j];
+                var two = Arrays.asList(
+                        Math.min(nums[i], nums[j]),
+                        Math.max(nums[i], nums[j])
+                );
+                twoSums.computeIfAbsent(sum, s -> new HashSet<>()).add(Map.entry(Set.of(i, j), two));
+            }
+        }
+        Set<Integer> twoSumSums = twoSums.keySet();
+        for (int i = 0; i < nums.length; i++) {
+            for (Integer twoSumSum : twoSumSums) {
+                if (nums[i] + twoSumSum == 0) {
+                    // two sum instance
+                    for (var inst : twoSums.get(twoSumSum)) {
+                        if (inst.getKey().contains(i)) continue;
+                        List<Integer> tsi = inst.getValue();
+                        List<Integer> num = Arrays.asList(nums[i], tsi.get(0), tsi.get(1));
                         Collections.sort(num);
                         solutionSets.add(num);
                     }
