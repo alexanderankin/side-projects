@@ -238,4 +238,47 @@ class Dec17 {
 
         assertEquals(expected, threeSum(nums));
     }
+
+    /**
+     * #16
+     */
+    int threeSumClosest(int[] nums, int target) {
+        Arrays.sort(nums);
+        int closest = Integer.MAX_VALUE + target;
+        for (int i = 0; i < nums.length; i++) {
+            if (i > 0 && nums[i] == nums[i - 1]) continue;
+            int j = i + 1, k = nums.length - 1;
+            while (j < k) {
+                var sum = nums[i] + nums[j] + nums[k];
+                if (sum < target) {
+                    var diff = Math.abs(target - sum);
+                    if (diff < Math.abs(target - closest))
+                        closest = sum;
+                    j++;
+                } else if (sum > target) {
+                    var diff = Math.abs(target - sum);
+                    if (diff < Math.abs(target - closest))
+                        closest = sum;
+                    k--;
+                } else {
+                    return sum;
+                }
+            }
+        }
+        return closest;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'-1,2,1,-4', 1, 2",
+            "'0,0,0', 1, 0",
+    })
+    void test_threeSumClosest(String numsString, int target, int expected) {
+        int[] nums = Arrays.stream(numsString.split(",")).mapToInt(Integer::parseInt).toArray();
+
+        assertEquals(expected, threeSumClosest(nums, target));
+
+    }
+
+
 }
