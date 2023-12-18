@@ -280,5 +280,75 @@ class Dec17 {
 
     }
 
+    // /**
+    //  * Given a string containing digits from 2-9 inclusive, return all possible letter combinations that the number
+    //  * could represent. Return the answer in any order.
+    //  * <p>
+    //  * A mapping of digits to letters (just like on the telephone buttons) is given below. Note that 1 does not map to any letters.
+    //  */
+    // static final char[][] LETTER_COMBINATIONS_LOOKUPS = new char[][] {{}, {},
+    //         {'a', 'b', 'c'}, {'d', 'e', 'f'}, {'g', 'h', 'i'},
+    //         {'g', 'h', 'i'}, {'j', 'k', 'l'}, {'m', 'n', 'o'},
+    //         {'p', 'q', 'r', 's'}, {'t', 'u', 'v'}, {'w', 'x', 'y', 'z'},
+    // };
+    //
+    // public List<String> letterCombinations(String digits) {
+    //     int possibilities = 1;
+    //     char[] digitsCharArray = digits.toCharArray();
+    //     for (char c : digitsCharArray) {
+    //         int value = c - '0';
+    //         possibilities *= LETTER_COMBINATIONS_LOOKUPS[value].length;
+    //     }
+    //     int[] counters = new int[digitsCharArray.length];
+    //     List<String> result = new ArrayList<>(possibilities);
+    //     StringBuilder sb = new StringBuilder();
+    //     for (int i = 0; i < possibilities; i++) {
+    //         sb.setLength(0);
+    //         for (int j = 0; j < counters.length; j++) {
+    //             int counter = counters[j];
+    //             sb.append(LETTER_COMBINATIONS_LOOKUPS[digitsCharArray[j] - '0'][counter]);
+    //         }
+    //         // for (int j = 2; j < 10; j++) {
+    //         // }
+    //         result.add(sb.toString());
+    //
+    //         boolean carry = false;
+    //         for (int j = counters.length - 1; j >= 0; j--) {
+    //             int counter = counters[j];
+    //             int maxValue = LETTER_COMBINATIONS_LOOKUPS[digitsCharArray[j] - '0'].length - 1;
+    //             int next = counter + 1 + (carry ? 1 : 0);
+    //             if (next >= maxValue) {
+    //                 next = 0;
+    //                 carry = true;
+    //             } else {
+    //                 carry = false;
+    //             }
+    //             counters[j] = next;
+    //         }
+    //     }
+    //     return result;
+    // }
+    //
+    // @ParameterizedTest
+    // @CsvSource({
+    //         "23,'ad,ae,af,bd,be,bf,cd,ce,cf'",
+    //         "'',''",
+    //         "2,'a,b,c'",
+    // })
+    // void test_letterCombinations(String input, String expectedString) {
+    //     assertEquals(Arrays.asList(expectedString.split(",")), letterCombinations(input));
+    // }
+    //
+    // void rotate() {}
+    //
+    // @ParameterizedTest
+    // @CsvSource({
+    //         "'0,0,0', '0,0,1', '3,3,3'",
+    //         "'0,0,2', '0,1,0', '3,3,3'",
+    //         "'0,2,2', '1,0,0', '3,3,3'",
+    // })
+    // void test_rotate(String before, String after, String widths) {
+    //      String best = "";
+    // }
 
 }
