@@ -312,6 +312,7 @@ class Dec17 {
     //         // }
     //         result.add(sb.toString());
     //
+    //         // got to be a better way
     //         boolean carry = false;
     //         for (int j = counters.length - 1; j >= 0; j--) {
     //             int counter = counters[j];
