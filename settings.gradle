@@ -1,3 +1,4 @@
 rootProject.name = 'side-projects'
 includeBuild 'buildPlugins'
+include 'aws:dynamodb:examples'
 include 'leet-code'

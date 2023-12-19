@@ -1,0 +1,13 @@
+plugins {
+    id 'conventions'
+}
+
+dependencies {
+    // implementation()
+    implementation platform('software.amazon.awssdk:bom:2.21.20')
+    implementation 'software.amazon.awssdk:dynamodb'
+    implementation 'software.amazon.awssdk:secretsmanager'
+    implementation 'software.amazon.awssdk:dynamodb-enhanced'
+    implementation 'org.projectlombok:lombok'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}
