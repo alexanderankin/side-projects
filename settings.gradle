@@ -1,4 +1,5 @@
 rootProject.name = 'side-projects'
 includeBuild 'buildPlugins'
-include 'aws:dynamodb:examples'
+include 'cloud:aws:dynamodb:examples'
+include 'cloud:tf:provisioner-data'
 include 'leet-code'
