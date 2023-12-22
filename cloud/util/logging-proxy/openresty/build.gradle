@@ -1,0 +1,10 @@
+plugins {
+    id 'conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    itestImplementation 'org.testcontainers:testcontainers'
+}
