@@ -3,6 +3,8 @@ package org.cloud.logging.proxy.sb;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -19,8 +21,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.function.ThrowingConsumer;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -31,16 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @SpringBootApplication
 class SpringBootLoggingProxyApplication {
     @SneakyThrows
     public static void main(String[] args) {
         System.setProperty("server.port", "8081");
-        System.setProperty("logged-routes.routes.test.base-url", "http://localhost:8080/");
+        System.setProperty("logged-routes.default-route.base-url", "http://localhost:8080/");
         SpringApplication.run(SpringBootLoggingProxyApplication.class, args);
         // uses com.fasterxml.jackson.core.Base64Variants#MIME_NO_LINEFEEDS
         // System.out.println(new ObjectMapper().writeValueAsString("abc".getBytes()));
@@ -48,21 +50,30 @@ class SpringBootLoggingProxyApplication {
 
     @Data
     @Accessors(chain = true)
+    @Validated
     @Component
     @ConfigurationProperties("logged-routes")
     static class LoggedRoutes {
-        // todo implement this
-        /*
-            WHERE I LEFT OFF
+        /**
+         * just take all requests and proxy them to here by default
          */
-        boolean stripPrefix = true;
-        Map<String, Route> routes = new HashMap<>();
+        @NotNull
+        @Valid
+        Route defaultRoute;
+
+        // Map<String, Route> routes = new HashMap<>();
+
+        /**
+         * 10kb default by default
+         */
+        int bufferSize = 10_000;
 
         @Data
         @Accessors(chain = true)
         static class Route {
+            @NotNull
             String baseUrl;
-            boolean stripPrefix;
+            // boolean stripPrefix;
         }
     }
 
@@ -94,10 +105,10 @@ class SpringBootLoggingProxyApplication {
         }
 
         @SneakyThrows
-        @RequestMapping(path = "/**", method = {RequestMethod.GET, RequestMethod.PUT, RequestMethod.POST})
+        @RequestMapping("/**")
         ResponseEntity<StreamingResponseBody> proxy(HttpMethod method,
                                                     HttpServletRequest servletRequest,
-                                                    @RequestBody(required = false) InputStream requestBody,
+                                                    @Nullable InputStream requestBody,
                                                     @RequestHeader HttpHeaders httpHeaders) {
             var requestBodyCopy = new ByteArrayOutputStream();
             if (requestBody != null) {
@@ -106,17 +117,10 @@ class SpringBootLoggingProxyApplication {
                 requestBody = NullInputStream.INSTANCE;
             }
 
-            var url = servletRequest.getRequestURI();
-            if (url.charAt(0) == '/')
-                url = url.substring(1);
-            var split = url.split("/");
-            if (split.length == 0) return NOT_FOUND;
-            var prefix = split[0];
-            var baseUrl = loggedRoutes.getRoutes().get(prefix);
-            if (baseUrl == null) return NOT_FOUND;
-
-            var target = UriComponentsBuilder.fromHttpUrl(baseUrl.getBaseUrl())
-                    .path(url)
+            var reqUrl = servletRequest.getRequestURI();
+            var baseUrl = loggedRoutes.defaultRoute.getBaseUrl();
+            var target = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .path(reqUrl)
                     .query(servletRequest.getQueryString())
                     .toUriString();
 
@@ -135,20 +139,33 @@ class SpringBootLoggingProxyApplication {
             var map = new LinkedHashMap<>();
             map.put("method", method.name());
             map.put("status", r.getStatusCode().value());
-            map.put("url", url);
+            map.put("url", reqUrl);
             map.put("url_target", target);
             map.put("request_body", maybeToString(requestBodyCopy.toByteArray()));
-            map.put("request_headers", httpHeaders.toSingleValueMap());
-            map.put("response_headers", r.getHeaders().toSingleValueMap());
+            map.put("request_headers", filterHeaders(httpHeaders.toSingleValueMap()));
+            map.put("response_headers", filterHeaders(r.getHeaders().toSingleValueMap()));
 
             return ResponseEntity.status(r.getStatusCode())
                     .headers(r.getHeaders())
                     .body(new MyStreamingResponseBody(responseBody,
                             responseBodyCopy,
+                            loggedRoutes.getBufferSize(),
                             (responseBA) -> {
                                 map.put("response_body", maybeToString(responseBodyCopy.toByteArray()));
                                 System.out.println(objectMapper.writeValueAsString(map));
                             }));
+        }
+
+        Map<String, String> filterHeaders(Map<String, String> input) {
+            List<String> toRemove = new ArrayList<>(input.size());
+            for (String key : input.keySet()) {
+                String lower = key.toLowerCase();
+                if (lower.contains("auth") || lower.contains("key")) {
+                    toRemove.add(key);
+                }
+            }
+            toRemove.forEach(input::remove);
+            return input;
         }
 
         private Object maybeToString(byte[] responseBodyCopy) {
@@ -163,12 +180,23 @@ class SpringBootLoggingProxyApplication {
         private static class MyStreamingResponseBody implements StreamingResponseBody {
             private final InputStream responseBody;
             private final ByteArrayOutputStream responseBodyCopy;
+            private final int bufferSize;
             private final ThrowingConsumer<byte[]> callback;
 
             @Override
             public void writeTo(@NonNull OutputStream out) throws IOException {
-                responseBody.transferTo(out);
+                transferTo(out);
                 callback.accept(responseBodyCopy.toByteArray());
+            }
+
+            private void transferTo(OutputStream out) throws IOException {
+                Objects.requireNonNull(out, "out");
+                byte[] buffer = new byte[bufferSize];
+                int read;
+                while ((read = responseBody.read(buffer, 0, bufferSize)) >= 0) {
+                    out.write(buffer, 0, read);
+                    out.flush();
+                }
             }
         }
     }
