@@ -15,4 +15,4 @@ the way these projects work:
   * based on [`spring-boot-netty`](./spring-boot-netty) (aka `spring-boot-webflux`)
     * working as need based on manual testing
     * seems to be the right tool for the job
-    * implemented last as async api is discouraging from a maintenance standpoint
+    * implemented last as async api is discouraging from a maintenance standpoint (not me, i love async, but for co-workers)
