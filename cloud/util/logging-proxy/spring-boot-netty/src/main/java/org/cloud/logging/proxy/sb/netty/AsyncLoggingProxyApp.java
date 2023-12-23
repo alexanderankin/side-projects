@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -84,6 +85,14 @@ class AsyncLoggingProxyApp {
         }
     }
 
+    @Component
+    @ConditionalOnMissingBean(RequestLogger.class)
+    static class RequestLogger {
+        void logRequest(String request) {
+            System.out.println(request);
+        }
+    }
+
     @RequiredArgsConstructor
     @Slf4j
     @Component
@@ -91,6 +100,7 @@ class AsyncLoggingProxyApp {
         final LoggedRoutes loggedRoutes;
         final WebClient webClient;
         final ObjectMapper objectMapper;
+        final RequestLogger requestLogger;
 
         @SuppressWarnings("deprecation") // spring boot people are just wrong about .exchange
         @Override
@@ -154,7 +164,7 @@ class AsyncLoggingProxyApp {
                 map.put("request_headers", filterHeaders(httpHeaders.toSingleValueMap()));
                 map.put("response_body", maybeToString(bufferedResponse.toByteArray()));
                 map.put("response_headers", filterHeaders(r.getHeaders().toSingleValueMap()));
-                System.out.println(writeValueAsString(map));
+                requestLogger.logRequest(writeValueAsString(map));
             }).then();
         }
 

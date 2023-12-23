@@ -11,6 +11,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     itestImplementation 'org.testcontainers:testcontainers'
+    itestImplementation 'org.apache.commons:commons-collections4:4.4'
 }
 
 tasks.named('integrationTest', Test) {
