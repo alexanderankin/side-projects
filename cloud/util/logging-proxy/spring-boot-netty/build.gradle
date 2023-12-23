@@ -8,4 +8,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     // implementation 'org.apache.httpcomponents.client5:httpclient5'
     implementation 'commons-io:commons-io:2.15.1'
+
+    // generally this is a big no-no but for testing it is fine it it works
+    itestImplementation project(':cloud:util:logging-proxy:logged-application')
+    itestImplementation 'org.testcontainers:testcontainers'
 }

@@ -46,7 +46,7 @@ class AsyncLoggingProxyApp {
 
         // test config: test app + default port not to conflict with the test app
         System.setProperty("server.port", "8082");
-        System.setProperty("server.netty.connection-timeout", "-1");
+        System.setProperty("server.netty.connection-timeout", "0");
         System.setProperty("logged-routes.default-route.base-url", "http://localhost:8080/");
 
         SpringApplication.run(AsyncLoggingProxyApp.class, args);
@@ -176,6 +176,7 @@ class AsyncLoggingProxyApp {
                         return response.writeWith(actualBody);
                     })
                     .then(clientResponse.releaseBody().onErrorComplete())
+                    .onErrorResume(e -> clientResponse.releaseBody().onErrorComplete())
                     .then();
         }
 
@@ -212,6 +213,7 @@ class AsyncLoggingProxyApp {
                 return (responseBodyCopy);
             }
         }
+        //</editor-fold>
 
         /**
          * this class is, to reactive, what ByteArrayOutputStream is to mvc
@@ -237,6 +239,5 @@ class AsyncLoggingProxyApp {
                 return body.doOnNext(this::add);
             }
         }
-        //</editor-fold>
     }
 }

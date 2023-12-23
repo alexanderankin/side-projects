@@ -1,4 +1,4 @@
-package org.cloud.logging.proxy;
+package org.cloud.logging.proxy.logged.application;
 
 import lombok.SneakyThrows;
 import org.springframework.boot.SpringApplication;
@@ -14,11 +14,15 @@ import java.util.Optional;
 @SpringBootApplication
 public class LoggedApplication {
     public static void main(String[] args) {
+        // copy of all fields determined necessary while developing openresty implementation
+        System.setProperty("server.tomcat.connection-timeout", "PT24H");
+        System.setProperty("server.tomcat.keep-alive-timeout", "PT24H");
+        System.setProperty("spring.mvc.async.request-timeout", "PT24H");
         SpringApplication.run(LoggedApplication.class, args);
     }
 
     @RestController
-    static class Ctrl {
+    public static class Ctrl {
         @GetMapping
         String hello() {
             return "world";
