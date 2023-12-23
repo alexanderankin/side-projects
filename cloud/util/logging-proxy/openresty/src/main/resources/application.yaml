@@ -1,0 +1,9 @@
+server:
+  tomcat:
+    connection-timeout: PT24H
+    keep-alive-timeout: PT24H
+
+spring:
+  mvc:
+    async:
+      request-timeout: PT24H

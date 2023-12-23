@@ -25,7 +25,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.function.ThrowingConsumer;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -89,7 +92,7 @@ class SpringBootLoggingProxyApplication {
     @RequiredArgsConstructor
     @RestController
     static class Ctrl {
-        static final ResponseEntity<StreamingResponseBody> NOT_FOUND = ResponseEntity.notFound().build();
+        // static final ResponseEntity<StreamingResponseBody> NOT_FOUND = ResponseEntity.notFound().build();
         final RestClient restClient;
         final LoggedRoutes loggedRoutes;
         final ObjectMapper objectMapper;
@@ -137,6 +140,7 @@ class SpringBootLoggingProxyApplication {
 
 
             var map = new LinkedHashMap<>();
+            map.put("client", servletRequest.getRemoteAddr());
             map.put("method", method.name());
             map.put("status", r.getStatusCode().value());
             map.put("url", reqUrl);

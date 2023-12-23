@@ -61,8 +61,9 @@ public class LoggedApplication {
 
                 int count = repeat;
                 while (count-- > 0) {
-                    writer.println(repeated);
+                    // sleep first, simulate actually problematic server, not the one which is easy to debug
                     LoggedApplication.sleep(delay);
+                    writer.println(repeated);
                 }
             };
         }
