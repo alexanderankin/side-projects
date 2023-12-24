@@ -8,3 +8,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
+
+configurations.create('la') {
+    canBeConsumed = true
+    canBeResolved = false
+}
+
+artifacts.add('la', bootJar)

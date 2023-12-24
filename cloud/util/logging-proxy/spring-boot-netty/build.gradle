@@ -14,8 +14,19 @@ dependencies {
     itestImplementation 'org.apache.commons:commons-collections4:4.4'
 }
 
+configurations {
+    la {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    la project(path: ':cloud:util:logging-proxy:logged-application', configuration: 'la')
+}
+
 tasks.named('integrationTest', Test) {
-    def laJar = project(':cloud:util:logging-proxy:logged-application').tasks.named('bootJar').get()
-    it.dependsOn laJar
-    it.systemProperty('loggedAppJar', laJar.outputs.files.singleFile.path)
+    // still need this or else it won't run the task even though it knows about it in producer side
+    dependsOn ':cloud:util:logging-proxy:logged-application:bootJar'
+    systemProperty('loggedAppJar', configurations.la.singleFile.path)
 }
