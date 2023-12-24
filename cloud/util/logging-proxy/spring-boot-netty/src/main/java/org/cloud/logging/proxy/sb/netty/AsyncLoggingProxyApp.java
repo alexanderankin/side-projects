@@ -10,10 +10,10 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -86,7 +86,7 @@ class AsyncLoggingProxyApp {
     }
 
     @Component
-    @ConditionalOnMissingBean(RequestLogger.class)
+    @Profile("!itest")
     static class RequestLogger {
         void logRequest(String request) {
             System.out.println(request);
