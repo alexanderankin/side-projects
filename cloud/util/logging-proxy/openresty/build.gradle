@@ -10,3 +10,18 @@ dependencies {
     itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     itestImplementation 'org.testcontainers:testcontainers'
 }
+
+configurations.create('la').with {
+    canBeConsumed = false
+    canBeResolved = true
+}
+
+dependencies {
+    la project(path: ':cloud:util:logging-proxy:logged-application', configuration: 'la')
+}
+
+tasks.named('integrationTest', Test) {
+    // still need this or else it won't run the task even though it knows about it in producer side
+    dependsOn ':cloud:util:logging-proxy:logged-application:bootJar'
+    systemProperty('loggedAppJar', configurations.la.singleFile.path)
+}
