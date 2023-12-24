@@ -29,9 +29,9 @@ RUN \
 
 # hide openresty
 RUN \
-   rm -rf /usr/local/openresty/nginx/html/ ; \
-   mkdir -p /usr/local/openresty/nginx/html/ && \
-   echo '<h1>It Works!</h1>' > /usr/local/openresty/nginx/html/index.html && \
-   sed -i 's/http {/http { server_tokens off; more_clear_headers server;/' /usr/local/openresty/nginx/conf/nginx.conf
+  rm -rf /usr/local/openresty/nginx/html/ ; \
+  mkdir -p /usr/local/openresty/nginx/html/ && \
+  echo '<h1>It Works!</h1>' > /usr/local/openresty/nginx/html/index.html
+#sed -i 's/http {/http { server_tokens off; more_clear_headers server;/' /usr/local/openresty/nginx/conf/nginx.conf
 
 CMD ["openresty", "-g", "daemon off;"]
