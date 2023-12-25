@@ -26,7 +26,6 @@ dependencies {
 }
 
 tasks.named('integrationTest', Test) {
-    // still need this or else it won't run the task even though it knows about it in producer side
-    dependsOn ':cloud:util:logging-proxy:logged-application:bootJar'
+    inputs.files(configurations.la)
     systemProperty('loggedAppJar', configurations.la.singleFile.path)
 }
