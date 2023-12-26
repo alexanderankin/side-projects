@@ -1,6 +1,10 @@
 package org.cloud.logging.proxy;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Data;
 import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,18 +17,18 @@ import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.type.TypeReference;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 import org.testcontainers.utility.MountableFile;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -65,9 +69,7 @@ class LoggingProxyTest {
             //
             ;
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
-    };
+    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
 
     /**
      * this is the scheme, host, and port, of the proxy (e.g., {@code http://localhost:8080})
@@ -87,16 +89,6 @@ class LoggingProxyTest {
         proxy.withNetwork(network);
         loggedAppContainer.withNetwork(network);
         proxy.start();
-    }
-
-    @SneakyThrows
-    Map<String, Object> remove() {
-        return Optional.of(BufferingConsumer.PROXY_LOG_CONSUMER.output.take()).map(this::parseMap).orElse(null);
-    }
-
-    @SneakyThrows
-    Map<String, Object> parseMap(String input) {
-        return OBJECT_MAPPER.readValue(input, MAP_TYPE_REFERENCE);
     }
 
     @BeforeEach
@@ -139,6 +131,7 @@ class LoggingProxyTest {
         }
 
      */
+    @SneakyThrows
     @Test
     @Timeout(10)
     void test() {
@@ -147,47 +140,34 @@ class LoggingProxyTest {
                 .returnResult();
 
         System.out.println(stringEntityExchangeResult);
-        var logged = remove();
-        System.out.println(logged);
-        assertThat(logged.get("remote_addr"), is(not(nullValue())));
-        // assertThat("client is null during test", logged, hasEntry("client", null));
+        var logEntry = OBJECT_MAPPER.readValue(BufferingConsumer.PROXY_LOG_CONSUMER.output.take(), LogByLuaLogEntry.class);
+        System.out.println(logEntry);
 
-        assertThat(logged, allOf(hasKey("req"), hasKey("resp"), hasKey("timing")));
-        var req = logged.get("req");
-        var resp = logged.get("resp");
-        var timing = logged.get("timing");
-        assertThat(Arrays.asList(req, resp, timing), everyItem(is(not(nullValue()))));
-        assertThat(Arrays.asList(req, resp, timing), everyItem(is(instanceOf(Map.class))));
+        if (NetworkInterface.networkInterfaces().flatMap(NetworkInterface::inetAddresses).map(InetAddress::getHostAddress).noneMatch(Predicate.isEqual(logEntry.getClient())))
+            System.err.println("warning - the client is not known to this machine");
 
-        @SuppressWarnings("unchecked")
-        var reqMap = (Map<String, Object>) req;
-        @SuppressWarnings("unchecked")
-        var respMap = (Map<String, Object>) resp;
-        @SuppressWarnings("unchecked")
-        var timingMap = (Map<String, Object>) timing;
+        assertThat(logEntry, is(not(nullValue())));
+        assertThat(logEntry.getClient(), is(not(emptyOrNullString())));
+        assertThat(logEntry.getReq(), is(not(nullValue())));
+        assertThat(logEntry.getReq().getMethod(), is("GET"));
+        assertThat(logEntry.getReq().getUri(), is("/"));
+        assertThat(logEntry.getReq().getHeaders(), is(not(nullValue())));
+        assertThat(logEntry.getReq().getHeaders(), hasKey("host"));
 
-        assertThat(reqMap, hasKey("headers"));
-        assertThat(reqMap.get("headers"), is(notNullValue()));
-        assertThat(reqMap.get("body"), is(Boolean.FALSE));
-        assertThat(reqMap.get("method"), is("GET"));
-        assertThat(reqMap.get("uri"), is("/"));
-
-        assertThat(respMap, hasKey("headers"));
-        assertThat(respMap.get("headers"), is(instanceOf(Map.class)));
-        assertThat((Map<?, ?>) respMap.get("headers"), allOf(
-                hasKey("connection"),
-                hasKey("content-type"),
-                hasKey("content-length")
-        ));
-        // in this case it is known
-        assertThat(respMap.get("headers"), is(Map.ofEntries(
-                Map.entry("connection", "close"),
+        assertThat(logEntry.getResp(), is(not(nullValue())));
+        assertThat(logEntry.getResp().getStatus(), is(200));
+        assertThat(logEntry.getResp().getHeaders(), is(Map.ofEntries(
+                Map.entry("content-length", "5"),
                 Map.entry("content-type", "text/plain;charset=UTF-8"),
-                Map.entry("content-length", "5")
+                Map.entry("connection", "close")
         )));
-        assertThat(respMap.get("status"), is(200));
-        assertThat(respMap.get("body"), is("world"));
-        assertThat(timingMap, allOf(hasKey("time_iso8601"), hasKey("time_millis"), hasKey("response_millis")));
+        assertThat(logEntry.getResp().getBody(), is("world"));
+
+        assertThat(logEntry.getTiming(), is(not(nullValue())));
+        assertThat(logEntry.getTiming().getIso8601(), is(not(nullValue())));
+        assertThat(logEntry.getTiming().getIso8601().isAfter(Instant.now().minusSeconds(5)), is(true));
+        assertThat((double) logEntry.getTiming().getCurrentTime(), is(closeTo(System.currentTimeMillis(), 5_000)));
+        assertThat((double) logEntry.getTiming().getResponseMillis(), is(closeTo(0, 200)));
     }
 
     public static class BufferingConsumer implements Consumer<OutputFrame> {
@@ -198,6 +178,44 @@ class LoggingProxyTest {
         public void accept(OutputFrame outputFrame) {
             if (output.remainingCapacity() == 0) output.remove();
             output.add(outputFrame.getUtf8String());
+        }
+    }
+
+    @Data
+    @Accessors(chain = true)
+    static class LogByLuaLogEntry {
+        @JsonProperty("remote_addr")
+        String client;
+        Req req;
+        Resp resp;
+        Timing timing;
+
+        @Data
+        @Accessors(chain = true)
+        static class Req {
+            String method;
+            String uri;
+            Map<String, Object> headers;
+            String body;
+        }
+
+        @Data
+        @Accessors(chain = true)
+        static class Resp {
+            int status;
+            Map<String, Object> headers;
+            String body;
+        }
+
+        @Data
+        @Accessors(chain = true)
+        static class Timing {
+            @JsonProperty("time_iso8601")
+            Instant iso8601;
+            @JsonProperty("time_millis")
+            long currentTime;
+            @JsonProperty("response_millis")
+            long responseMillis;
         }
     }
 }
