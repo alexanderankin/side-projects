@@ -1,10 +1,11 @@
 package net.pe;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -161,5 +162,88 @@ class ProblemsTest {
         return primes;
     }
 
+    /**
+     * A palindromic number reads the same both ways. The largest palindrome made from the product of two 2-digit
+     * numbers is 9009=91×99.Find the largest palindrome made from the product of two 3-digit numbers.
+     */
+    long problemFour(int nDigits) {
+        // equation: x1 * 10^4 + x2 * 10^3 + x2 * 10^2 + x1 * 10^1
+        // sum x{1..n} = xi * 10^i + xi * 10^(n - i)
+        // sum x{1..n} = xi(10^i + 10^(n - i))
+        // sum = y * z
+        // ok, naive solution:
+        long start = (long) Math.pow(10, nDigits - 1);
+        long end = 0;
+        for (int i = 0; i < nDigits; i++) {
+            end *= 10;
+            end += 9;
+        }
+
+        long max = 0;
+
+        long a = end;
+        while (a >= start) {
+            long b = end;
+            while (b >= a) {
+                long product = a * b;
+                if (isPalindrome(product) && product > max)
+                    max = product;
+                b--;
+            }
+            a--;
+        }
+        return max;
+
+        // we can apparently also optimize by using the 11 multiple fact
+
+        // back to the good stuff, the incomprehensible euler stuff:
+        // xy
+        // P=1000x+100y+10y+x
+        // P=1001x+110y
+        // P=(91x+10y)11
+        // xyz
+        // P=100000x10000y1000z100z10yx
+        // P=100001x10010y1100z
+        // P=119091x910y100z
+        // wxyz
+        // P=10000000w+1000000x+100000y+10000z+1000z+100y+10x+w
+        // P=10000001w+1000010x+100100y+11000z
+        // P=(909091w+90910x+9100y+1000z)11
+    }
+
+    boolean isPalindrome(long num) {
+        long reverse = 0;
+        long copy = num;
+        while (copy > 0) {
+            reverse *= 10;
+            reverse += copy % 10;
+            copy /= 10;
+        }
+        return num == reverse;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1,9",
+            "2,9009",
+            "3,906609",
+            // "4,99000099",
+            // "5,9966006699",
+    })
+    void test_problemFour(int size, long expected) {
+        assertEquals(expected, problemFour(size));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "true,4",
+            "true,44",
+            "false,445",
+            "true,5445",
+            "false,1234",
+    })
+    void test_isPalindrome(boolean expected, int input) {
+        assertEquals(expected, isPalindrome(input));
+    }
 
 }
