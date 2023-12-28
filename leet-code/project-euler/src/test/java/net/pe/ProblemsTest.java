@@ -246,4 +246,34 @@ class ProblemsTest {
         assertEquals(expected, isPalindrome(input));
     }
 
+    /**
+     * smallest multiple
+     */
+    int problem5(int upTo) {
+        int next = upTo * upTo;
+
+        int limit = Integer.MAX_VALUE;
+        while (limit-- > 0) {
+            boolean even = true;
+            for (int i = 1; i < upTo; i++) {
+                if (next % i != 0) {
+                    even = false;
+                    break;
+                }
+            }
+
+            if (even) return next;
+            next += upTo;
+        }
+        return -1;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "10,2520",
+            "20,232792560",
+    })
+    void test_problem5(int upTo, int expected) {
+        assertEquals(expected, problem5(upTo));
+    }
 }
