@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SuppressWarnings("SameParameterValue")
 class ProblemsTest {
+    private static final HashMap<List<Integer>, Long> PROBLEM_15 = new HashMap<>();
     private static boolean[] PROBLEM_SEVEN;
 
     /**
@@ -966,35 +967,37 @@ class ProblemsTest {
      * Starting in the top left corner of a 2×2 grid,
      * and only being able to move to the right and down,
      * there are exactly 6 routes to the bottom right corner.
+     * <p>
+     * TODO implement "dynamic" approach - literally just build out grid like sieve:
+     * TODO start at end and fill in matrix with solutions by coordinate
      *
      * @return How many such routes are there through a 20×20 grid?
      */
-    int problem15(int dim) {
-        return problem15(dim, new ArrayList<>(), 0, 0);
+    long problem15(int dim) {
+        return problem15(dim, PROBLEM_15, 0, 0, 0);
     }
 
-    int problem15(int dim, List<Boolean> choices, int row, int col) {
+    long problem15(int dim, Map<List<Integer>, Long> cache, int row, int col, int depth) {
+        Long cached;
+        if (null != (cached = cache.get(List.of(dim - row, dim - col))))
+            return cached;
         if (row == dim && col == dim) {
-            // System.out.println(choices);
             return 1;
         }
 
-        int totalRoutes = 0;
+        long totalRoutes = 0;
 
         // Move right if within bounds and not already chosen.
         if (col < dim) {
-            choices.add(true);
-            totalRoutes += problem15(dim, choices, row, col + 1);
-            choices.removeLast();
+            totalRoutes += problem15(dim, cache, row, col + 1, depth + 1);
         }
 
         // Move down if within bounds and not already chosen.
         if (row < dim) {
-            choices.add(false);
-            totalRoutes += problem15(dim, choices, row + 1, col);
-            choices.removeLast();
+            totalRoutes += problem15(dim, cache, row + 1, col, depth + 1);
         }
 
+        cache.put(List.of(dim - row, dim - col), totalRoutes);
         return totalRoutes;
     }
 
@@ -1007,9 +1010,9 @@ class ProblemsTest {
             "4,70",
             "5,252",
             // the actual problem
-            // "20,1",
+            "20,137846528820",
     })
-    void test_problem15(int dim, int expect) {
+    void test_problem15(int dim, long expect) {
         assertEquals(expect, problem15(dim));
     }
 }
