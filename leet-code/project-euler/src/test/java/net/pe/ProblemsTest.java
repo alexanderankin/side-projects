@@ -114,7 +114,7 @@ class ProblemsTest {
 
     @ParameterizedTest
     @CsvSource({
-            "10,44",
+            // "10,44",  // misinterpreted upTo as count initially
             "4000000,4613732",
     })
     void test_problemTwo(int upTo, long expected) {
@@ -251,11 +251,33 @@ class ProblemsTest {
      */
     int problem5(int upTo) {
         int next = upTo * upTo;
+        // try to reduce the amount of tests on each multiple of largest number (upTo)
+        // boolean[] yes = new boolean[upTo];
+        // Arrays.fill(yes, true);
+        //
+        // List<Integer> numsToTry = new ArrayList<>();
+        // for (int i = upTo - 1; i > 0; i--) {
+        //     if (!yes[i]) continue;
+        //     for (int j = 2; j < i; j++) {
+        //         if (i % j == 0) {
+        //             yes[j] = false;
+        //         }
+        //     }
+        // }
+        //
+        // for (int i = 2; i < upTo; i++) {
+        //     if (yes[i])
+        //         numsToTry.add(i);
+        // }
+        //
+        // but as it turns out, it is just the larger half
+        // System.out.println(numsToTry);
+        var numsToTry = IntStream.rangeClosed(upTo / 2, upTo).toArray();
 
         int limit = Integer.MAX_VALUE;
         while (limit-- > 0) {
             boolean even = true;
-            for (int i = 1; i < upTo; i++) {
+            for (int i : numsToTry) {
                 if (next % i != 0) {
                     even = false;
                     break;
