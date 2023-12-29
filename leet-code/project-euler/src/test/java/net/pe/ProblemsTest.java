@@ -540,4 +540,85 @@ class ProblemsTest {
     void test_problem8(int length, long expect) {
         assertEquals(expect, problem8(length));
     }
+
+    int problem9() {
+        for (int i = 0; i < 1000; i++) {
+            for (int j = 0; j < 1000; j++) {
+                if (j == i) continue;
+                for (int k = 0; k < 1000; k++) {
+                    if (k == i || k == j) continue;
+
+                    if (i * i + j * j != k * k) continue;
+
+                    if (i + j + k == 1000) {
+                        System.out.println(i); // 200
+                        System.out.println(j); // 375
+                        System.out.println(k); // 425
+
+                        return i * j * k;
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException("not found");
+    }
+
+    @Test
+    void test_problem9() {
+        assertEquals(31875000, problem9());
+    }
+
+    long problem10_naive(int n) {
+        long result = 0;
+        outer:
+        // start at 2
+        for (int i = 2; i <= n; i++) {
+            // each go from i to i/2, checking if any divide
+            for (int j = 2; j <= i / 2; ++j) {
+                if (i % j == 0) {
+                    continue outer;
+                }
+            }
+            result += i;
+        }
+
+        return result;
+    }
+
+    // sum of primes below n
+    long problem10(int n) {
+        boolean[] prime = new boolean[n + 1];
+        Arrays.fill(prime, true);
+
+        // i from 2 to sqrt n
+        for (int i = 2; i * i <= n; i++) {
+            // if i is prime
+            if (prime[i]) {
+                // j from i squared to all multiples of i - not prime
+                for (int j = i * i; j <= n; j += i) {
+                    prime[j] = false;
+                }
+            }
+        }
+
+        long result = 0;
+        for (int i = 2; i < prime.length; i++) {
+            if (prime[i]) {
+                result += i;
+            }
+        }
+        return result;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "10,17",
+            "43,281",
+            "2000000,142913828922",
+    })
+    void test_problem10(int n, long expected) {
+        assertEquals(expected, problem10(n));
+        if (n < 100)
+            assertEquals(expected, problem10_naive(n));
+    }
 }
