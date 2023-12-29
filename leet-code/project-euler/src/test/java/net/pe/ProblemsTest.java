@@ -1015,4 +1015,88 @@ class ProblemsTest {
     void test_problem15(int dim, long expect) {
         assertEquals(expect, problem15(dim));
     }
+
+    // power digit sum
+    int problem16(int twoPower) {
+        // long value = (long) Math.pow(2, twoPower);
+        // String string = String.valueOf(value);
+        // return string.chars().map(i -> i - '0').sum();
+        return new BigInteger("2").pow(twoPower).toString().chars().map(i -> i - '0').sum();
+    }
+
+    @Test
+    void test_problem16() {
+        assertEquals(26, problem16(15));
+        assertEquals(1366, problem16(1000));
+    }
+
+    int problem17() {
+        List<String> basic = List.of(
+                "one",
+                "two",
+                "three",
+                "four",
+                "five",
+                "six",
+                "seven",
+                "eight",
+                "nine");
+        assert basic.size() == 9;
+        List<String> teens = List.of(
+                "ten",
+                "eleven",
+                "twelve",
+                "thirteen",
+                "fourteen",
+                "fifteen",
+                "sixteen",
+                "seventeen",
+                "eighteen",
+                "nineteen");
+        assert teens.size() == 10;
+        List<String> tens = List.of(
+                "twenty",
+                "thirty",
+                "forty",
+                "fifty",
+                "sixty",
+                "seventy",
+                "eighty",
+                "ninety");
+        assert tens.size() == 8;
+        // 1-99
+        int forOneHundred =
+                // 0-9
+                basic.stream().mapToInt(String::length).sum() +
+                        // 10-19
+                        teens.stream().mapToInt(String::length).sum() +
+                        // 20,21..29 X 30,31..39
+                        (tens.stream().mapToInt(String::length).sum() * 10) +
+                        // the ones part of the above
+                        (basic.stream().mapToInt(String::length).sum() * tens.size());
+
+        // we count 0 to 100 10 times
+        // (00)1-99, 100-199, ... 900-999: 0-9 (10)
+        int forAllHundreds = forOneHundred * 10;
+        // "...", "one hundred and" x99, x9
+        int hundredAndSuffixes =
+                // (one hundred + /* below */) one hundred and x99
+                // (two hundred + /* below */) two hundred and x99
+                // 1-9 = 9x
+                (basic.stream().mapToInt(String::length).sum() * 99) +
+                        ("hundred".length() * 99 * 9) +
+                        ("and".length() * 99 * 9);
+                        // (10 * (basic.stream().mapToInt(String::length).sum() + "hundred".length()));
+        // + 9x basic[@] .. "hundred"
+        int hundreds =
+                (basic.stream().mapToInt(String::length).sum()) +
+                        ("hundred".length() * 9);
+
+        return forAllHundreds + hundredAndSuffixes + hundreds + "onethousand".length();
+    }
+
+    @Test
+    void test_problem17() {
+        assertEquals(21124, problem17());
+    }
 }
