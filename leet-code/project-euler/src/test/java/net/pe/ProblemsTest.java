@@ -18,14 +18,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * because that is what is recommended for the Amazon SDE interview.
  * <p>
  * Questions beyond this are not published due to the notice on the projecteuler website:
- * "Please do not.... (todo fill this in on next submission)".
+ * "We hope that you enjoyed solving this problem. Please do not deprive others of going
+ * through the same process by publishing your solution outside of Project Euler. Members
+ * found to be spoiling problems beyond the first one-hundred problems will have their
+ * accounts locked.".
  * <p>
- * It should be noted here also that I do not agree but am complying within their guidelines
+ * It should be noted here also that I do not agree, but I am complying within their guidelines
  * (I am stopping at 50, not even their limit of 100).
  * <p>
- * No SDE outside "big-tech" should have this front and center anyways.
+ * No SDE outside "big-tech" should have this at the front of their mind anyway.
  * Go clean up your test suite, learn that framework, refactor that utility service,
  * and reduce the tech debt instead, to improve the output of you and your team.
+ * <p>
+ * I'm putting this here mainly so that I can prove to myself that I did it.
+ * When I discovered my 10 years old account this year in 2023,
+ * I struggled to recover the solutions to the same problems.
+ * <p>
+ * An effective programmer's philosophy is materialist, not pure and abstract (mathematical).
  */
 @SuppressWarnings("SameParameterValue")
 class ProblemsTest {
@@ -901,5 +910,55 @@ class ProblemsTest {
     @Test
     void test_problem13() {
         assertEquals("5537376230", problem13());
+    }
+
+    long problem14_longestChainUnderMillion() {
+        int max = 1_000_000;
+        HashMap<Long, Long> map = HashMap.newHashMap(max);
+
+        long longest = 1;
+        long longestKey = -1;
+        for (long i = 1; i < max; i++) {
+            var mapValue = map.get(i);
+            long chainLength;
+            if (mapValue != null) chainLength = mapValue;
+            else chainLength = problem14_intermediate(map, i);
+            if (chainLength > longest) {
+                longest = chainLength;
+                longestKey = i;
+            }
+        }
+        return longestKey;
+    }
+
+    long problem14_intermediate(Map<Long, Long> map, long key) {
+        if (key == 1) {
+            return 0;
+        }
+
+        var mapValue = map.get(key);
+        if (mapValue != null) return mapValue;
+        boolean isEven = key % 2 == 0;
+        long value;
+        long next;
+        if (isEven) {
+            next = key / 2;
+        } else {
+            next = (3 * key) + 1;
+        }
+
+        value = 1 + problem14_intermediate(map, next);
+        map.put(key, value);
+        return value;
+    }
+
+    @Test
+    void test_problem14_intermediate() {
+        assertEquals(9, problem14_intermediate(new HashMap<>(), 13));
+    }
+
+    @Test
+    void test_problem14() {
+        assertEquals(837799, problem14_longestChainUnderMillion());
     }
 }
