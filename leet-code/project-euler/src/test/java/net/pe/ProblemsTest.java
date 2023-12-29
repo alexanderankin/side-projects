@@ -970,12 +970,44 @@ class ProblemsTest {
      * @return How many such routes are there through a 20×20 grid?
      */
     int problem15(int dim) {
-        throw new UnsupportedOperationException("todo");
+        return problem15(dim, new ArrayList<>(), 0, 0);
+    }
+
+    int problem15(int dim, List<Boolean> choices, int row, int col) {
+        if (row == dim && col == dim) {
+            // System.out.println(choices);
+            return 1;
+        }
+
+        int totalRoutes = 0;
+
+        // Move right if within bounds and not already chosen.
+        if (col < dim) {
+            choices.add(true);
+            totalRoutes += problem15(dim, choices, row, col + 1);
+            choices.removeLast();
+        }
+
+        // Move down if within bounds and not already chosen.
+        if (row < dim) {
+            choices.add(false);
+            totalRoutes += problem15(dim, choices, row + 1, col);
+            choices.removeLast();
+        }
+
+        return totalRoutes;
     }
 
     @ParameterizedTest
     @CsvSource({
-            "2,20",
+            // example from webpage
+            "2,6",
+            // more examples to test an efficient solution
+            "3,20",
+            "4,70",
+            "5,252",
+            // the actual problem
+            // "20,1",
     })
     void test_problem15(int dim, int expect) {
         assertEquals(expect, problem15(dim));
