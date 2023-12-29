@@ -1088,7 +1088,6 @@ class ProblemsTest {
                 (basic.stream().mapToInt(String::length).sum() * 99) +
                         ("hundred".length() * 99 * 9) +
                         ("and".length() * 99 * 9);
-                        // (10 * (basic.stream().mapToInt(String::length).sum() + "hundred".length()));
         // + 9x basic[@] .. "hundred"
         int hundreds =
                 (basic.stream().mapToInt(String::length).sum()) +
@@ -1100,5 +1099,66 @@ class ProblemsTest {
     @Test
     void test_problem17() {
         assertEquals(21124, problem17());
+    }
+
+    int problem18_maxPathSum() {
+        String input = """
+                75
+                95 64
+                17 47 82
+                18 35 87 10
+                20 04 82 47 65
+                19 01 23 75 03 34
+                88 02 77 73 07 63 67
+                99 65 04 28 06 16 70 92
+                41 41 26 56 83 40 80 70 33
+                41 48 72 33 47 32 37 16 94 29
+                53 71 44 65 25 43 91 52 97 51 14
+                70 11 33 28 77 73 17 78 39 68 17 57
+                91 71 52 38 17 14 91 43 58 50 27 29 48
+                63 66 04 68 89 53 67 30 73 16 69 87 40 31
+                04 62 98 27 23 09 70 98 73 93 38 53 60 04 23""";
+
+
+        String[] lines = input.split("\r?\n");
+        int[][] matrix = new int[lines.length][lines[lines.length - 1].split(" ").length];
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i];
+            String[] split = line.split(" ");
+            for (int j = 0; j < split.length; j++) {
+                String number = split[j];
+                matrix[i][j] = Integer.parseInt(number);
+            }
+        }
+
+        int[][] maxes = new int[matrix.length][matrix[0].length];
+
+        // for bottom row, max path is itself
+        {
+            int i = matrix.length - 1;
+            int[] ints = matrix[i];
+            System.arraycopy(ints, 0, maxes[i], 0, i + 1);
+        }
+
+        // for others, reuse previous results
+        for (int i = matrix.length - 2; i >= 0; i--) {
+            int[] ints = matrix[i];
+            for (int j = i; j >= 0; j--) {
+                int number = ints[j];
+                int left = maxes[i + 1][j];
+                int right = maxes[i + 1][j + 1];
+
+                int max = Math.max(left, right);
+                int newValue = max + number;
+                maxes[i][j] = newValue;
+            }
+        }
+
+        return maxes[0][0];
+    }
+
+    @Test
+    void test_problem18_maxPathSum() {
+        assertEquals(1074, problem18_maxPathSum());
     }
 }
