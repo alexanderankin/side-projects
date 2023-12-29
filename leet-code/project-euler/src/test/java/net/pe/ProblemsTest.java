@@ -671,7 +671,7 @@ class ProblemsTest {
                 20 73 35 29 78 31 90 01 74 31 49 71 48 86 81 16 23 57 05 54
                 01 70 54 71 83 51 54 69 16 92 33 48 61 43 52 01 89 19 67 48""";
 
-        var lines = input.split("\r?\n");
+        var lines = input.split("\r?");
         int[][] numbers = new int[lines.length][lines[0].split(" ").length];
 
         for (int i = 0; i < lines.length; i++) {
@@ -901,7 +901,7 @@ class ProblemsTest {
                 20849603980134001723930671666823555245252804609722
                 53503534226472524250874054075591789781264330331690""";
 
-        String[] lines = input.split("\r?\n");
+        String[] lines = input.split("\r?");
 
         // ?? surely not what was meant
         return Arrays.stream(lines).map(BigInteger::new).reduce(BigInteger::add).orElseThrow().toString().substring(0, 10);
@@ -960,5 +960,24 @@ class ProblemsTest {
     @Test
     void test_problem14() {
         assertEquals(837799, problem14_longestChainUnderMillion());
+    }
+
+    /**
+     * Starting in the top left corner of a 2×2 grid,
+     * and only being able to move to the right and down,
+     * there are exactly 6 routes to the bottom right corner.
+     *
+     * @return How many such routes are there through a 20×20 grid?
+     */
+    int problem15(int dim) {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2,20",
+    })
+    void test_problem15(int dim, int expect) {
+        assertEquals(expect, problem15(dim));
     }
 }
