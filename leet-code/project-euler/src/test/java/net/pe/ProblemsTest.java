@@ -1,5 +1,6 @@
 package net.pe;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -11,8 +12,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("SameParameterValue")
 class ProblemsTest {
+    private static boolean[] PROBLEM_SEVEN;
+
     /**
      * If we list all the natural numbers below 10 that are multiples of 3 or 5, we get 3,5,6 and 9. The sum of these multiples is 23.
      * <p>
@@ -314,4 +319,176 @@ class ProblemsTest {
     void test_problemSix(int upTo, int expected) {
         assertEquals(expected, problemSix(upTo));
     }
+
+    /**
+     * @param n how many nums to generate
+     * @return nth prime
+     */
+    int problemSeven(int n) {
+        if (PROBLEM_SEVEN == null)
+            PROBLEM_SEVEN = sieveOfEratosthenes(nPrimesErHelper_piN(10_000));
+        for (int i = 2; i < PROBLEM_SEVEN.length; i++) {
+            if (PROBLEM_SEVEN[i]) n--;
+            if (n == 0) return i;
+        }
+        throw new IllegalStateException("not found");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1,2",
+            "2,3",
+            "3,5",
+            "4,7",
+            "5,11",
+            "6,13",
+            "10001,104743",
+    })
+    void test_problemSeven(int n, int nthPrime) {
+        assertEquals(nthPrime, problemSeven(n));
+    }
+
+    //<editor-fold desc="Primes: Simple G4G approach">
+    List<Integer> nPrimes(int n) {
+        List<Integer> result = new ArrayList<>();
+        outer:
+        // start at 2
+        for (int i = 2; ; i++) {
+            // each go from i to i/2, checking if any divide
+            for (int j = 2; j <= i / 2; ++j) {
+                if (i % j == 0) {
+                    continue outer;
+                }
+            }
+            result.add(i);
+            if (result.size() == n)
+                break;
+        }
+
+        return result;
+    }
+
+    int nthPrime(int n) {
+        int counter = 0;
+        outer:
+        // start at 2
+        for (int i = 2; ; i++) {
+            // each go from i to i/2, checking if any divide
+            for (int j = 2; j <= i / 2; ++j) {
+                if (i % j == 0) {
+                    continue outer;
+                }
+            }
+            counter++;
+            if (counter == n)
+                return i;
+        }
+    }
+
+    @Test
+    void test_nPrimes() {
+        assertEquals(List.of(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43), nPrimes(14));
+        assertEquals(43, nthPrime(14));
+    }
+
+    // https://www.geeksforgeeks.org/java-program-to-display-all-prime-numbers-from-1-to-n/
+    @SuppressWarnings("unused")
+    void prime_N(int N) {
+        // Declaring the variables
+        int x, y, flg;
+
+        // Using for loop for traversing all
+        // the numbers from 1 to N
+        for (x = 1; x <= N; x++) {
+
+            // Omit 0 and 1 as they are
+            // neither prime nor composite
+            if (x == 1 || x == 0)
+                continue;
+
+            // Using flag variable to check
+            // if x is prime or not
+            flg = 1;
+
+            for (y = 2; y <= x / 2; ++y) {
+                if (x % y == 0) {
+                    flg = 0;
+                    break;
+                }
+            }
+
+            // If flag is 1 then x is prime but
+            // if flag is 0 then x is not prime
+            if (flg == 1)
+                System.out.println(x);
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="Primes: Eratosthenes G4G approach">
+    int nPrimesErHelper_piN(int n) {
+        // https://en.wikipedia.org/wiki/Prime_number_theorem#Approximations_for_the_nth_prime_number
+        // https://math.stackexchange.com/questions/4535527/heuristic-argument-on-the-position-of-nth-prime
+        return (int) (1.5 * n * Math.log(n));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1,2", // 4 = pi(n), or how many primes before 10,
+            "2,541", // 25 = pi(100),
+            "3,7919", // 168 = pi(1000),
+            "4,104729", // 1229,
+            "5,1299709", // 9592,
+            "6,15485863", // 78498,
+            "7,179424673", // 664579,
+    })
+    void test_nPrimesErHelper_piN(int power, int nthPrime) {
+        int n = (int) Math.pow(10, power);
+        assertTrue(nthPrime < nPrimesErHelper_piN(n),
+                "oh no - our helper was not greater than the actual number of the nth prime");
+    }
+
+    List<Integer> nPrimesEr(int n) {
+        int size = nPrimesErHelper_piN(n);
+        List<Integer> integers = new ArrayList<>();
+        var s = sieveOfEratosthenes(size);
+        for (int i = 2; i < s.length; i++) if (s[i]) integers.add(i);
+        return integers.subList(0, n);
+    }
+
+    @Test
+    void test_nPrimesEr() {
+        assertEquals(List.of(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43), nPrimesEr(14));
+        assertEquals(43, nthPrimeEr(14));
+    }
+
+    int nthPrimeEr(int n) {
+        int size = nPrimesErHelper_piN(n);
+        List<Integer> integers = new ArrayList<>();
+        var s = sieveOfEratosthenes(size);
+        for (int i = 2; i < s.length; i++) if (s[i]) integers.add(i);
+        return integers.get(n - 1);
+    }
+
+    boolean[] sieveOfEratosthenes(int n) {
+        boolean[] prime = new boolean[n + 1];
+        Arrays.fill(prime, true);
+
+        // i from 2 to sqrt n
+        for (int i = 2; i * i <= n; i++) {
+            // if i is prime
+            if (prime[i]) {
+                // j from i squared to all multiples of i - not prime
+                for (int j = i * i; j <= n; j += i) {
+                    prime[j] = false;
+                }
+            }
+        }
+
+        // Print all prime numbers
+        // for (int i = 2; i <= n; i++) if (prime[i]) System.out.print(i + " ");
+        return prime;
+    }
+    //</editor-fold>
+
 }
