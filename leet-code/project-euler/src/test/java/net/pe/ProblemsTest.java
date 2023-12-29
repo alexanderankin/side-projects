@@ -1017,6 +1017,7 @@ class ProblemsTest {
     }
 
     // power digit sum
+    @SuppressWarnings("CommentedOutCode")
     int problem16(int twoPower) {
         // long value = (long) Math.pow(2, twoPower);
         // String string = String.valueOf(value);
@@ -1030,6 +1031,7 @@ class ProblemsTest {
         assertEquals(1366, problem16(1000));
     }
 
+    @SuppressWarnings("ConstantValue")
     int problem17() {
         List<String> basic = List.of(
                 "one",
@@ -1092,7 +1094,7 @@ class ProblemsTest {
                 (basic.stream().mapToInt(String::length).sum()) +
                         ("hundred".length() * 9);
 
-        return forAllHundreds + hundredAndSuffixes + hundreds + "onethousand".length();
+        return forAllHundreds + hundredAndSuffixes + hundreds + "one".length() + "thousand".length();
     }
 
     @Test
