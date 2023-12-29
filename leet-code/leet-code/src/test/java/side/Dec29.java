@@ -81,10 +81,11 @@ class Dec29 {
     // #17 leet-code
     List<String> letterCombinations(String digits) {
         if (digits.isEmpty()) return List.of();
-        return doLetterCombinations(digits.toCharArray(), new ArrayList<>(), digits.charAt(0), new ArrayList<>());
+        return doLetterCombinations(digits.toCharArray(), new StringBuilder(digits.length()), digits.charAt(0), new ArrayList<>());
     }
 
-    List<String> doLetterCombinations(char[] digits, List<Character> soFar, char next, List<String> results) {
+    List<String> doLetterCombinations(char[] digits, StringBuilder soFar, char next, List<String> results) {
+        // when submitting - make static variable and array lookup, for maintainability/encapsulation, switch
         char[] possibilities = switch (next) {
             case '2' -> "abc".toCharArray();
             case '3' -> "def".toCharArray();
@@ -97,16 +98,15 @@ class Dec29 {
             default -> new char[0];
         };
 
-        if (soFar.size() == digits.length - 1) {
-            var arr = soFar.stream().mapToInt(Character::charValue).toArray();
-            String arrString = new String(arr, 0, arr.length);
+        if (soFar.length() == digits.length - 1) {
             for (char possibility : possibilities) {
-                results.add(arrString + possibility);
+                results.add(soFar.append(possibility).toString());
+                soFar.setLength(soFar.length() - 1);
             }
         } else for (char possibility : possibilities) {
-            soFar.add(possibility);
-            doLetterCombinations(digits, soFar, digits[soFar.size()], results);
-            soFar.removeLast();
+            soFar.append(possibility);
+            doLetterCombinations(digits, soFar, digits[soFar.length()], results);
+            soFar.setLength(soFar.length() - 1);
         }
         return results;
     }
