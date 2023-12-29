@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -699,5 +697,75 @@ class ProblemsTest {
     @Test
     void test_problem11() {
         assertEquals(70600674, problem11());
+    }
+
+    // Highly Divisible Triangular Number
+    int problem12_naive(int n) {
+        int number = 1;
+
+        int triangleDelta = number;
+        for (; ; ) {
+            int next = number + ++triangleDelta;
+
+            Set<Integer> factors = new HashSet<>();
+            for (int j = next; j > 0; j--) {
+                if (next % j == 0) {
+                    factors.add(j);
+                }
+            }
+
+            if (factors.size() >= n)
+                return next;
+            // else System.out.println("not stopping at %s with %s factors: %s".formatted(next, factors.size(), factors));
+
+            number = next;
+        }
+    }
+
+    int problem12(int input) {
+        int nthTriangleNumber = 3;
+        int divisorsOfN = 2;
+        int counter = 0;
+
+        var primeArray = nPrimes(nPrimesErHelper_piN(1000)).stream().mapToInt(Integer::intValue).toArray();
+
+        int n1, divisorsOfN1, exponent;
+        while (counter <= input) {
+            nthTriangleNumber += 1;
+            n1 = nthTriangleNumber;
+            if (n1 % 2 == 0) n1 = n1 / 2;
+            divisorsOfN1 = 1;
+            for (int p : primeArray) {
+                if (p * p > n1) {
+                    divisorsOfN1 *= 2;
+                    break;
+                }
+
+                exponent = 1;
+                while (n1 % p == 0) {
+                    exponent++;
+                    n1 = n1 / p;
+                }
+
+                if (exponent > 1) divisorsOfN1 *= exponent;
+                if (n1 == 1) break;
+            }
+            counter = divisorsOfN * divisorsOfN1;
+            divisorsOfN = divisorsOfN1;
+        }
+
+        return nthTriangleNumber * (nthTriangleNumber - 1) / 2;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "5,28",
+            "50,25200",
+            "500,76576500",
+    })
+    void test(int n, int expected) {
+        if (n < 100)
+            assertEquals(expected, problem12_naive(n));
+        assertEquals(expected, problem12(n));
     }
 }
