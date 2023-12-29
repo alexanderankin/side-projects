@@ -298,4 +298,20 @@ class ProblemsTest {
     void test_problem5(int upTo, int expected) {
         assertEquals(expected, problem5(upTo));
     }
+
+    int problemSix(int upTo) {
+        var squareOfSum = Math.pow(IntStream.rangeClosed(1, upTo).sum(), 2);
+        var sumOfSquare = IntStream.rangeClosed(1, upTo).map(i -> i * i).sum();
+
+        return (int) (squareOfSum - sumOfSquare);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "10,2640",
+            "100,25164150",
+    })
+    void test_problemSix(int upTo, int expected) {
+        assertEquals(expected, problemSix(upTo));
+    }
 }
