@@ -1,5 +1,6 @@
 package side;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -13,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SuppressWarnings("NewClassNamingConvention")
 class Dec29 {
     /**
+     * # 39 leet-code combination sum
+     * <p>
      * Given an array of distinct integers candidates and a target integer target, return
      * a list of all unique combinations of candidates where the chosen numbers sum to
      * target. You may return the combinations in any order.
@@ -73,5 +76,49 @@ class Dec29 {
                 .toList();
 
         assertEquals(expected, combinationSum(candidates, target));
+    }
+
+    // #17 leet-code
+    List<String> letterCombinations(String digits) {
+        if (digits.isEmpty()) return List.of();
+        return doLetterCombinations(digits.toCharArray(), new ArrayList<>(), digits.charAt(0), new ArrayList<>());
+    }
+
+    List<String> doLetterCombinations(char[] digits, List<Character> soFar, char next, List<String> results) {
+        char[] possibilities = switch (next) {
+            case '2' -> "abc".toCharArray();
+            case '3' -> "def".toCharArray();
+            case '4' -> "ghi".toCharArray();
+            case '5' -> "jkl".toCharArray();
+            case '6' -> "mno".toCharArray();
+            case '7' -> "pqrs".toCharArray();
+            case '8' -> "tuv".toCharArray();
+            case '9' -> "wxyz".toCharArray();
+            default -> new char[0];
+        };
+
+        if (soFar.size() == digits.length - 1) {
+            var arr = soFar.stream().mapToInt(Character::charValue).toArray();
+            String arrString = new String(arr, 0, arr.length);
+            for (char possibility : possibilities) {
+                results.add(arrString + possibility);
+            }
+        } else for (char possibility : possibilities) {
+            soFar.add(possibility);
+            doLetterCombinations(digits, soFar, digits[soFar.size()], results);
+            soFar.removeLast();
+        }
+        return results;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'',''",
+            "2,'a,b,c'",
+            "23,'ad,ae,af,bd,be,bf,cd,ce,cf'",
+    })
+    void test(String digits, String expectedString) {
+        assertEquals(Arrays.asList(expectedString.split(",")).stream().filter(Predicate.not(String::isEmpty)).toList(),
+                letterCombinations(digits));
     }
 }
