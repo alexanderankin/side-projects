@@ -1,0 +1,39 @@
+Hamburg;12.0
+Bulawayo;8.9
+Palembang;38.8
+St. John's;15.2
+Cracow;12.6
+Abha;5.0
+Abha;21.6
+Abha;27.4
+Abidjan;15.7
+Abidjan;27
+Abidjan;27.2
+Abidjan;34.1
+Abéché;12.1
+Abéché;29.3
+Abéché;35
+Abéché;35
+Abéché;35.6
+Accra;14.7
+Accra;20
+Accra;32.2
+Accra;32
+Accra;33.1
+Addis Ababa;2.1
+Addis Ababa;17
+Addis Ababa;18
+Addis Ababa;18.6
+Addis Ababa;24.3
+Adelaide;4.1
+Adelaide;5
+Adelaide;6
+Adelaide;7
+Adelaide;7.8
+Adelaide;18
+Adelaide;24
+Adelaide;25
+Adelaide;26
+Adelaide;27
+Adelaide;28
+Adelaide;29.7
