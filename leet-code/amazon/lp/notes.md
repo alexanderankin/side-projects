@@ -128,7 +128,16 @@ star:
   self-sufficiency, and invention. There are no extra points for growing
   headcount, budget size, or fixed expense.
 
-* part of my criteria is working in a smaller company.
+* wanted to use postgres for a service with a small dataset,
+  as FHIR project used cassandra, but that is quite obnoxious for RDBMS tasks.
+  From my standpoint, wanted to use "the right tool for the job".
+  Team lead showed me AWS pricing for postgres, which made cleared up reasoning,
+  to which I suggested trying to self-host the postgres on ec2
+  (how hard could it be - well, maybe quite hard).
+  In the end, realized that building for cost-effectiveness is its own
+  exciting challenge, no less engineering-intensive than the others.
+  Service was built with cassandra, energy spent investigating into
+  spring async abstractions for cassandra instead.
 
 ### Earn Trust
 > Leaders listen attentively, speak candidly, and treat others respectfully.
@@ -143,7 +152,10 @@ star:
   frequently, and are skeptical when metrics and anecdote differ. No task is
   beneath them.
 
-*
+* low level projects?
+  * learning spring inside out?
+  * ford proxy for custom tcp binary protocol
+  * logging reverse proxy for OpenAI@bny
 
 ### Have Backbone; Disagree and Commit
 > Leaders are obligated to respectfully challenge decisions when they
