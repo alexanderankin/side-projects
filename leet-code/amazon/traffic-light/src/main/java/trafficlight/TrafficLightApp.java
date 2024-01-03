@@ -159,6 +159,7 @@ class TrafficLightApp {
             return intersection;
         }
 
+        // can use mapstruct for most of this
         private void defaults(Models.Intersection intersection) {
             if (null == intersection.getEnabled())
                 intersection.setEnabled(Models.Intersection.DEFAULTS.getEnabled());
