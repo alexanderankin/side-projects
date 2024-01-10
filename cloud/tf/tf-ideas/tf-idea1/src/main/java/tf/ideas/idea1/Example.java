@@ -24,5 +24,14 @@ public class Example {
                 .add("output \"var1\" { value = var.var1 }")
                 .add("output \"var2\" { value = var.var2 }")
                 .add(new Configuration.Resource());
+
+        var var1 = "abc";
+        var var2 = "def";
+        new Configuration()
+                .add(new Configuration.Resource("my_test")
+                        .setResourceType("example_resource")
+                        .add(stringProperty("name", var1)))
+        // how to actually output??
+        ;
     }
 }
