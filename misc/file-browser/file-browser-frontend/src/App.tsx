@@ -2,9 +2,26 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { throwIfNotResponseOk } from "./utils.tsx";
 
 function App() {
   const [count, setCount] = useState(0)
+
+  let queryClient = useQueryClient();
+
+  const countQuery = useQuery('count', () =>
+    fetch('/api/count')
+      .then(throwIfNotResponseOk)
+      .then(r => r.json())
+      .then(t => t.count));
+
+  const updateCounter = useMutation(() => {
+    return fetch('/api/count/increment', { method: 'PATCH' })
+      .then(throwIfNotResponseOk)
+      .then(r => r.json())
+      .then(b => queryClient.getQueryCache().find('count')?.setData(b.count))
+  })
 
   return (
     <>
@@ -18,8 +35,18 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button onClick={() => updateCounter.mutate()}>
+          {
+            (countQuery.isError || updateCounter.isError)
+              ? <>
+                Could not load the count:
+                <br />
+                {String(countQuery.error || updateCounter.error)}
+              </>
+              : (countQuery.isLoading || updateCounter.isLoading)
+                ? <>loading...</>
+                : <>count is {countQuery.data}</>
+          }
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
