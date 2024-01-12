@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -6,8 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "react-query";
 import { throwIfNotResponseOk } from "./utils.tsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   let queryClient = useQueryClient();
 
   const countQuery = useQuery('count', () =>
@@ -16,12 +13,11 @@ function App() {
       .then(r => r.json())
       .then(t => t.count));
 
-  const updateCounter = useMutation(() => {
-    return fetch('/api/count/increment', { method: 'PATCH' })
+  const updateCounter = useMutation(() =>
+    fetch('/api/count/increment', { method: 'PATCH' })
       .then(throwIfNotResponseOk)
       .then(r => r.json())
-      .then(b => queryClient.getQueryCache().find('count')?.setData(b.count))
-  })
+      .then(b => queryClient.getQueryCache().find('count')?.setData(b.count)))
 
   return (
     <>
