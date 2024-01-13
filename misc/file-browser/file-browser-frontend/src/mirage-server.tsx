@@ -1,4 +1,6 @@
-let fakeServer = () => {};
+type CallbackFunctionVariadicAnyReturn = (...args: any[]) => any;
+
+let fakeServer: CallbackFunctionVariadicAnyReturn = () => {};
 
 // @ts-ignore
 if (!window['notMirage']) {
