@@ -1,0 +1,31 @@
+{
+  "name": "citation-management",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node ./bin/www",
+    "dev": "concurrently 'npm run dev:frontend' 'npm run dev:backend'",
+    "dev:frontend": "vite build --watch --mode=dev",
+    "dev:backend": "nodemon bin/www.js",
+    "vite": "vite"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "^4.18.2",
+    "morgan": "~1.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.3",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "bootstrap": "^5.3.2",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-query": "^3.39.3",
+    "vite": "^5.0.11"
+  }
+}
