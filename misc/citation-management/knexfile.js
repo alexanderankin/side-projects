@@ -8,7 +8,7 @@ export default {
   development: {
     client: 'sqlite3',
     connection: {
-      filename: './dev.sqlite3',
+      filename: process.env.SQLITE_FILENAME || './dev.sqlite3',
     },
     useNullAsDefault: true
   },
@@ -32,9 +32,12 @@ export default {
   production: {
     client: 'postgresql',
     connection: {
-      database: 'my_db',
-      user: 'username',
-      password: 'password'
+      database: process.env.POSTGRES_DATABASE || 'citations',
+      user: process.env.POSTGRES_USER || 'username',
+      password: process.env.POSTGRES_PASSWORD || 'password',
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: (process.env.POSTGRES_PORT && parseInt(process.env.POSTGRES_PORT, 10)) ||
+        5432,
     },
     pool: {
       min: 2,

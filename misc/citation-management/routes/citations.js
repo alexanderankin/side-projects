@@ -6,7 +6,7 @@ let router = express.Router();
 let logger = debug('citation-management:api:citations');
 
 router.use((req, res, next) => {
-  logger('hello');
+  // logger('hello');
   next();
 });
 
@@ -16,6 +16,7 @@ router.get('/api/citations', async function (req, res) {
   let db = res.app.locals.db;
   let rows =
     await db('citation')
+      .orderBy('id', 'desc')
       .limit(parseInt(req.query.limit || '10', 10))
       .offset(parseInt(req.query.offset || '0', 10))
   res.send(rows);
@@ -30,7 +31,8 @@ router.post('/api/citations', async function (req, res) {
     created_at: now,
     updated_at: now,
   };
-  let [id] = await db('citation').insert(data);
+  let [id] = await db('citation').insert(data).returning('id');
+  if (id.id) id = id.id; // postgres
   res.status(201).send({ ...data, id });
 });
 
@@ -74,6 +76,7 @@ router.get('/api/citations/:id/cites', async (req, res) => {
     .where({ citation_from: req.params.id })
     .limit(parseInt(req.query.limit || '10', 10))
     .offset(parseInt(req.query.offset || '0', 10))
+    .orderBy('created_at', 'desc')
   res.send(rows);
 });
 
@@ -102,6 +105,7 @@ router.get('/api/citations/:id/cited', async (req, res) => {
     .where({ citation_to: req.params.id })
     .limit(parseInt(req.query.limit || '10', 10))
     .offset(parseInt(req.query.offset || '0', 10))
+    .orderBy('created_at', 'desc')
   res.send(rows);
 });
 

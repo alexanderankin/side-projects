@@ -6,7 +6,6 @@ import logger from "morgan";
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import knex from 'knex';
-import knexConfig from './knexfile.js';
 
 const __dirname = path.dirname(import.meta.url.substring('file://'.length));
 const app = express();
@@ -22,7 +21,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 /** @type import('express').ErrorRequestHandler */
-function errors(err, req, res, next) {
+function errors(err, req, res) {
   res.status(500).send({
     err: err.message
   })
@@ -33,6 +32,7 @@ app.use(errors);
 export default app;
 
 export async function getApp() {
+  let { default: knexConfig } = await import('./knexfile.js')
   const db = knex(knexConfig[process.env.NODE_ENV || 'development']);
   await db.migrate.latest();
   app.locals.db = db;
