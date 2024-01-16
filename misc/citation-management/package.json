@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node ./bin/www",
+    "test": "jasmine test/**",
+    "test:sqlite": "TEST_DB=sqlite3 jasmine test/**",
+    "test:jasmine-json": "jasmine --config=jasmine.json",
+    "test:sqlite:jasmine-json": "TEST_DB=sqlite3 jasmine --config=jasmine.json",
     "dev": "concurrently 'npm run dev:frontend' 'npm run dev:backend'",
     "dev:frontend": "vite build --watch --mode=dev",
     "dev:backend": "nodemon bin/www.js",
