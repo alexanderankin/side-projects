@@ -134,6 +134,7 @@ router.get('/api/latest-citations', async (req, res) => {
       'from.name as from_name',
       'to.id as to_id',
       'to.name as to_name',
+      'cc.created_at',
     ])
     .orderBy('cc.created_at', 'desc')
     .leftJoin({ from: 'citation' }, 'cc.citation_from', 'from.id')
@@ -141,6 +142,7 @@ router.get('/api/latest-citations', async (req, res) => {
     .limit(parseInt(req.query.limit || '10', 10))
     .offset(parseInt(req.query.offset || '0', 10))
   let data = rows.map(d => ({
+    createdAt: d.created_at,
     from: {
       id: d['from_id'],
       name: d['from_name'],

@@ -12,6 +12,7 @@
     "dev": "concurrently 'npm run dev:frontend' 'npm run dev:backend'",
     "dev:frontend": "vite build --watch --mode=dev",
     "dev:backend": "nodemon bin/www.js",
+    "dev:vite": "vite dev",
     "knex": "knex",
     "jasmine": "jasmine",
     "vite": "vite"
@@ -40,6 +41,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
+    "react-router": "^6.21.2",
     "testcontainers": "^10.5.0",
     "vite": "^5.0.11"
   }
