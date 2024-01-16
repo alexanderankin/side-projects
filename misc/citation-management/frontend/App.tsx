@@ -1,14 +1,15 @@
 import { useQuery } from "react-query";
 import { formatDate } from "./dateFormatUtils";
+import { Link, Outlet, useLocation, useRouteError } from "react-router-dom";
 
 function Header() {
   return <header
     className="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom"
   >
-    <a href="/"
-       className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+    <Link to="/"
+          className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
       <span className="fs-4">Citation MGMT</span>
-    </a>
+    </Link>
 
     <ul className="nav nav-pills" style={{ paddingLeft: 40 }}>
       <li className="nav-item"><a href="#" className="nav-link active"
@@ -74,9 +75,9 @@ function LatestCitationsList() {
     <div className="list-group">
       {latest.data.map(e => {
         return <div key={e.from.id + '->' + e.to.id}
-           className="list-group-item list-group-item-action">
-          From <a href={`/citations/${e.from.id}`}>{e.from.name}</a>
-          {' '} to <a href={`/citations/${e.to.id}`}>{e.to.name}</a>
+                    className="list-group-item list-group-item-action">
+          From <Link to={`/citations/${e.from.id}`}>{e.from.name}</Link>
+          {' '} to <Link to={`/citations/${e.to.id}`}>{e.to.name}</Link>
           {' '} on {e.createdAt}
         </div>
       })}
@@ -84,26 +85,48 @@ function LatestCitationsList() {
   </>
 }
 
-async function okResponse(response: Response) {
+export async function okResponse(response: Response) {
   if (!response.ok) throw new Error('not okay response: ' + await response.text());
   return response;
 }
 
-export function App() {
+export function ErrorPage() {
+  const error = useRouteError();
+  console.error(error);
+
   return <>
     <div className='container'>
       <Header />
     </div>
     <div className='container'>
       <div className='row'>
-        <div className='col'>
-          <div className="container">
-          </div>
+        <div id="error-page">
+          <h1>Oops!</h1>
+          <p>Sorry, an unexpected error has occurred.</p>
+          <p>
+            <i>{error['statusText'] || error['message']}</i>
+          </p>
         </div>
       </div>
+    </div>
+  </>;
+}
+
+export function App() {
+  let { pathname } = useLocation();
+  return <>
+    <div className='container'>
+      <Header />
+    </div>
+    <div className='container'>
       <div className='row'>
-        <div className='col'><LatestCitationsJumbotron /></div>
-        <div className='col'><LatestCitationsList /></div>
+        {pathname === "/"
+          ? <>
+            <div className='col'><LatestCitationsJumbotron /></div>
+            <div className='col'><LatestCitationsList /></div>
+          </>
+          : <div className='col'><Outlet /></div>
+        }
       </div>
     </div>
   </>

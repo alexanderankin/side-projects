@@ -3,6 +3,7 @@ import 'express-async-errors'
 import path from "node:path";
 import cookieParser from "cookie-parser";
 import logger from "morgan";
+import createError from "http-errors";
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import knex from 'knex';
@@ -20,13 +21,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
+// noinspection JSUnusedLocalSymbols
 /** @type import('express').ErrorRequestHandler */
-function errors(err, req, res) {
-  res.status(500).send({
+function errors(err, req, res, next) {
+  res.status(err.status || 500).send({
     err: err.message
   })
 }
 
+app.use((r, s, n) => n(createError(404)));
 app.use(errors);
 
 export default app;
