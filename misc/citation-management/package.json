@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node ./bin/www",
+    "build": "npm run build:frontend",
+    "build:frontend": "vite build",
     "test": "jasmine test/**",
     "test:sqlite": "TEST_DB=sqlite3 jasmine test/**",
     "test:jasmine-json": "jasmine --config=jasmine.json",

@@ -31,7 +31,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />
   }
 ], {
-  basename: '/thing'
+  basename: '/'
 });
 
 createRoot(document.getElementById('root')!).render(
