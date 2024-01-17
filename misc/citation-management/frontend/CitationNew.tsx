@@ -1,17 +1,9 @@
-import { formDataObject, Header } from './Reusable';
+import { formDataObject, Header, okResponse } from './reusable';
 import { Button, Col, Form, InputGroup, Row } from 'react-bootstrap';
 import { useMutation } from "react-query";
-import { okResponse } from "./App";
 import { Link } from "react-router-dom";
 
-export function NewCitationPage() {
-  return <>
-    <Header />
-    <NewCitation />
-  </>
-}
-
-function NewCitation() {
+export function NewCitation() {
   let newCitationMutation = useMutation('CitationNew.create', async ({ name, description }: { name: string, description?: string, }) =>
     fetch('/api/citations', {
       method: 'POST',

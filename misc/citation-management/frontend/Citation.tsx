@@ -3,8 +3,8 @@
 */
 import { useParams } from "react-router-dom";
 import { useQuery } from "react-query";
-import { okResponse } from "./App";
 import { formatDate } from "./dateFormatUtils";
+import { okResponse } from "./reusable";
 
 export function Citation() {
   let { citationId } = useParams();
@@ -36,7 +36,7 @@ export function Citation() {
       <p>loading</p>
     </>
 
-  return <>
+  return <div className='container'>
     <h1>{citationQuery.data.name}</h1>
     {citationQuery.data.description
       ? <blockquote className='blockquote'>{citationQuery.data.description}</blockquote>
@@ -47,5 +47,5 @@ export function Citation() {
     <div></div>
     <div className='fw-bold me-3 mb-1 d-inline-block'>Updated</div>
     <span>{formatDate(new Date(citationQuery.data.updated_at))}</span>
-  </>
+  </div>
 }

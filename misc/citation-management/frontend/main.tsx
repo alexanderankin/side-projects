@@ -5,27 +5,34 @@ import 'bootstrap/dist/css/bootstrap.css'
 import { QueryClient, QueryClientProvider } from "react-query";
 import { createBrowserRouter, RouterProvider, } from "react-router-dom";
 import { Citation } from "./Citation";
-import { NewCitationPage } from "./CitationNew";
-import { ErrorPage } from "./Reusable";
+import { NewCitation } from "./CitationNew";
+import { ErrorPage, Header } from "./reusable";
+import { Citations } from "./Citations";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     errorElement: <ErrorPage />,
-    children: [
-      {
-        path: "/citations/:citationId",
-        element: <Citation />
-      }
-    ]
+  },
+  {
+    path: "/citations/:citationId",
+    element: <><Header/><Citation /></>,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/citations",
+    element: <><Header/><Citations /></>,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/new-citation",
-    element: <NewCitationPage />,
+    element: <><Header /><NewCitation /></>,
     errorElement: <ErrorPage />
   }
-]);
+], {
+  basename: '/thing'
+});
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
