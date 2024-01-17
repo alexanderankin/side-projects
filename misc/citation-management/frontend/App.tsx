@@ -1,8 +1,8 @@
-import { useQuery, UseQueryResult } from "react-query";
+import { useQuery } from "react-query";
 import { formatDate } from "./dateFormatUtils";
 import { Link } from "react-router-dom";
 import { AddMoreCitations, Header, LoadingListGroup, okResponse } from "./reusable";
-import { Key, ReactNode } from "react";
+import { Citation } from "./models";
 
 function LatestCitationsJumbotron() {
   return <div className="px-5 py-5 mb-4 bg-light rounded-3">
@@ -61,6 +61,20 @@ function LatestCitationsLinkList() {
   </>
 }
 
+function LatestCitationList() {
+  let lcl = useQuery('LatestCitationList', async () =>
+    fetch('/api/citations').then(okResponse)
+      .then(r => r.json())
+      .then(b => b as Array<Citation>))
+  return <LoadingListGroup result={lcl} keyFn={k => k.id} nodeFn={
+    c => <>
+      <Link to={'/citations/' + c.id}>{c.name}</Link>
+      {' '}
+      <span className='small text-muted'>(Created: {formatDate(new Date(c.created_at))})</span>
+    </>
+  } />
+}
+
 export function App() {
   return <>
     <Header />
@@ -71,8 +85,11 @@ export function App() {
       </div>
       <hr className='mt-5' />
       <div className='row'>.
-        <div className='col'><h3>Latest Citations</h3></div>
         <div className='col'>
+          <h3>Latest Citations</h3>
+          <div className='mt-3'>
+            <LatestCitationList />
+          </div>
         </div>
       </div>
     </div>
