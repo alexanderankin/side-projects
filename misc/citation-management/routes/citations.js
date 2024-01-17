@@ -14,11 +14,16 @@ router.use((req, res, next) => {
 router.get('/api/citations', async function (req, res) {
   /** @type import('knex').Knex */
   let db = res.app.locals.db;
-  let rows =
-    await db('citation')
-      .orderBy('id', 'desc')
-      .limit(parseInt(req.query.limit || '10', 10))
-      .offset(parseInt(req.query.offset || '0', 10))
+  let query = db('citation')
+    .orderBy('id', 'desc')
+    .limit(parseInt(req.query.limit || '10', 10))
+    .offset(parseInt(req.query.offset || '0', 10));
+
+  if (req.query.search) {
+    query.where('name', 'like', '%' + req.query.search + '%');
+  }
+
+  let rows = await query;
   res.send(rows);
 });
 

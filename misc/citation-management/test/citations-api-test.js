@@ -98,4 +98,27 @@ describe('citation tests', () => {
     expect(cited0).to.have.length(1);
     expect(cited0[0]).to.include({ id: ids[0] })
   });
+
+  it('should be able to search citations by name part', async () => {
+    let prefix = 'searchCitationByNamePart';
+    let part = 'searchCitationByName';
+    expect(prefix).to.satisfy(p => p.startsWith(part));
+
+    let before = await fetch(`http://localhost:${process.env.PORT}/api/citations?search=${part}`).then(r => r.json());
+    expect(before).to.be.an('array');
+    expect(before).to.be.empty;
+
+    let create = await fetch(`http://localhost:${process.env.PORT}/api/citations`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: `${prefix}.1` })
+    }).then(r => r.json());
+    expect(create).to.include({ name: `${prefix}.1` })
+    expect(create).to.have.property('id');
+
+    let after = await fetch(`http://localhost:${process.env.PORT}/api/citations?search=${part}`).then(r => r.json());
+    expect(after).to.be.an('array');
+    expect(after).to.have.length(1);
+    expect(after[0]).to.include({ name: `${prefix}.1` })
+  });
 });
