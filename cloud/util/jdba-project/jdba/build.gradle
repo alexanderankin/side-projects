@@ -1,0 +1,10 @@
+import java.util.logging.SimpleFormatter
+
+plugins {
+    id 'conventions'
+}
+
+dependencies {
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    implementation('org.springframework.boot:spring-boot-starter-jdbc')
+}
