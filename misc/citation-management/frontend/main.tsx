@@ -4,7 +4,7 @@ import { App } from './App'
 import 'bootstrap/dist/css/bootstrap.css'
 import { QueryClient, QueryClientProvider } from "react-query";
 import { createBrowserRouter, RouterProvider, } from "react-router-dom";
-import { Citation } from "./Citation";
+import { CitationPage } from "./Citation";
 import { NewCitation } from "./CitationNew";
 import { ErrorPage, Header } from "./reusable";
 import { Citations } from "./Citations";
@@ -17,7 +17,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/citations/:citationId",
-    element: <><Header/><Citation /></>,
+    element: <><Header/><CitationPage /></>,
     errorElement: <ErrorPage />,
   },
   {

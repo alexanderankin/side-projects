@@ -1,12 +1,13 @@
 /*
   View to show a single article ("citation")
 */
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "react-query";
 import { formatDate } from "./dateFormatUtils";
-import { okResponse } from "./reusable";
+import { LoadingListGroup, okResponse } from "./reusable";
+import { Citation } from "./models";
 
-export function Citation() {
+export function CitationPage() {
   let { citationId } = useParams();
 
   let citationQuery = useQuery(`citation.${citationId}`, async () =>
@@ -14,27 +15,26 @@ export function Citation() {
       .then(r => r.json())
   );
 
+  let cited = useQuery(`citation.${citationId}.cited`,
+    async () =>
+      fetch(`/api/citations/${citationId}/cited`).then(okResponse).then(r => r.json().then(e => e as Array<Citation>)))
+
+  let cites = useQuery(`citation.${citationId}.cites`,
+    async () =>
+      fetch(`/api/citations/${citationId}/cites`).then(okResponse).then(r => r.json().then(e => e as Array<Citation>)))
+
   if (citationQuery.error || citationQuery.isError) {
-    return <div className="alert alert-danger d-flex align-items-center" role="alert">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"
-        style={{ maxHeight: '1em' }}
-        viewBox="0 0 16 16" role="img" aria-label="Warning:">
-        <path
-          d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"
-        />
-      </svg>
-      <div>
+    return <div className='container'>
+      <div className="alert alert-danger d-flex align-items-center" role="alert">
         {String(citationQuery.error)}
       </div>
     </div>
   }
 
   if (citationQuery.isLoading)
-    return <>
+    return <div className='container'>
       <p>loading</p>
-    </>
+    </div>
 
   return <div className='container'>
     <h1>{citationQuery.data.name}</h1>
@@ -47,5 +47,21 @@ export function Citation() {
     <div></div>
     <div className='fw-bold me-3 mb-1 d-inline-block'>Updated</div>
     <span>{formatDate(new Date(citationQuery.data.updated_at))}</span>
+    <hr />
+    <h2>Cites:</h2>
+    <p className='small text-muted'>This article is cites the following articles:</p>
+    <LoadingListGroup result={cited} keyFn={k => k.id} nodeFn={c => <CitationItem citation={c} />} />
+    <hr />
+    <h2>Cited by:</h2>
+    <p className='small text-muted'>This article is cited by the following articles:</p>
+    <LoadingListGroup result={cites} keyFn={k => k.id} nodeFn={c => <CitationItem citation={c} />} />
   </div>
+}
+
+function CitationItem({ citation }: { citation: Citation }) {
+  return <>
+    <Link to={'/citations/' + citation.id}>{citation.name}</Link>
+    {' '}
+    <span className='small text-muted'>(Created: {formatDate(new Date(citation.created_at))})</span>
+  </>
 }
