@@ -8,7 +8,7 @@ import { LoadingListGroup, okResponse } from "./reusable";
 import { Citation } from "./models";
 import { Form } from "react-bootstrap";
 import { useState } from "react";
-import lodash from "lodash";
+import { debounce } from "lodash";
 
 function AddLinks({ citation, queries }: { citation: Citation, queries: Array<UseQueryResult<any, any>> }) {
   const [selected, setSelected] = useState<Citation>()
@@ -37,7 +37,7 @@ function AddLinks({ citation, queries }: { citation: Citation, queries: Array<Us
       required
       type='text'
       name='name'
-      onChange={lodash.debounce(e => (setSearch(e.target.value), searchQuery.refetch()), 50)}
+      onChange={debounce(e => (setSearch(e.target.value), searchQuery.refetch()), 50)}
       placeholder='Article title'
       disabled={!!selected}
       // defaultValue='Mark'
