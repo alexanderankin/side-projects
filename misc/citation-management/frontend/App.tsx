@@ -1,27 +1,7 @@
 import { useQuery } from "react-query";
 import { formatDate } from "./dateFormatUtils";
-import { Link, Outlet, useLocation, useRouteError } from "react-router-dom";
-
-function Header() {
-  return <header
-    className="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom"
-  >
-    <Link to="/"
-          className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
-      <span className="fs-4">Citation MGMT</span>
-    </Link>
-
-    <ul className="nav nav-pills" style={{ paddingLeft: 40 }}>
-      <li className="nav-item"><a href="#" className="nav-link active"
-                                  aria-current="page">Citations</a></li>
-      <li className="nav-item"><a href="#" className="nav-link">Links</a>
-      </li>
-      {/* <li className="nav-item"><a href="#" className="nav-link">Pricing</a></li> */}
-      {/* <li className="nav-item"><a href="#" className="nav-link">FAQs</a></li> */}
-      {/* <li className="nav-item"><a href="#" className="nav-link">About</a></li> */}
-    </ul>
-  </header>;
-}
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { Header } from "./Reusable";
 
 function LatestCitationsJumbotron() {
   return <div className="px-5 py-5 mb-4 bg-light rounded-3">
@@ -30,9 +10,11 @@ function LatestCitationsJumbotron() {
       <p className="col-md-8 fs-4">
         Here are the latest citation links that have been added:
       </p>
+      <Link to='./new-citation'>
       <button className="btn btn-outline-success btn-lg" type="button">
         Add More
       </button>
+      </Link>
     </div>
   </div>;
 }
@@ -90,34 +72,10 @@ export async function okResponse(response: Response) {
   return response;
 }
 
-export function ErrorPage() {
-  const error = useRouteError();
-  console.error(error);
-
-  return <>
-    <div className='container'>
-      <Header />
-    </div>
-    <div className='container'>
-      <div className='row'>
-        <div id="error-page">
-          <h1>Oops!</h1>
-          <p>Sorry, an unexpected error has occurred.</p>
-          <p>
-            <i>{error['statusText'] || error['message']}</i>
-          </p>
-        </div>
-      </div>
-    </div>
-  </>;
-}
-
 export function App() {
   let { pathname } = useLocation();
   return <>
-    <div className='container'>
-      <Header />
-    </div>
+    <Header />
     <div className='container'>
       <div className='row'>
         {pathname === "/"

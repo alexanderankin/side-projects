@@ -1,10 +1,12 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App, ErrorPage } from './App'
+import { App } from './App'
 import 'bootstrap/dist/css/bootstrap.css'
 import { QueryClient, QueryClientProvider } from "react-query";
 import { createBrowserRouter, RouterProvider, } from "react-router-dom";
 import { Citation } from "./Citation";
+import { NewCitationPage } from "./CitationNew";
+import { ErrorPage } from "./Reusable";
 
 const router = createBrowserRouter([
   {
@@ -18,6 +20,11 @@ const router = createBrowserRouter([
       }
     ]
   },
+  {
+    path: "/new-citation",
+    element: <NewCitationPage />,
+    errorElement: <ErrorPage />
+  }
 ]);
 
 createRoot(document.getElementById('root')!).render(
