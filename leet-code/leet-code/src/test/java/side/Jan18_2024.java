@@ -5,7 +5,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -126,5 +129,42 @@ class Jan18_2024 {
         } finally {
             System.setOut(out);
         }
+    }
+
+    /**
+     * leet code #198
+     */
+    int houseRobber(List<Integer> houses) {
+        if (houses.size() <= 2) {
+            if (houses.isEmpty()) return 0;
+            if (houses.size() == 1) return houses.getFirst();
+            return Math.max(houses.getFirst(), houses.getLast());
+        }
+
+        int[] robAmount = new int[houses.size()];
+        Arrays.fill(robAmount, 0);
+
+        robAmount[0] = houses.getFirst();
+        robAmount[1] = houses.get(1);
+
+        for (int i = 2; i < houses.size(); i++) {
+            int finalI = i;
+            int maxRob = Arrays.stream(robAmount).limit(i - 1).map(a -> a + houses.get(finalI)).max().orElseThrow();
+            int notRob = robAmount[i - 1];
+            robAmount[i] = Math.max(notRob, maxRob);
+        }
+
+        return Arrays.stream(robAmount).max().orElseThrow();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'1,2,3,1',4",
+            "'2,7,9,3,1',12",
+            "'2,1,1,2',4",
+    })
+    void test_houseRobber(String input, int expected) {
+        List<Integer> houses = Arrays.stream(input.split(",")).map(Integer::parseInt).toList();
+        assertEquals(expected, houseRobber(houses));
     }
 }
