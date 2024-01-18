@@ -134,27 +134,29 @@ class Jan18_2024 {
     /**
      * leet code #198
      */
-    int houseRobber(List<Integer> houses) {
-        if (houses.size() <= 2) {
-            if (houses.isEmpty()) return 0;
-            if (houses.size() == 1) return houses.getFirst();
-            return Math.max(houses.getFirst(), houses.getLast());
+    int houseRobber(int[] houses) {
+        if (houses.length <= 2) {
+            if (houses.length == 0) return 0;
+            if (houses.length == 1) return houses[0];
+            return Math.max(houses[0], houses[1]);
         }
 
-        int[] robAmount = new int[houses.size()];
-        Arrays.fill(robAmount, 0);
+        int[] robAmount = new int[houses.length];
+        // Arrays.fill(robAmount, 0);
 
-        robAmount[0] = houses.getFirst();
-        robAmount[1] = houses.get(1);
+        robAmount[0] = houses[0];
+        robAmount[1] = houses[1];
+        int max = houses[0];
 
-        for (int i = 2; i < houses.size(); i++) {
-            int finalI = i;
-            int maxRob = Arrays.stream(robAmount).limit(i - 1).map(a -> a + houses.get(finalI)).max().orElseThrow();
+        for (int i = 2; i < houses.length; i++) {
+            // int finalI = i;
+            int maxRob = houses[i] + max;
             int notRob = robAmount[i - 1];
             robAmount[i] = Math.max(notRob, maxRob);
+            max = Math.max(max, robAmount[i - 1]);
         }
 
-        return Arrays.stream(robAmount).max().orElseThrow();
+        return Math.max(robAmount[robAmount.length - 1], robAmount[robAmount.length - 2]);
     }
 
     @ParameterizedTest
@@ -164,7 +166,7 @@ class Jan18_2024 {
             "'2,1,1,2',4",
     })
     void test_houseRobber(String input, int expected) {
-        List<Integer> houses = Arrays.stream(input.split(",")).map(Integer::parseInt).toList();
+        var houses = Arrays.stream(input.split(",")).mapToInt(Integer::parseInt).toArray();
         assertEquals(expected, houseRobber(houses));
     }
 }
