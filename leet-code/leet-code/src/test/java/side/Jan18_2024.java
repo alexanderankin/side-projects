@@ -3,6 +3,8 @@ package side;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,5 +75,56 @@ class Jan18_2024 {
     })
     void test_gb(String input, String expected) {
         assertEquals(expected, gb(input));
+    }
+
+    // hackerrank
+    void kaprekarNumbers(int p, int q) {
+        boolean found = false;
+        for (int i = p; i <= q; i++) {
+            if (isKap(i)) {
+                if (found) System.out.print(" ");
+                System.out.print(i);
+                found = true;
+            }
+        }
+        if (!found)
+            System.out.println("INVALID RANGE");
+    }
+
+    boolean isKap(long n) {
+        long sq = Math.multiplyExact(n, n);
+        String sqs = String.valueOf(sq);
+        String rs = sqs.substring(0, sqs.length() / 2);
+        int r = rs.isEmpty() ? 0 : Integer.parseInt(rs, 10);
+        String ls = sqs.substring(sqs.length() / 2);
+        int l = ls.isEmpty() ? 0 : Integer.parseInt(ls, 10);
+        return r + l == n;
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "5,false",
+            "9,true",
+            "45,true",
+    })
+    void test_isKap(int n, boolean expect) {
+        assertEquals(expect, isKap(n));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1,100,'1 9 45 55 99'",
+            "400,700,'INVALID RANGE'",
+    })
+    void test_kaprekarNumbers(int p, int q, String expected) {
+        PrintStream out = System.out;
+        try {
+            var os = new ByteArrayOutputStream();
+            System.setOut(new PrintStream(os));
+            kaprekarNumbers(p, q);
+            assertEquals(expected, os.toString().trim());
+        } finally {
+            System.setOut(out);
+        }
     }
 }
