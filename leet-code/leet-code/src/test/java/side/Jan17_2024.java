@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("NewClassNamingConvention")
-class Jan17_2024A {
+class Jan17_2024 {
 
     String countAndSay(int n) {
         String result = "1";
