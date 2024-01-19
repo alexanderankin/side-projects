@@ -30,7 +30,8 @@ function errors(err, req, res, next) {
   })
 }
 
-app.use((r, s, n) => n(createError(404)));
+app.use('/api', (r, s, n) => n(createError(404)));
+app.use((r, s) => s.sendFile('index.html', { root: path.join(__dirname, 'dist') }));
 app.use(errors);
 
 export default app;
