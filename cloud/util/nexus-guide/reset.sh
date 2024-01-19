@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 dir="$(dirname "$BASH_SOURCE")"
+dir="$(readlink -f "$dir")"
 
 new_password=password
 old_password=$(cat "$dir"/nexus-data/admin.password)

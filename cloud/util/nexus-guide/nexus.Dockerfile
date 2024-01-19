@@ -14,3 +14,9 @@ EXPOSE "8081/tcp"
 
 # verify this somehow?
 VOLUME "/nexus/sonatype-work/nexus3"
+
+# use "nexus" user with uid 200 for compatibility with official image
+RUN \
+    addgroup nexus && \
+    adduser --home /nexus/sonatype-work --shell /bin/bash --no-create-home --uid 200 -G nexus --disabled-password nexus
+USER nexus

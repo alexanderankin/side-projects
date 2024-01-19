@@ -11,6 +11,7 @@ cd $dir
 [[ -d ~/.venv/Scripts ]] && source ~/.venv/Scripts/activate
 
 #pip install setuptools
-pip install . --extra-index-url http://localhost:8081/repository/nexus-guide-python/simple/ # --use-deprecated=html5lib
+#pip install . --extra-index-url http://localhost:8081/repository/nexus-guide-python/simple/ # --use-deprecated=html5lib
+pip install org.example.nexus_guide.module1 --extra-index-url http://localhost:8081/repository/nexus-guide-python/simple/
 
 python app1/app.py
