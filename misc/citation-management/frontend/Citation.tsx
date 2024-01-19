@@ -186,21 +186,34 @@ export function CitationPage() {
     <h2>Cites:</h2>
     <p className='small text-muted'>This article is cites the following articles:</p>
     <LoadingListGroup result={cited} keyFn={k => k.id}
-                      nodeFn={c => <CitationItem citation={c} />} />
+                      nodeFn={c => <CitationItem parent={citationQuery.data} citation={c} type='cited' onDeleted={() => [cites, cited].forEach(e => e.refetch())} />} />
     <hr />
     <h2>Cited by:</h2>
     <p className='small text-muted'>This article is cited by the following articles:</p>
     <LoadingListGroup result={cites} keyFn={k => k.id}
-                      nodeFn={c => <CitationItem citation={c} />} />
+                      nodeFn={c => <CitationItem parent={citationQuery.data} citation={c} type='cites' onDeleted={() => [cites, cited].forEach(e => e.refetch())} />} />
   </div>
 }
 
-function CitationItem({ citation }: { citation: Citation }) {
+function CitationItem(
+  { parent, citation, type, onDeleted } :
+  {
+    parent: Citation,
+    citation: Citation,
+    type: 'cites' | 'cited',
+    onDeleted: () => void,
+  }
+) {
+  let deletedMutation = useMutation(() => fetch(`/api/citations/${parent.id}/${type}/${citation.id}`, { method: 'DELETE' }).then(okResponse));
   return <>
     <Link to={'/citations/' + citation.id}>{citation.name}</Link>
     {' '}
     <span
       className='small text-muted'>(Created: {formatDate(new Date(citation.created_at))})</span>
+    <button className='btn btn-outline-danger btn-sm mx-3' onClick={() => deletedMutation.mutateAsync().then(onDeleted || (() => {}))}
+      disabled={deletedMutation.isSuccess}>
+      Delete
+    </button>
   </>
 }
 

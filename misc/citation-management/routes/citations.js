@@ -114,6 +114,13 @@ router.get('/api/citations/:id/cited', async (req, res) => {
   res.send(rows);
 });
 
+router.delete('/api/citations/:id/cites/:toId', async (req, res) => {
+  /** @type import('knex').Knex */
+  let db = res.app.locals.db;
+  console.log(await db('citation_citation').del().where({ citation_from: req.params.id, citation_to: req.params.toId }))
+  res.status(200).end();
+});
+
 /**
  * PUT into the collection of citations where id is cited by fromId
  */
@@ -158,6 +165,13 @@ router.get('/api/latest-citations', async (req, res) => {
     }
   }))
   res.send(data);
+});
+
+router.delete('/api/citations/:id/cited/:fromId', async (req, res) => {
+  /** @type import('knex').Knex */
+  let db = res.app.locals.db;
+  console.log(await db('citation_citation').del().where({ citation_to: req.params.id, citation_from: req.params.fromId }))
+  res.status(200).end();
 });
 
 export default router;
