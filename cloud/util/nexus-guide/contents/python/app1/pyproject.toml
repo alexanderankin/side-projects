@@ -1,0 +1,22 @@
+# https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#auto-discovery
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "app1"
+description = "app1"
+version = "0.1.0"
+authors = []
+dependencies = [
+    "org.example.nexus_guide.module1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff.lint]
+ignore = ["F541"]

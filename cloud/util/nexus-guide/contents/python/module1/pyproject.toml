@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "org.example.nexus_guide.module1"
+version = "0.1.0"
+description = "a module which is used for app1"
+authors = ["Your Name <you@example.com>"]
+license = "UNLICENSED"
+readme = "README.md"
+packages = [
+    { include = "module1" }
+]
+
+[tool.poetry.dependencies]
+python = ">= 3.8"
+requests = "^2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
