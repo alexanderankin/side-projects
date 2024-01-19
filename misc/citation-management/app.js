@@ -1,6 +1,7 @@
 import express from "express";
 import 'express-async-errors'
 import path from "node:path";
+import url from 'node:url';
 import cookieParser from "cookie-parser";
 import logger from "morgan";
 import createError from "http-errors";
@@ -8,7 +9,7 @@ import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
 import knex from 'knex';
 
-const __dirname = path.dirname(import.meta.url.substring('file://'.length));
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(logger('dev'));
