@@ -1,0 +1,23 @@
+plugins {
+    id 'conventions'
+}
+
+dependencies {
+    implementation 'org.openjdk.jmh:jmh-core:1.36'
+    annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess:1.36'
+}
+
+def extraArgs = [
+        '--add-opens=java.base/java.util=ALL-UNNAMED',
+        '--add-modules=jdk.incubator.vector',
+]
+
+// JavaCompile, JavaExec, Test
+tasks.matching({ it instanceof JavaForkOptions }).configureEach {
+    (it as JavaForkOptions).jvmArgs += extraArgs
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.compilerArgs += extraArgs
+    // it.options.warnings(false) // still warns about incubator modules anyway
+}
