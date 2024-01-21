@@ -34,12 +34,15 @@ public class OtpGenerator {
                 .toUpperCase();
 
         byte[] secretBytes = base32.decode(token);
+
         Mac mac = HmacUtils.getInitializedMac(HmacAlgorithms.HMAC_SHA_1, secretBytes);
 
-        // byte[] buf = new byte[OtpConstants.sumByteLength];
-        ByteBuffer buf = ByteBuffer.allocate(OtpConstants.sumByteLength);
-        buf.order(ByteOrder.BIG_ENDIAN).putLong(timer);
-        byte[] sum = mac.doFinal(buf.array());
+        byte[] buf = ByteBuffer.allocate(OtpConstants.sumByteLength)
+                .order(ByteOrder.BIG_ENDIAN)
+                .putLong(timer)
+                .array();
+
+        byte[] sum = mac.doFinal(buf);
 
         // http://tools.ietf.org/html/rfc4226#section-5.4
         int offset = sum[sum.length - 1] & OtpConstants.mask1;
@@ -48,12 +51,17 @@ public class OtpGenerator {
                 ((((int) (sum[offset + 2]) & OtpConstants.mask3)) << OtpConstants.shift8) |
                 (((int) (sum[offset + 3])) & OtpConstants.mask3);
 
-        long modulo = (int) value % (long) (Math.pow(10, (int) (length)));
+        long modulo = (int) value % (long) (Math.pow(10, length));
 
-        String format = String.format("%%0%dd", length);
+        String moduloStr = String.valueOf(modulo);
+
+        // left pad with 0s if not long enough
+        String code = moduloStr.length() < length
+            ? "0".repeat(length - moduloStr.length()) + moduloStr
+            : moduloStr;
 
         return new Password()
-                .setCode(String.format(format, modulo))
+                .setCode(code)
                 .setRemainingTime(remainingTime);
     }
 
