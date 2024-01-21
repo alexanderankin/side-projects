@@ -1,3 +1,8 @@
 plugins {
-    id 'groovy-gradle-plugin'
+    id 'spring-conventions'
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/commons-codec/commons-codec
+    implementation 'commons-codec:commons-codec:1.16.0'
 }
