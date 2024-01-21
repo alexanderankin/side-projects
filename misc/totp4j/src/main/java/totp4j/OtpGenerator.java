@@ -22,7 +22,7 @@ public class OtpGenerator {
         this.base32 = base32;
     }
 
-    Password generate(String token, Instant instant, int length) {
+    public Password generate(String token, Instant instant, int length) {
         long unix = instant.getEpochSecond();
         double unixF = (double) unix;
 
