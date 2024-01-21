@@ -1,0 +1,31 @@
+plugins {
+    id 'conventions'
+}
+
+dependencies {
+    implementation platform('io.vertx:vertx-stack-depchain:4.5.1')
+    implementation 'io.vertx:vertx-web'
+    /*
+    implementation 'io.vertx:vertx-web-templ-pug'
+    implementation 'io.vertx:vertx-web-client'
+    implementation 'io.vertx:vertx-web-validation'
+    implementation 'io.vertx:vertx-uri-template'
+    implementation 'io.vertx:vertx-redis-client'
+    implementation 'io.vertx:vertx-reactive-streams'
+    implementation 'io.vertx:vertx-config'
+    implementation 'io.vertx:vertx-pg-client'
+    implementation 'io.vertx:vertx-auth-properties'
+    implementation 'io.vertx:vertx-circuit-breaker'
+    implementation 'io.vertx:vertx-auth-sql-client'
+    */
+    // annotationProcessor platform('io.vertx:vertx-dependencies:4.5.1')
+}
+
+// curl -G https://start.vertx.io/starter.zip -d "groupId=com.example" -d "artifactId=starter" -d "vertxVersion=4.5.1" -d "vertxDependencies=vertx-web,vertx-web-client,vertx-web-templ-pug,vertx-web-validation,vertx-uri-template,vertx-pg-client,vertx-redis-client,vertx-reactive-streams,vertx-circuit-breaker,vertx-config,vertx-auth-properties,vertx-junit5,vertx-auth-sql-client" -d "language=java" -d "jdkVersion=17" -d "buildTool=maven" --output starter.zip
+
+// want to make this into a separate convention plugin like spring boot but
+// have to figure out why they keep it in the deprecated github org
+/*
+    implementation platform('io.vertx:vertx-stack-depchain:4.5.1')
+    annotationProcessor platform('io.vertx:vertx-stack-depchain:4.5.1')
+*/

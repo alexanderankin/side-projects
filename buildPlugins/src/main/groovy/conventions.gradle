@@ -45,18 +45,34 @@ configurations {
 }
 
 dependencies {
-    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:3.2.0')
-    implementation platform('org.springframework.boot:spring-boot-dependencies:3.2.0')
-    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2023.0.0')
-
+    testImplementation platform('org.junit:junit-bom:5.10.1')
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testImplementation 'org.junit.jupiter:junit-jupiter-params'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    constraints {
+        [
+                ['org.projectlombok:lombok', '1.18.30'],
+        ].each { l ->
+            ['compileOnly', 'annotationProcessor'].each { String c ->
+                add(c, l.getFirst()) { version { prefer l.getLast() } }
+            }
+        }
+    }
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    constraints {
+        [
+                ['org.hamcrest:hamcrest', '2.2'],
+                ['ch.qos.logback:logback-classic', '1.4.11'],
+                ['org.mockito:mockito-core', '5.7.0'],
+        ].each { l ->
+            add('testImplementation', l.getFirst()) {
+                version { prefer l.getLast() } }
+        }
+    }
     testImplementation 'org.hamcrest:hamcrest'
     testImplementation 'org.mockito:mockito-core:3+'
     testImplementation 'ch.qos.logback:logback-classic'
