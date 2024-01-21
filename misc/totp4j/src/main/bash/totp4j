@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+java -jar ~/.local/bin/totp4j-1.jar "$@"
