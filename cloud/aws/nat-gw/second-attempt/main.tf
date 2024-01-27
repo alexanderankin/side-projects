@@ -42,6 +42,7 @@ resource "aws_security_group" "securitygroup" {
   name        = "DummySecurityGroup"
   description = "DummySecurityGroup"
   vpc_id      = aws_vpc.vpc.id
+  /*
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 22
@@ -54,16 +55,35 @@ resource "aws_security_group" "securitygroup" {
     to_port     = 0
     protocol    = "-1"
   }
+  */
   tags = {
     "Name" = "DummySecurityGroup"
   }
+}
+
+resource "aws_security_group_rule" "r1" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 22
+  to_port           = 22
+  protocol          = "Tcp"
+  type              = "ingress"
+  security_group_id = aws_security_group.securitygroup.id
+}
+
+resource "aws_security_group_rule" "r2" {
+  cidr_blocks       = ["0.0.0.0/0"]
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1" # "Tcp"
+  type              = "egress"
+  security_group_id = aws_security_group.securitygroup.id
 }
 
 resource "aws_instance" "ec2instance" {
   instance_type           = "t2.micro"
   ami                     = "ami-0c7217cdde317cfec" # from other script
   subnet_id               = aws_subnet.instance.id
-  security_groups         = [aws_security_group.securitygroup.id]
+  vpc_security_group_ids  = [aws_security_group.securitygroup.id] # hashicorp/terraform-provider-aws#23693
   key_name                = "public_key"
   disable_api_termination = false
   ebs_optimized           = false
@@ -148,7 +168,7 @@ resource "aws_instance" "ec2jumphost" {
   instance_type           = "t2.micro"
   ami                     = "ami-0c7217cdde317cfec"
   subnet_id               = aws_subnet.nat_gateway.id
-  security_groups         = [aws_security_group.securitygroup.id]
+  vpc_security_group_ids  = [aws_security_group.securitygroup.id] # hashicorp/terraform-provider-aws#23693
   key_name                = "public_key"
   disable_api_termination = false
   ebs_optimized           = false
