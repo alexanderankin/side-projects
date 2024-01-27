@@ -164,7 +164,10 @@ resource "aws_route_table_association" "instance" {
 
 //
 
+variable "enable_jump_host" { default = false }
+
 resource "aws_instance" "ec2jumphost" {
+  count                   = var.enable_jump_host ? 1 : 0
   instance_type           = "t2.micro"
   ami                     = "ami-0c7217cdde317cfec"
   subnet_id               = aws_subnet.nat_gateway.id
@@ -182,10 +185,11 @@ resource "aws_instance" "ec2jumphost" {
 
 # aws ec2 describe-addresses --query 'join(`\n`, Addresses[*].join(`: `, [PublicIp,AllocationId]))' --output text
 resource "aws_eip" "jumphost" {
-  instance = aws_instance.ec2jumphost.id
+  count    = var.enable_jump_host ? 1 : 0
+  instance = aws_instance.ec2jumphost[0].id
   domain   = "vpc"
 }
 
 output "jumphost_ip" {
-  value = aws_eip.jumphost.public_ip
+  value = var.enable_jump_host ? aws_eip.jumphost[0].public_ip : null
 }
