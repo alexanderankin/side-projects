@@ -79,12 +79,17 @@ resource "aws_security_group_rule" "r2" {
   security_group_id = aws_security_group.securitygroup.id
 }
 
+data "aws_key_pair" "public_key" {
+  key_name           = "public_key"
+  include_public_key = false
+}
+
 resource "aws_instance" "ec2instance" {
   instance_type           = "t2.micro"
   ami                     = "ami-0c7217cdde317cfec" # from other script
   subnet_id               = aws_subnet.instance.id
   vpc_security_group_ids  = [aws_security_group.securitygroup.id] # hashicorp/terraform-provider-aws#23693
-  key_name                = "public_key"
+  key_name                = data.aws_key_pair.public_key.key_name
   disable_api_termination = false
   ebs_optimized           = false
   root_block_device {
@@ -172,7 +177,7 @@ resource "aws_instance" "ec2jumphost" {
   ami                     = "ami-0c7217cdde317cfec"
   subnet_id               = aws_subnet.nat_gateway.id
   vpc_security_group_ids  = [aws_security_group.securitygroup.id] # hashicorp/terraform-provider-aws#23693
-  key_name                = "public_key"
+  key_name                = data.aws_key_pair.public_key.key_name
   disable_api_termination = false
   ebs_optimized           = false
   root_block_device {
