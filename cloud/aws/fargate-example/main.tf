@@ -14,10 +14,19 @@ resource "aws_subnet" "fg" {
     "us-east-1c" : { cidr : "10.0.0.128/27" }
     #"us-east-1d" : { cidr : "10.0.0.192/26"}
   }
+  availability_zone = each.key
+
   vpc_id     = aws_vpc.fg_vpc.id
   cidr_block = each.value["cidr"]
   tags       = {
     Name = "fg-${each.key}"
+  }
+}
+
+resource "aws_internet_gateway" "fg_vpc_igw" {
+  vpc_id = aws_vpc.fg_vpc.id
+  tags   = {
+    Name = "fg-vpc-igw"
   }
 }
 
@@ -93,4 +102,53 @@ resource "aws_ecs_service" "fargate_apache_service" {
     capacity_provider = "FARGATE" # consider learning the asg based one also
     weight            = 1
   }
+  load_balancer {
+    target_group_arn = aws_alb_target_group.fargate_tg.arn
+    container_name   = jsondecode(aws_ecs_task_definition.fargate_apache_task.container_definitions)[0]["name"]
+    container_port   = 80
+  }
 }
+
+resource "aws_lb" "fargate_lb" {
+  name               = "fargate-apache-lb"
+  internal           = false
+  load_balancer_type = "application"
+  # subnet must be in vpc having igw
+  subnets            = [for a in aws_subnet.fg : a.id]
+  security_groups    = [aws_security_group.allow_all.id]
+  tags               = {
+    Name = "fargate-apache-lb"
+  }
+}
+
+/*
+
+
+│ Error: registering ELBv2 Target Group (arn:aws:elasticloadbalancing:us-east-1:662610805887:targetgroup/fargate-apache-tg/4aed2f0f339a28ab) target: ValidationError: Instance ID 'arn:aws:elasticloadbalancing:us-east-1:662610805887:loadbalancer/app/fargate-apache-lb/b41a63a0714407d6' is not valid
+│ Error: registering ELBv2 Target Group () target: ValidationError: Instance ID '' is not valid
+│       status code: 400, request id: e1a475b0-e7fd-43a6-a544-587c9ef18f42
+
+*/
+resource "aws_alb_target_group" "fargate_tg" {
+  name        = "fargate-apache-tg"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = aws_vpc.fg_vpc.id
+}
+
+resource "aws_lb_listener" "fargate_lb_listener" {
+  load_balancer_arn = aws_lb.fargate_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.fargate_tg.arn
+  }
+}
+
+# this seems to only be for individual vms
+#resource "aws_lb_target_group_attachment" "fargate_lb_tg" {
+#  target_group_arn = aws_alb_target_group.fargate_tg.arn
+#  target_id        = aws_lb.fargate_lb.id
+#}
