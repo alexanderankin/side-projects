@@ -46,9 +46,9 @@ class AsyncLoggingProxyApp {
         // todo configure allowing to change log levels externally
 
         // test config: test app + default port not to conflict with the test app
-        System.setProperty("server.port", "8082");
+        // System.setProperty("server.port", "8082");
         System.setProperty("server.netty.connection-timeout", "0");
-        System.setProperty("logged-routes.default-route.base-url", "http://localhost:8080/");
+        // System.setProperty("logged-routes.default-route.base-url", "http://localhost:8080/");
 
         SpringApplication.run(AsyncLoggingProxyApp.class, args);
     }
