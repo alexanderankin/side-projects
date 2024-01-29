@@ -427,6 +427,8 @@ resource "azurerm_linux_virtual_machine" "vm1" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+
+  user_data = filebase64("${path.module}/user_data.sh")
 }
 
 # Add virtual machines to load balancer backend pool
