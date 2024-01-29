@@ -30,6 +30,42 @@ resource "aws_internet_gateway" "fg_vpc_igw" {
   }
 }
 
+# https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
+resource "aws_route_table" "fg_vpc_rt" {
+  vpc_id = aws_vpc.fg_vpc.id
+  tags   = { Name : "fg-vpc-rt" }
+}
+
+resource "aws_route_table_association" "fg_vpc_rt_as_local" {
+  for_each = aws_subnet.fg
+
+  route_table_id = aws_route_table.fg_vpc_rt.id
+  subnet_id      = each.value.id
+}
+
+resource "aws_route" "fg_vpc_rt_route_igw" {
+  route_table_id         = aws_route_table.fg_vpc_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.fg_vpc_igw.id
+}
+
+# use import!?!?
+# no.
+# https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
+#
+# "Every route table contains a local route for communication within the VPC. This route is
+# added by default to all route tables. If your VPC has more than one IPv4 CIDR block, your
+# route tables contain a local route for each IPv4 CIDR block. [...] You cannot modify or
+# delete these routes in a subnet route table or in the main route table."
+#
+#resource "aws_route" "fg_vpc_rt_route_local" {
+#  route_table_id         = aws_route_table.fg_vpc_rt.id
+#  destination_cidr_block = aws_vpc.fg_vpc.cidr_block
+#  gateway_id             = "local"
+#}
+
+# but that is still not enough to pull from registry.
+
 resource "aws_security_group" "allow_all" {
   name = "sec-allow-all"
   tags = { Name : "sec-allow-all" }
@@ -89,6 +125,8 @@ resource "aws_ecs_task_definition" "fargate_apache_task" {
   ])
 }
 
+# disabling while we figure out the route to public internet situation
+/*
 resource "aws_ecs_service" "fargate_apache_service" {
   name            = "fargate-apache-service"
   cluster         = aws_ecs_cluster.fargate_cluster.id
@@ -108,7 +146,10 @@ resource "aws_ecs_service" "fargate_apache_service" {
     container_port   = 80
   }
 }
+*/
 
+# disabling to save money
+/*
 resource "aws_lb" "fargate_lb" {
   name               = "fargate-apache-lb"
   internal           = false
@@ -121,14 +162,6 @@ resource "aws_lb" "fargate_lb" {
   }
 }
 
-/*
-
-
-│ Error: registering ELBv2 Target Group (arn:aws:elasticloadbalancing:us-east-1:662610805887:targetgroup/fargate-apache-tg/4aed2f0f339a28ab) target: ValidationError: Instance ID 'arn:aws:elasticloadbalancing:us-east-1:662610805887:loadbalancer/app/fargate-apache-lb/b41a63a0714407d6' is not valid
-│ Error: registering ELBv2 Target Group () target: ValidationError: Instance ID '' is not valid
-│       status code: 400, request id: e1a475b0-e7fd-43a6-a544-587c9ef18f42
-
-*/
 resource "aws_alb_target_group" "fargate_tg" {
   name        = "fargate-apache-tg"
   port        = 80
@@ -146,6 +179,7 @@ resource "aws_lb_listener" "fargate_lb_listener" {
     target_group_arn = aws_alb_target_group.fargate_tg.arn
   }
 }
+*/
 
 # this seems to only be for individual vms
 #resource "aws_lb_target_group_attachment" "fargate_lb_tg" {
