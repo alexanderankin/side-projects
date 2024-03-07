@@ -1,0 +1,7 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'io.reactivex.rxjava3:rxjava'
+}
