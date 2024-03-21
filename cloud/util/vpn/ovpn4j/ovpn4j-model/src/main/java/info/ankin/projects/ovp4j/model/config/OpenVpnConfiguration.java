@@ -54,6 +54,28 @@ public class OpenVpnConfiguration {
         asym, no, yes
     }
 
+    public enum KeyDirection {
+        SERVER, CLIENT
+    }
+
+    public enum AuthRetry {
+        /**
+         * the default
+         */
+        none,
+
+        /**
+         * retry with the same credentials
+         */
+        @SuppressWarnings("SpellCheckingInspection")
+        nointeract,
+
+        /**
+         * confirm the credentials before retrying
+         */
+        interact,
+    }
+
     /**
      * for client and server
      */
@@ -276,6 +298,49 @@ public class OpenVpnConfiguration {
          * colon-separated in config file,
          */
         List<String> dataCiphers;
+
+        /**
+         * to be removed, static (non-tls, from "genkey") channel encryption config
+         */
+        KeyEncryptionConfig secret;
+
+        Duration transactionWindow;
+    }
+
+    @Data
+    @Accessors(chain = true)
+    public static class ClientOptions {
+        /**
+         * accept domain names (rather than just ip addresses) for
+         * --ifconfig, --route, and --route-gateway
+         */
+        boolean allowPullFqdn;
+
+        /**
+         * do not drop tun packets with same destination as host (?).
+         */
+        boolean allowRecursiveRouting;
+
+        /**
+         * field to be used with dynamic server-side plugins (pushed to clients, not configured).
+         */
+        String authToken;
+
+        /**
+         * override the user field when password is set to an auth token.
+         *
+         * @see #authToken
+         */
+        String authTokenUser;
+
+        /**
+         * @see AuthUserPass
+         */
+        AuthUserPass authUserPass;
+
+        AuthRetry authRetry;
+
+
     }
 
     @Data
@@ -315,5 +380,23 @@ public class OpenVpnConfiguration {
          * more sophisticated version of {@link #n}
          */
         Duration period;
+    }
+
+    @Data
+    @Accessors(chain = true)
+    public static class KeyEncryptionConfig {
+        Path file;
+        KeyDirection direction;
+    }
+
+    @Data
+    @Accessors(chain = true)
+    public static class AuthUserPass {
+        /**
+         * file with two lines - one with user and one with pass.
+         * <p>
+         * if omitted, should be interactively prompted.
+         */
+        Path userPass;
     }
 }
