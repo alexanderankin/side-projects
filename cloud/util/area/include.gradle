@@ -1,0 +1,5 @@
+include 'cloud:util:area:area-cloud-aws'
+include 'cloud:util:area:area-cloud-azure'
+include 'cloud:util:area:area-core'
+include 'cloud:util:area:area-scheduler-core'
+include 'cloud:util:area:area-scheduler-ui'

@@ -1,0 +1,8 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework:spring-web'
+    implementation 'commons-codec:commons-codec:1.16.0'
+}
