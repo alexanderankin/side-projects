@@ -1,0 +1,17 @@
+{
+  "name": "lambda-runtime-client",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "jasmine --config=jasmine.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexanderankin/side-projects.git"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.8",
+    "jasmine": "^5.1.0"
+  }
+}
