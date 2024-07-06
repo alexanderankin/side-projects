@@ -69,3 +69,16 @@ resource "azurerm_storage_container" "container" {
   name                  = "container"
   container_access_type = "blob"
 }
+
+output "account_url" {
+  value = azurerm_storage_account.storage.primary_blob_endpoint
+}
+
+output "account_access_key" {
+  value     = azurerm_storage_account.storage.primary_access_key
+  sensitive = true
+}
+
+output "account_container_name" {
+  value = azurerm_storage_container.container.name
+}
