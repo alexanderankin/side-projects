@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "container-test"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+azure-storage-blob = "12.20.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.2.2"
+ruff = "0.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
