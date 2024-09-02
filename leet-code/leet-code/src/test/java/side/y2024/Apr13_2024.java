@@ -1,4 +1,4 @@
-package side;
+package side.y2024;
 
 import org.junit.jupiter.api.Test;
 

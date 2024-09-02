@@ -1,4 +1,4 @@
-package side;
+package side.y2024;
 
 import lombok.ToString;
 import org.junit.jupiter.api.Disabled;
