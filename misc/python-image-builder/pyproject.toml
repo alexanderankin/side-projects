@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "python-image-builder"
+version = "0.1.0"
+description = "constructs oci images in pure python with no infrastructure dependencies"
+authors = ["David Ankin <daveankin@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+click = "^8.1.7"
+httpx = "^0.27.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+ruff = "^0.6.7"
+pytest-httpx = "^0.31.2"
+
+[tool.poetry.scripts]
+pib = 'python_image_builder.cli:run'
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
