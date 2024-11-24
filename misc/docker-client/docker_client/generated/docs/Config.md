@@ -1,0 +1,33 @@
+# Config
+
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**id** | **str** |  | [optional] 
+**version** | [**ObjectVersion**](ObjectVersion.md) |  | [optional] 
+**created_at** | **str** |  | [optional] 
+**updated_at** | **str** |  | [optional] 
+**spec** | [**ConfigSpec**](ConfigSpec.md) |  | [optional] 
+
+## Example
+
+```python
+from docker_client.generated.models.config import Config
+
+# TODO update the JSON string below
+json = "{}"
+# create an instance of Config from a JSON string
+config_instance = Config.from_json(json)
+# print the JSON string representation of the object
+print(Config.to_json())
+
+# convert the object into a dict
+config_dict = config_instance.to_dict()
+# create an instance of Config from a dict
+config_from_dict = Config.from_dict(config_dict)
+```
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+
