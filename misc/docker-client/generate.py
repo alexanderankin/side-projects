@@ -1,3 +1,5 @@
+import os
+from re import compile, M
 import shutil
 import subprocess
 from pathlib import Path
@@ -59,6 +61,29 @@ try:
         encoding="utf-8",
         check=True
     )
+
+    replacement_strs = [
+        ("^from docker_client.generated", "^from docker_client.generated.docker_client.generated"),
+        ("^import docker_client.generated", "^import docker_client.generated.docker_client.generated"),
+        # ("^from pydantic", "^from docker_client.pydantic_shim"),
+        # ("^import pydantic", "^import docker_client.generated.docker_client.generated"),
+    ]
+    replacements = [(compile(p1, M), compile(p2, M)) for p1, p2 in replacement_strs]
+
+    for walked_dir, dirs, files in os.walk(top=output_dir):
+        # print(f"{walked_dir} has {dirs}, {files}")
+        for file in files:
+            file_path = Path(walked_dir) / file
+            file_text = file_path.read_text()
+            original_text = file_text
+
+            for replace_from, replace_to in replacements:
+                if replace_from.search(file_text) and not replace_to.search(file_text):
+                    file_text = replace_from.sub(replace_to.pattern[1:], file_text)
+
+            if original_text != file_text:
+                file_path.write_text(file_text)
+
 except subprocess.CalledProcessError as e:
     print(e.output)
     print(e.stderr)
