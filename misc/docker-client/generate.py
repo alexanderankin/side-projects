@@ -1,9 +1,8 @@
-from json import dumps
+import shutil
+import subprocess
 from pathlib import Path
 
-from openapi_python_generator.__main__ import main
 from requests import get
-from yaml import safe_load
 
 # https://docs.docker.com/reference/api/engine/version/v1.45.yaml
 
@@ -22,7 +21,45 @@ if not source_target.exists():
 # if not source_json.exists():
 #     source_json.write_text(dumps(safe_load(source_target.read_text())))
 
+generator_url = "https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/7.10.0/openapi-generator-cli-7.10.0.jar"
+generator_url_fname = generator_url.split("/")[-1]
+generator_url_target = Path.home() / ".cache" / "docker-client-generate" / generator_url_fname
+if not generator_url_target.exists():
+    generator_url_target.parent.mkdir(parents=True, exist_ok=True)
+    generator_url_target.write_bytes(get(generator_url).content)
+
 output_dir = Path(__file__).parent / "docker_client" / "generated"
 output_dir.mkdir(parents=True, exist_ok=True)
 
-main([str(source_target), str(output_dir)])
+java = shutil.which("java")
+if not java:
+    raise ChildProcessError("no java in PATH")
+
+# from wget -N 'https://repo1.maven.org/maven2/org/openapitools/openapi-generator/7.10.0/openapi-generator-7.10.0.jar'
+generator = str(generator_url_target)
+
+# subprocess.run(executable=java, args=["java", "-jar", generator, "help", "generate"], encoding="utf-8", check=True)
+try:
+    subprocess.run(
+        executable=java,
+        args=[
+            "java",
+            "-jar",
+            generator,
+            "generate",
+            "-g",
+            "python",
+            "--package-name",
+            "docker_client.generated",
+            "-i",
+            str(source_target),
+            "-o",
+            str(output_dir)
+        ],
+        encoding="utf-8",
+        check=True
+    )
+except subprocess.CalledProcessError as e:
+    print(e.output)
+    print(e.stderr)
+    raise e
