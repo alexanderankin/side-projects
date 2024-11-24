@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "docker-client"
+version = "0.1.0"
+description = "Simple Python Docker API Client"
+authors = ["David Ankin <daveankin@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
