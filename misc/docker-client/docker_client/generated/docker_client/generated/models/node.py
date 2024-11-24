@@ -19,11 +19,11 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.manager_status import ManagerStatus
-from docker_client.generated.models.node_description import NodeDescription
-from docker_client.generated.models.node_spec import NodeSpec
-from docker_client.generated.models.node_status import NodeStatus
-from docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.manager_status import ManagerStatus
+from docker_client.generated.docker_client.generated.models.node_description import NodeDescription
+from docker_client.generated.docker_client.generated.models.node_spec import NodeSpec
+from docker_client.generated.docker_client.generated.models.node_status import NodeStatus
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
 from typing import Optional, Set
 from typing_extensions import Self
 

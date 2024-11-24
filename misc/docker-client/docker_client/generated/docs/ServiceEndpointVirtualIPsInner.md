@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
+from docker_client.generated.docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
 
 # TODO update the JSON string below
 json = "{}"

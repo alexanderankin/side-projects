@@ -35,7 +35,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.container_config import ContainerConfig
+from docker_client.generated.docker_client.generated.models.container_config import ContainerConfig
 
 # TODO update the JSON string below
 json = "{}"

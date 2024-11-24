@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.service_service_status import ServiceServiceStatus
+from docker_client.generated.docker_client.generated.models.service_service_status import ServiceServiceStatus
 
 # TODO update the JSON string below
 json = "{}"

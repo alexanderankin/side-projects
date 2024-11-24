@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_container_spec_privileges_app_armor import TaskSpecContainerSpecPrivilegesAppArmor
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_privileges_app_armor import TaskSpecContainerSpecPrivilegesAppArmor
 
 class TestTaskSpecContainerSpecPrivilegesAppArmor(unittest.TestCase):
     """TaskSpecContainerSpecPrivilegesAppArmor unit test stubs"""

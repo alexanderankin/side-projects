@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.task_api import TaskApi
+from docker_client.generated.docker_client.generated.api.task_api import TaskApi
 
 
 class TestTaskApi(unittest.TestCase):

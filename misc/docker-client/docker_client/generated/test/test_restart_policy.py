@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.restart_policy import RestartPolicy
+from docker_client.generated.docker_client.generated.models.restart_policy import RestartPolicy
 
 class TestRestartPolicy(unittest.TestCase):
     """RestartPolicy unit test stubs"""

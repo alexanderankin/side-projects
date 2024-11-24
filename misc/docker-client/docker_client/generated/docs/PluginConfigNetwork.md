@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.plugin_config_network import PluginConfigNetwork
+from docker_client.generated.docker_client.generated.models.plugin_config_network import PluginConfigNetwork
 
 # TODO update the JSON string below
 json = "{}"

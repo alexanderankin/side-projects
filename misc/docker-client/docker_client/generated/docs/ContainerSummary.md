@@ -24,7 +24,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.container_summary import ContainerSummary
+from docker_client.generated.docker_client.generated.models.container_summary import ContainerSummary
 
 # TODO update the JSON string below
 json = "{}"

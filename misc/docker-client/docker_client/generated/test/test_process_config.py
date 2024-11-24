@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.process_config import ProcessConfig
+from docker_client.generated.docker_client.generated.models.process_config import ProcessConfig
 
 class TestProcessConfig(unittest.TestCase):
     """ProcessConfig unit test stubs"""

@@ -42,8 +42,8 @@ Get a tar archive of a resource in the filesystem of container id.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -112,8 +112,8 @@ A response header `X-Docker-Container-Path-Stat` is returned, containing a base6
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -182,8 +182,8 @@ Attach to a container to read its output or send it input. You can attach to the
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -261,8 +261,8 @@ Attach to a container via a websocket
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -342,9 +342,9 @@ Returns which files in a container's filesystem have been added, deleted, or mod
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.filesystem_change import FilesystemChange
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.filesystem_change import FilesystemChange
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -410,10 +410,10 @@ Create a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_create_request import ContainerCreateRequest
-from docker_client.generated.models.container_create_response import ContainerCreateResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_create_request import ContainerCreateRequest
+from docker_client.generated.docker_client.generated.models.container_create_response import ContainerCreateResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -485,8 +485,8 @@ Remove a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -560,8 +560,8 @@ Export the contents of a container as a tarball.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -627,9 +627,9 @@ Return low-level information about a container.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_inspect_response import ContainerInspectResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_inspect_response import ContainerInspectResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -699,8 +699,8 @@ Send a POSIX signal to a container, defaulting to killing to the container.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -769,9 +769,9 @@ Returns a list of containers. For details on the format, see the [inspect endpoi
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_summary import ContainerSummary
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_summary import ContainerSummary
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -845,8 +845,8 @@ Get `stdout` and `stderr` logs from a container.  Note: This endpoint works only
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -928,8 +928,8 @@ Use the freezer cgroup to suspend all processes in a container.  Traditionally, 
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -993,9 +993,9 @@ Delete stopped containers
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_prune_response import ContainerPruneResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_prune_response import ContainerPruneResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1060,8 +1060,8 @@ Rename a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1130,8 +1130,8 @@ Resize the TTY for a container.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1199,8 +1199,8 @@ Restart a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1268,8 +1268,8 @@ Start a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1338,8 +1338,8 @@ This endpoint returns a live stream of a container’s resource usage statistics
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1409,8 +1409,8 @@ Stop a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1481,9 +1481,9 @@ On Unix systems, this is done by running the `ps` command. This endpoint is not 
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_top_response import ContainerTopResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_top_response import ContainerTopResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1553,8 +1553,8 @@ Resume a container which has been paused.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1620,10 +1620,10 @@ Change various configuration options of a container without having to recreate i
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_update_request import ContainerUpdateRequest
-from docker_client.generated.models.container_update_response import ContainerUpdateResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_update_request import ContainerUpdateRequest
+from docker_client.generated.docker_client.generated.models.container_update_response import ContainerUpdateResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1693,9 +1693,9 @@ Block until a container stops, then returns the exit code.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_wait_response import ContainerWaitResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_wait_response import ContainerWaitResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1766,8 +1766,8 @@ Upload a tar archive to be extracted to a path in the filesystem of container id
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

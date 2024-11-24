@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
+from docker_client.generated.docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
 
 # TODO update the JSON string below
 json = "{}"

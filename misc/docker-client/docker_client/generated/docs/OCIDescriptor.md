@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.oci_descriptor import OCIDescriptor
+from docker_client.generated.docker_client.generated.models.oci_descriptor import OCIDescriptor
 
 # TODO update the JSON string below
 json = "{}"

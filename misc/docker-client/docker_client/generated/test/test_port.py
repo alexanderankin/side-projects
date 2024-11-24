@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.port import Port
+from docker_client.generated.docker_client.generated.models.port import Port
 
 class TestPort(unittest.TestCase):
     """Port unit test stubs"""

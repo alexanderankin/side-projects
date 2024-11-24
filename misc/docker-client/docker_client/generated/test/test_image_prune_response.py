@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_prune_response import ImagePruneResponse
+from docker_client.generated.docker_client.generated.models.image_prune_response import ImagePruneResponse
 
 class TestImagePruneResponse(unittest.TestCase):
     """ImagePruneResponse unit test stubs"""

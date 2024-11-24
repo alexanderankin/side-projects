@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.index_info import IndexInfo
+from docker_client.generated.docker_client.generated.models.index_info import IndexInfo
 
 # TODO update the JSON string below
 json = "{}"

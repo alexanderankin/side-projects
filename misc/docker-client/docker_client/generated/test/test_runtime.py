@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.runtime import Runtime
+from docker_client.generated.docker_client.generated.models.runtime import Runtime
 
 class TestRuntime(unittest.TestCase):
     """Runtime unit test stubs"""

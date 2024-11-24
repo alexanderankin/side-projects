@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.join_tokens import JoinTokens
+from docker_client.generated.docker_client.generated.models.join_tokens import JoinTokens
 
 # TODO update the JSON string below
 json = "{}"

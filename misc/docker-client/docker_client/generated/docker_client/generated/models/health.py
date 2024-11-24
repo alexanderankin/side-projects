@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.healthcheck_result import HealthcheckResult
+from docker_client.generated.docker_client.generated.models.healthcheck_result import HealthcheckResult
 from typing import Optional, Set
 from typing_extensions import Self
 

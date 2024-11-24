@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.generic_resources_inner_discrete_resource_spec import GenericResourcesInnerDiscreteResourceSpec
-from docker_client.generated.models.generic_resources_inner_named_resource_spec import GenericResourcesInnerNamedResourceSpec
+from docker_client.generated.docker_client.generated.models.generic_resources_inner_discrete_resource_spec import GenericResourcesInnerDiscreteResourceSpec
+from docker_client.generated.docker_client.generated.models.generic_resources_inner_named_resource_spec import GenericResourcesInnerNamedResourceSpec
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.join_tokens import JoinTokens
+from docker_client.generated.docker_client.generated.models.join_tokens import JoinTokens
 
 class TestJoinTokens(unittest.TestCase):
     """JoinTokens unit test stubs"""

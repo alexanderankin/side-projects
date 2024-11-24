@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
+from docker_client.generated.docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
 
 class TestNetworkDisconnectRequest(unittest.TestCase):
     """NetworkDisconnectRequest unit test stubs"""

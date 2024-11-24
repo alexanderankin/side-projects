@@ -19,9 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.cluster_info import ClusterInfo
-from docker_client.generated.models.local_node_state import LocalNodeState
-from docker_client.generated.models.peer_node import PeerNode
+from docker_client.generated.docker_client.generated.models.cluster_info import ClusterInfo
+from docker_client.generated.docker_client.generated.models.local_node_state import LocalNodeState
+from docker_client.generated.docker_client.generated.models.peer_node import PeerNode
 from typing import Optional, Set
 from typing_extensions import Self
 

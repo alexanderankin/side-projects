@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.endpoint_settings import EndpointSettings
+from docker_client.generated.docker_client.generated.models.endpoint_settings import EndpointSettings
 
 class TestEndpointSettings(unittest.TestCase):
     """EndpointSettings unit test stubs"""

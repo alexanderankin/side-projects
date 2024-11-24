@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
+from docker_client.generated.docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
 
 class TestImageInspectMetadata(unittest.TestCase):
     """ImageInspectMetadata unit test stubs"""

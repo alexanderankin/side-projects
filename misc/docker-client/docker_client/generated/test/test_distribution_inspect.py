@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.distribution_inspect import DistributionInspect
+from docker_client.generated.docker_client.generated.models.distribution_inspect import DistributionInspect
 
 class TestDistributionInspect(unittest.TestCase):
     """DistributionInspect unit test stubs"""

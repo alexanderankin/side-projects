@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.task_spec_resources import TaskSpecResources
+from docker_client.generated.docker_client.generated.models.task_spec_resources import TaskSpecResources
 
 # TODO update the JSON string below
 json = "{}"

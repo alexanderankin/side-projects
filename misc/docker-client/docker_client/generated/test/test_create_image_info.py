@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.create_image_info import CreateImageInfo
+from docker_client.generated.docker_client.generated.models.create_image_info import CreateImageInfo
 
 class TestCreateImageInfo(unittest.TestCase):
     """CreateImageInfo unit test stubs"""

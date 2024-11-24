@@ -80,7 +80,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.host_config import HostConfig
+from docker_client.generated.docker_client.generated.models.host_config import HostConfig
 
 # TODO update the JSON string below
 json = "{}"

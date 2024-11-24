@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_prune_response import ContainerPruneResponse
+from docker_client.generated.docker_client.generated.models.container_prune_response import ContainerPruneResponse
 
 class TestContainerPruneResponse(unittest.TestCase):
     """ContainerPruneResponse unit test stubs"""

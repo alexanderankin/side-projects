@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.endpoint_port_config import EndpointPortConfig
+from docker_client.generated.docker_client.generated.models.endpoint_port_config import EndpointPortConfig
 
 class TestEndpointPortConfig(unittest.TestCase):
     """EndpointPortConfig unit test stubs"""

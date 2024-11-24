@@ -95,7 +95,7 @@ pip install git+https://github.com/GIT_USER_ID/GIT_REPO_ID.git
 
 Then import the package:
 ```python
-import docker_client.generated
+import docker_client.generated.docker_client.generated
 ```
 
 ### Setuptools
@@ -109,7 +109,7 @@ python setup.py install --user
 
 Then import the package:
 ```python
-import docker_client.generated
+import docker_client.generated.docker_client.generated
 ```
 
 ### Tests
@@ -122,8 +122,8 @@ Please follow the [installation procedure](#installation--usage) and then run th
 
 ```python
 
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

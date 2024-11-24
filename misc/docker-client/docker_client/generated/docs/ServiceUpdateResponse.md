@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.service_update_response import ServiceUpdateResponse
+from docker_client.generated.docker_client.generated.models.service_update_response import ServiceUpdateResponse
 
 # TODO update the JSON string below
 json = "{}"

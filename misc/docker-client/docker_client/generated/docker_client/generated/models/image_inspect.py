@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.graph_driver_data import GraphDriverData
-from docker_client.generated.models.image_config import ImageConfig
-from docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
-from docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
+from docker_client.generated.docker_client.generated.models.graph_driver_data import GraphDriverData
+from docker_client.generated.docker_client.generated.models.image_config import ImageConfig
+from docker_client.generated.docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
+from docker_client.generated.docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
 from typing import Optional, Set
 from typing_extensions import Self
 

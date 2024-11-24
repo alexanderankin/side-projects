@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
+from docker_client.generated.docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
 
 class TestServiceEndpointVirtualIPsInner(unittest.TestCase):
     """ServiceEndpointVirtualIPsInner unit test stubs"""

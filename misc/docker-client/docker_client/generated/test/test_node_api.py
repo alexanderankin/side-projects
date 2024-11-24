@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.node_api import NodeApi
+from docker_client.generated.docker_client.generated.api.node_api import NodeApi
 
 
 class TestNodeApi(unittest.TestCase):

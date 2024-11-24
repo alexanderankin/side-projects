@@ -21,10 +21,10 @@ Create a volume
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.volume import Volume
-from docker_client.generated.models.volume_create_options import VolumeCreateOptions
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.volume import Volume
+from docker_client.generated.docker_client.generated.models.volume_create_options import VolumeCreateOptions
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -91,8 +91,8 @@ Instruct the driver to remove the volume.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -159,9 +159,9 @@ Inspect a volume
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.volume import Volume
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.volume import Volume
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -227,9 +227,9 @@ List volumes
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.volume_list_response import VolumeListResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.volume_list_response import VolumeListResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -294,9 +294,9 @@ Delete unused volumes
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.volume_prune_response import VolumePruneResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.volume_prune_response import VolumePruneResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -361,9 +361,9 @@ No authorization required
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.volume_update_request import VolumeUpdateRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.volume_update_request import VolumeUpdateRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

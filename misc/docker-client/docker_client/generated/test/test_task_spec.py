@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec import TaskSpec
+from docker_client.generated.docker_client.generated.models.task_spec import TaskSpec
 
 class TestTaskSpec(unittest.TestCase):
     """TaskSpec unit test stubs"""

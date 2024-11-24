@@ -16,7 +16,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.event_message import EventMessage
+from docker_client.generated.docker_client.generated.models.event_message import EventMessage
 
 # TODO update the JSON string below
 json = "{}"

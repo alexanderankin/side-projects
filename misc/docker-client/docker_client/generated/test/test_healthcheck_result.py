@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.healthcheck_result import HealthcheckResult
+from docker_client.generated.docker_client.generated.models.healthcheck_result import HealthcheckResult
 
 class TestHealthcheckResult(unittest.TestCase):
     """HealthcheckResult unit test stubs"""

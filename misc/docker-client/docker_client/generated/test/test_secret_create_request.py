@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.secret_create_request import SecretCreateRequest
+from docker_client.generated.docker_client.generated.models.secret_create_request import SecretCreateRequest
 
 class TestSecretCreateRequest(unittest.TestCase):
     """SecretCreateRequest unit test stubs"""

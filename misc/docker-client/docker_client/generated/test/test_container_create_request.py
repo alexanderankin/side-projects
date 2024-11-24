@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_create_request import ContainerCreateRequest
+from docker_client.generated.docker_client.generated.models.container_create_request import ContainerCreateRequest
 
 class TestContainerCreateRequest(unittest.TestCase):
     """ContainerCreateRequest unit test stubs"""

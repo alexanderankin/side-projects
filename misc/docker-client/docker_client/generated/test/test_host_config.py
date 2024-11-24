@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.host_config import HostConfig
+from docker_client.generated.docker_client.generated.models.host_config import HostConfig
 
 class TestHostConfig(unittest.TestCase):
     """HostConfig unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_join_request import SwarmJoinRequest
+from docker_client.generated.docker_client.generated.models.swarm_join_request import SwarmJoinRequest
 
 class TestSwarmJoinRequest(unittest.TestCase):
     """SwarmJoinRequest unit test stubs"""

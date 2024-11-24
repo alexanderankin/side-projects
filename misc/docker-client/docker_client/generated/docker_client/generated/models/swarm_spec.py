@@ -19,12 +19,12 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.swarm_spec_ca_config import SwarmSpecCAConfig
-from docker_client.generated.models.swarm_spec_dispatcher import SwarmSpecDispatcher
-from docker_client.generated.models.swarm_spec_encryption_config import SwarmSpecEncryptionConfig
-from docker_client.generated.models.swarm_spec_orchestration import SwarmSpecOrchestration
-from docker_client.generated.models.swarm_spec_raft import SwarmSpecRaft
-from docker_client.generated.models.swarm_spec_task_defaults import SwarmSpecTaskDefaults
+from docker_client.generated.docker_client.generated.models.swarm_spec_ca_config import SwarmSpecCAConfig
+from docker_client.generated.docker_client.generated.models.swarm_spec_dispatcher import SwarmSpecDispatcher
+from docker_client.generated.docker_client.generated.models.swarm_spec_encryption_config import SwarmSpecEncryptionConfig
+from docker_client.generated.docker_client.generated.models.swarm_spec_orchestration import SwarmSpecOrchestration
+from docker_client.generated.docker_client.generated.models.swarm_spec_raft import SwarmSpecRaft
+from docker_client.generated.docker_client.generated.models.swarm_spec_task_defaults import SwarmSpecTaskDefaults
 from typing import Optional, Set
 from typing_extensions import Self
 

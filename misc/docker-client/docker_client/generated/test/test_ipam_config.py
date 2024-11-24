@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.ipam_config import IPAMConfig
+from docker_client.generated.docker_client.generated.models.ipam_config import IPAMConfig
 
 class TestIPAMConfig(unittest.TestCase):
     """IPAMConfig unit test stubs"""

@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List
-from docker_client.generated.models.plugin_device import PluginDevice
+from docker_client.generated.docker_client.generated.models.plugin_device import PluginDevice
 from typing import Optional, Set
 from typing_extensions import Self
 

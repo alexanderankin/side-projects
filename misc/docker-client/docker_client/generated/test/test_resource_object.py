@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.resource_object import ResourceObject
+from docker_client.generated.docker_client.generated.models.resource_object import ResourceObject
 
 class TestResourceObject(unittest.TestCase):
     """ResourceObject unit test stubs"""

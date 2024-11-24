@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.volume_usage_data import VolumeUsageData
+from docker_client.generated.docker_client.generated.models.volume_usage_data import VolumeUsageData
 
 class TestVolumeUsageData(unittest.TestCase):
     """VolumeUsageData unit test stubs"""

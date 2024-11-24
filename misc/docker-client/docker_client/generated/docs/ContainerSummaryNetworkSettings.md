@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
+from docker_client.generated.docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
 
 # TODO update the JSON string below
 json = "{}"

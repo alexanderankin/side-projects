@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
+from docker_client.generated.docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
 
 class TestImageSearchResponseItem(unittest.TestCase):
     """ImageSearchResponseItem unit test stubs"""

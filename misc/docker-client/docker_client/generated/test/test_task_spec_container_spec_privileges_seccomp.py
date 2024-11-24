@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_container_spec_privileges_seccomp import TaskSpecContainerSpecPrivilegesSeccomp
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_privileges_seccomp import TaskSpecContainerSpecPrivilegesSeccomp
 
 class TestTaskSpecContainerSpecPrivilegesSeccomp(unittest.TestCase):
     """TaskSpecContainerSpecPrivilegesSeccomp unit test stubs"""

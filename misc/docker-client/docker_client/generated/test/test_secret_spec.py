@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.secret_spec import SecretSpec
+from docker_client.generated.docker_client.generated.models.secret_spec import SecretSpec
 
 class TestSecretSpec(unittest.TestCase):
     """SecretSpec unit test stubs"""

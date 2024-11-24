@@ -19,14 +19,14 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictInt, StrictStr
 from typing import Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.exec_config import ExecConfig
-from docker_client.generated.models.exec_inspect_response import ExecInspectResponse
-from docker_client.generated.models.exec_start_config import ExecStartConfig
-from docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.models.exec_config import ExecConfig
+from docker_client.generated.docker_client.generated.models.exec_inspect_response import ExecInspectResponse
+from docker_client.generated.docker_client.generated.models.exec_start_config import ExecStartConfig
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class ExecApi:

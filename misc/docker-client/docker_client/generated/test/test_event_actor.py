@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.event_actor import EventActor
+from docker_client.generated.docker_client.generated.models.event_actor import EventActor
 
 class TestEventActor(unittest.TestCase):
     """EventActor unit test stubs"""

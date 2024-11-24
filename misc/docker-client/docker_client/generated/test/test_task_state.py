@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_state import TaskState
+from docker_client.generated.docker_client.generated.models.task_state import TaskState
 
 class TestTaskState(unittest.TestCase):
     """TaskState unit test stubs"""

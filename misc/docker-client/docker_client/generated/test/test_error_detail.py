@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.error_detail import ErrorDetail
+from docker_client.generated.docker_client.generated.models.error_detail import ErrorDetail
 
 class TestErrorDetail(unittest.TestCase):
     """ErrorDetail unit test stubs"""

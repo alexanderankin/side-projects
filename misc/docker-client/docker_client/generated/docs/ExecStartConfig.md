@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.exec_start_config import ExecStartConfig
+from docker_client.generated.docker_client.generated.models.exec_start_config import ExecStartConfig
 
 # TODO update the JSON string below
 json = "{}"

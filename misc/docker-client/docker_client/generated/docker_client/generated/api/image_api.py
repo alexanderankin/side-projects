@@ -19,19 +19,19 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictBytes, StrictInt, StrictStr, field_validator
 from typing import List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from docker_client.generated.models.build_prune_response import BuildPruneResponse
-from docker_client.generated.models.container_config import ContainerConfig
-from docker_client.generated.models.history_response_item import HistoryResponseItem
-from docker_client.generated.models.id_response import IdResponse
-from docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
-from docker_client.generated.models.image_inspect import ImageInspect
-from docker_client.generated.models.image_prune_response import ImagePruneResponse
-from docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
-from docker_client.generated.models.image_summary import ImageSummary
+from docker_client.generated.docker_client.generated.models.build_prune_response import BuildPruneResponse
+from docker_client.generated.docker_client.generated.models.container_config import ContainerConfig
+from docker_client.generated.docker_client.generated.models.history_response_item import HistoryResponseItem
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
+from docker_client.generated.docker_client.generated.models.image_inspect import ImageInspect
+from docker_client.generated.docker_client.generated.models.image_prune_response import ImagePruneResponse
+from docker_client.generated.docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
+from docker_client.generated.docker_client.generated.models.image_summary import ImageSummary
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class ImageApi:

@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.error_detail import ErrorDetail
+from docker_client.generated.docker_client.generated.models.error_detail import ErrorDetail
 
 # TODO update the JSON string below
 json = "{}"

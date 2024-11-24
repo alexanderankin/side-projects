@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.mount import Mount
+from docker_client.generated.docker_client.generated.models.mount import Mount
 
 class TestMount(unittest.TestCase):
     """Mount unit test stubs"""

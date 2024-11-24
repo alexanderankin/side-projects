@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.event_actor import EventActor
+from docker_client.generated.docker_client.generated.models.event_actor import EventActor
 
 # TODO update the JSON string below
 json = "{}"

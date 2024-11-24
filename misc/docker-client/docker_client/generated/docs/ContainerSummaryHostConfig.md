@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
+from docker_client.generated.docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
 
 # TODO update the JSON string below
 json = "{}"

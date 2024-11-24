@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.config_spec import ConfigSpec
+from docker_client.generated.docker_client.generated.models.config_spec import ConfigSpec
 
 class TestConfigSpec(unittest.TestCase):
     """ConfigSpec unit test stubs"""

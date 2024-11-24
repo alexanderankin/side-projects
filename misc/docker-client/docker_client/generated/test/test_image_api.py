@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.image_api import ImageApi
+from docker_client.generated.docker_client.generated.api.image_api import ImageApi
 
 
 class TestImageApi(unittest.TestCase):

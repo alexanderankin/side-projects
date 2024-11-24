@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
+from docker_client.generated.docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
 
 class TestImageDeleteResponseItem(unittest.TestCase):
     """ImageDeleteResponseItem unit test stubs"""

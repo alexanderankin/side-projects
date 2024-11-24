@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.process_config import ProcessConfig
+from docker_client.generated.docker_client.generated.models.process_config import ProcessConfig
 
 # TODO update the JSON string below
 json = "{}"

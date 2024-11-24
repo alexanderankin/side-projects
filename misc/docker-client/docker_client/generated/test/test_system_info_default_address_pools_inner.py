@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_info_default_address_pools_inner import SystemInfoDefaultAddressPoolsInner
+from docker_client.generated.docker_client.generated.models.system_info_default_address_pools_inner import SystemInfoDefaultAddressPoolsInner
 
 class TestSystemInfoDefaultAddressPoolsInner(unittest.TestCase):
     """SystemInfoDefaultAddressPoolsInner unit test stubs"""

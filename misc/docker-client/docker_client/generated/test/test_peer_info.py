@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.peer_info import PeerInfo
+from docker_client.generated.docker_client.generated.models.peer_info import PeerInfo
 
 class TestPeerInfo(unittest.TestCase):
     """PeerInfo unit test stubs"""

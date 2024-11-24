@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
+from docker_client.generated.docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
 
 # TODO update the JSON string below
 json = "{}"

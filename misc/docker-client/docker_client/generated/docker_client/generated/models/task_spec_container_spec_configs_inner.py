@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.task_spec_container_spec_configs_inner_file import TaskSpecContainerSpecConfigsInnerFile
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_configs_inner_file import TaskSpecContainerSpecConfigsInnerFile
 from typing import Optional, Set
 from typing_extensions import Self
 

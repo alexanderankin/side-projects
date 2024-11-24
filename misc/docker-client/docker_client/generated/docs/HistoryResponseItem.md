@@ -16,7 +16,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.history_response_item import HistoryResponseItem
+from docker_client.generated.docker_client.generated.models.history_response_item import HistoryResponseItem
 
 # TODO update the JSON string below
 json = "{}"

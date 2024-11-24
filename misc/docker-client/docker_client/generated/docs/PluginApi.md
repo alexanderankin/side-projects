@@ -26,9 +26,9 @@ Get plugin privileges
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin_privilege import PluginPrivilege
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin_privilege import PluginPrivilege
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -93,8 +93,8 @@ Create a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -159,9 +159,9 @@ Remove a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin import Plugin
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin import Plugin
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -229,8 +229,8 @@ Disable a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -296,8 +296,8 @@ Enable a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -363,9 +363,9 @@ Inspect a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin import Plugin
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin import Plugin
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -433,9 +433,9 @@ Returns information about installed plugins.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin import Plugin
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin import Plugin
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -502,9 +502,9 @@ Pulls and installs a plugin. After the plugin is installed, it can be enabled us
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin_privilege import PluginPrivilege
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin_privilege import PluginPrivilege
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -575,8 +575,8 @@ Push a plugin to the registry.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -640,8 +640,8 @@ Configure a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -707,9 +707,9 @@ Upgrade a plugin
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.plugin_privilege import PluginPrivilege
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.plugin_privilege import PluginPrivilege
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

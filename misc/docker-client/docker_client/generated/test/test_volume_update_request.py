@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.volume_update_request import VolumeUpdateRequest
+from docker_client.generated.docker_client.generated.models.volume_update_request import VolumeUpdateRequest
 
 class TestVolumeUpdateRequest(unittest.TestCase):
     """VolumeUpdateRequest unit test stubs"""

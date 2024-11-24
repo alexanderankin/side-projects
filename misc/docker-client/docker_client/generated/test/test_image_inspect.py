@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_inspect import ImageInspect
+from docker_client.generated.docker_client.generated.models.image_inspect import ImageInspect
 
 class TestImageInspect(unittest.TestCase):
     """ImageInspect unit test stubs"""

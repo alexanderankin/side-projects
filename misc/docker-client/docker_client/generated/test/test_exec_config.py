@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.exec_config import ExecConfig
+from docker_client.generated.docker_client.generated.models.exec_config import ExecConfig
 
 class TestExecConfig(unittest.TestCase):
     """ExecConfig unit test stubs"""

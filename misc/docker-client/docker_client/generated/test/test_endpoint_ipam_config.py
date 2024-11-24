@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.endpoint_ipam_config import EndpointIPAMConfig
+from docker_client.generated.docker_client.generated.models.endpoint_ipam_config import EndpointIPAMConfig
 
 class TestEndpointIPAMConfig(unittest.TestCase):
     """EndpointIPAMConfig unit test stubs"""

@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.system_auth_response import SystemAuthResponse
+from docker_client.generated.docker_client.generated.models.system_auth_response import SystemAuthResponse
 
 # TODO update the JSON string below
 json = "{}"

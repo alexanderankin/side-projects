@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.platform import Platform
-from docker_client.generated.models.task_spec_placement_preferences_inner import TaskSpecPlacementPreferencesInner
+from docker_client.generated.docker_client.generated.models.platform import Platform
+from docker_client.generated.docker_client.generated.models.task_spec_placement_preferences_inner import TaskSpecPlacementPreferencesInner
 from typing import Optional, Set
 from typing_extensions import Self
 

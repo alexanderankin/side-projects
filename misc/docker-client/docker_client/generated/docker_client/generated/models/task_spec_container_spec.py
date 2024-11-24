@@ -19,13 +19,13 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.health_config import HealthConfig
-from docker_client.generated.models.mount import Mount
-from docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
-from docker_client.generated.models.task_spec_container_spec_configs_inner import TaskSpecContainerSpecConfigsInner
-from docker_client.generated.models.task_spec_container_spec_dns_config import TaskSpecContainerSpecDNSConfig
-from docker_client.generated.models.task_spec_container_spec_privileges import TaskSpecContainerSpecPrivileges
-from docker_client.generated.models.task_spec_container_spec_secrets_inner import TaskSpecContainerSpecSecretsInner
+from docker_client.generated.docker_client.generated.models.health_config import HealthConfig
+from docker_client.generated.docker_client.generated.models.mount import Mount
+from docker_client.generated.docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_configs_inner import TaskSpecContainerSpecConfigsInner
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_dns_config import TaskSpecContainerSpecDNSConfig
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_privileges import TaskSpecContainerSpecPrivileges
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_secrets_inner import TaskSpecContainerSpecSecretsInner
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_placement import TaskSpecPlacement
+from docker_client.generated.docker_client.generated.models.task_spec_placement import TaskSpecPlacement
 
 class TestTaskSpecPlacement(unittest.TestCase):
     """TaskSpecPlacement unit test stubs"""

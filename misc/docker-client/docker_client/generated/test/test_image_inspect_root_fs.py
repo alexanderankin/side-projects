@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
+from docker_client.generated.docker_client.generated.models.image_inspect_root_fs import ImageInspectRootFS
 
 class TestImageInspectRootFS(unittest.TestCase):
     """ImageInspectRootFS unit test stubs"""

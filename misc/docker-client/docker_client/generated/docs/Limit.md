@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.limit import Limit
+from docker_client.generated.docker_client.generated.models.limit import Limit
 
 # TODO update the JSON string below
 json = "{}"

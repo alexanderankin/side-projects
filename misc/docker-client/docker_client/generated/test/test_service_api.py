@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.service_api import ServiceApi
+from docker_client.generated.docker_client.generated.api.service_api import ServiceApi
 
 
 class TestServiceApi(unittest.TestCase):

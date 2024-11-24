@@ -19,12 +19,12 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.object_version import ObjectVersion
-from docker_client.generated.models.service_endpoint import ServiceEndpoint
-from docker_client.generated.models.service_job_status import ServiceJobStatus
-from docker_client.generated.models.service_service_status import ServiceServiceStatus
-from docker_client.generated.models.service_spec import ServiceSpec
-from docker_client.generated.models.service_update_status import ServiceUpdateStatus
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.service_endpoint import ServiceEndpoint
+from docker_client.generated.docker_client.generated.models.service_job_status import ServiceJobStatus
+from docker_client.generated.docker_client.generated.models.service_service_status import ServiceServiceStatus
+from docker_client.generated.docker_client.generated.models.service_spec import ServiceSpec
+from docker_client.generated.docker_client.generated.models.service_update_status import ServiceUpdateStatus
 from typing import Optional, Set
 from typing_extensions import Self
 

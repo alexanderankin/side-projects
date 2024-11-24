@@ -19,9 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.endpoint_port_config import EndpointPortConfig
-from docker_client.generated.models.endpoint_spec import EndpointSpec
-from docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
+from docker_client.generated.docker_client.generated.models.endpoint_port_config import EndpointPortConfig
+from docker_client.generated.docker_client.generated.models.endpoint_spec import EndpointSpec
+from docker_client.generated.docker_client.generated.models.service_endpoint_virtual_ips_inner import ServiceEndpointVirtualIPsInner
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.plugin_privilege import PluginPrivilege
+from docker_client.generated.docker_client.generated.models.plugin_privilege import PluginPrivilege
 
 # TODO update the JSON string below
 json = "{}"

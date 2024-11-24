@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.graph_driver_data import GraphDriverData
+from docker_client.generated.docker_client.generated.models.graph_driver_data import GraphDriverData
 
 class TestGraphDriverData(unittest.TestCase):
     """GraphDriverData unit test stubs"""

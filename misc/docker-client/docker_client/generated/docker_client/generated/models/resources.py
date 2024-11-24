@@ -20,11 +20,11 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.device_mapping import DeviceMapping
-from docker_client.generated.models.device_request import DeviceRequest
-from docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
-from docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
-from docker_client.generated.models.throttle_device import ThrottleDevice
+from docker_client.generated.docker_client.generated.models.device_mapping import DeviceMapping
+from docker_client.generated.docker_client.generated.models.device_request import DeviceRequest
+from docker_client.generated.docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
+from docker_client.generated.docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
+from docker_client.generated.docker_client.generated.models.throttle_device import ThrottleDevice
 from typing import Optional, Set
 from typing_extensions import Self
 

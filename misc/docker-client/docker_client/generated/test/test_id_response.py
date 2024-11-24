@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
 
 class TestIdResponse(unittest.TestCase):
     """IdResponse unit test stubs"""

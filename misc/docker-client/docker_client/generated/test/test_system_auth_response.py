@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_auth_response import SystemAuthResponse
+from docker_client.generated.docker_client.generated.models.system_auth_response import SystemAuthResponse
 
 class TestSystemAuthResponse(unittest.TestCase):
     """SystemAuthResponse unit test stubs"""

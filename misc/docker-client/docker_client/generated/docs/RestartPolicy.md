@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.restart_policy import RestartPolicy
+from docker_client.generated.docker_client.generated.models.restart_policy import RestartPolicy
 
 # TODO update the JSON string below
 json = "{}"

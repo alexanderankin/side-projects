@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_config_interface import PluginConfigInterface
+from docker_client.generated.docker_client.generated.models.plugin_config_interface import PluginConfigInterface
 
 class TestPluginConfigInterface(unittest.TestCase):
     """PluginConfigInterface unit test stubs"""

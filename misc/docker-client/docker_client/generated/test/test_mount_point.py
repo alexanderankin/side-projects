@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.mount_point import MountPoint
+from docker_client.generated.docker_client.generated.models.mount_point import MountPoint
 
 class TestMountPoint(unittest.TestCase):
     """MountPoint unit test stubs"""

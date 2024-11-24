@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.object_version import ObjectVersion
-from docker_client.generated.models.secret_spec import SecretSpec
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.secret_spec import SecretSpec
 from typing import Optional, Set
 from typing_extensions import Self
 

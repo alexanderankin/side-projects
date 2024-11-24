@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.filesystem_change import FilesystemChange
+from docker_client.generated.docker_client.generated.models.filesystem_change import FilesystemChange
 
 # TODO update the JSON string below
 json = "{}"

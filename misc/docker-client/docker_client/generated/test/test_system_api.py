@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.system_api import SystemApi
+from docker_client.generated.docker_client.generated.api.system_api import SystemApi
 
 
 class TestSystemApi(unittest.TestCase):

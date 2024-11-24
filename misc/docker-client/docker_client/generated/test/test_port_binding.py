@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.port_binding import PortBinding
+from docker_client.generated.docker_client.generated.models.port_binding import PortBinding
 
 class TestPortBinding(unittest.TestCase):
     """PortBinding unit test stubs"""

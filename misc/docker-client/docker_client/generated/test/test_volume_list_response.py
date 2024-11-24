@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.volume_list_response import VolumeListResponse
+from docker_client.generated.docker_client.generated.models.volume_list_response import VolumeListResponse
 
 class TestVolumeListResponse(unittest.TestCase):
     """VolumeListResponse unit test stubs"""

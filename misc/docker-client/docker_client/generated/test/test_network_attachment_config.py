@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
+from docker_client.generated.docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
 
 class TestNetworkAttachmentConfig(unittest.TestCase):
     """NetworkAttachmentConfig unit test stubs"""

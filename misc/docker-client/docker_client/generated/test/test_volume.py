@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.volume import Volume
+from docker_client.generated.docker_client.generated.models.volume import Volume
 
 class TestVolume(unittest.TestCase):
     """Volume unit test stubs"""

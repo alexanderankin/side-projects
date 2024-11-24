@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.change_type import ChangeType
+from docker_client.generated.docker_client.generated.models.change_type import ChangeType
 
 class TestChangeType(unittest.TestCase):
     """ChangeType unit test stubs"""

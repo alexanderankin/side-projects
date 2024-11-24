@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.engine_description import EngineDescription
+from docker_client.generated.docker_client.generated.models.engine_description import EngineDescription
 
 class TestEngineDescription(unittest.TestCase):
     """EngineDescription unit test stubs"""

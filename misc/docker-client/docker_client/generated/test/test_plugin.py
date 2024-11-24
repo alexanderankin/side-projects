@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin import Plugin
+from docker_client.generated.docker_client.generated.models.plugin import Plugin
 
 class TestPlugin(unittest.TestCase):
     """Plugin unit test stubs"""

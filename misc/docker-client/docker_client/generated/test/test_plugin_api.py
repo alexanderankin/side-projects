@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.plugin_api import PluginApi
+from docker_client.generated.docker_client.generated.api.plugin_api import PluginApi
 
 
 class TestPluginApi(unittest.TestCase):

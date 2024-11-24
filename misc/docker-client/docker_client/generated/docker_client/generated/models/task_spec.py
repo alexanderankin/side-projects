@@ -19,14 +19,14 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
-from docker_client.generated.models.task_spec_container_spec import TaskSpecContainerSpec
-from docker_client.generated.models.task_spec_log_driver import TaskSpecLogDriver
-from docker_client.generated.models.task_spec_network_attachment_spec import TaskSpecNetworkAttachmentSpec
-from docker_client.generated.models.task_spec_placement import TaskSpecPlacement
-from docker_client.generated.models.task_spec_plugin_spec import TaskSpecPluginSpec
-from docker_client.generated.models.task_spec_resources import TaskSpecResources
-from docker_client.generated.models.task_spec_restart_policy import TaskSpecRestartPolicy
+from docker_client.generated.docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec import TaskSpecContainerSpec
+from docker_client.generated.docker_client.generated.models.task_spec_log_driver import TaskSpecLogDriver
+from docker_client.generated.docker_client.generated.models.task_spec_network_attachment_spec import TaskSpecNetworkAttachmentSpec
+from docker_client.generated.docker_client.generated.models.task_spec_placement import TaskSpecPlacement
+from docker_client.generated.docker_client.generated.models.task_spec_plugin_spec import TaskSpecPluginSpec
+from docker_client.generated.docker_client.generated.models.task_spec_resources import TaskSpecResources
+from docker_client.generated.docker_client.generated.models.task_spec_restart_policy import TaskSpecRestartPolicy
 from typing import Optional, Set
 from typing_extensions import Self
 

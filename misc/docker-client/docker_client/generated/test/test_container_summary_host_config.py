@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
+from docker_client.generated.docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
 
 class TestContainerSummaryHostConfig(unittest.TestCase):
     """ContainerSummaryHostConfig unit test stubs"""

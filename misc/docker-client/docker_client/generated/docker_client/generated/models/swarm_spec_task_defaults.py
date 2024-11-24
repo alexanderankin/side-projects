@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
+from docker_client.generated.docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
 from typing import Optional, Set
 from typing_extensions import Self
 

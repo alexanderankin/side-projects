@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.cluster_info import ClusterInfo
+from docker_client.generated.docker_client.generated.models.cluster_info import ClusterInfo
 
 # TODO update the JSON string below
 json = "{}"

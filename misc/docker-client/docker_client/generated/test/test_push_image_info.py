@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.push_image_info import PushImageInfo
+from docker_client.generated.docker_client.generated.models.push_image_info import PushImageInfo
 
 class TestPushImageInfo(unittest.TestCase):
     """PushImageInfo unit test stubs"""

@@ -18,9 +18,9 @@ Inspect a task
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.task import Task
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.task import Task
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -87,9 +87,9 @@ List tasks
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.task import Task
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.task import Task
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -157,8 +157,8 @@ Get `stdout` and `stderr` logs from a task. See also [`/containers/{id}/logs`](#
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

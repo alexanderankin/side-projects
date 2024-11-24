@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_wait_exit_error import ContainerWaitExitError
+from docker_client.generated.docker_client.generated.models.container_wait_exit_error import ContainerWaitExitError
 
 class TestContainerWaitExitError(unittest.TestCase):
     """ContainerWaitExitError unit test stubs"""

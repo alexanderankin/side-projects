@@ -19,13 +19,13 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.commit import Commit
-from docker_client.generated.models.generic_resources_inner import GenericResourcesInner
-from docker_client.generated.models.plugins_info import PluginsInfo
-from docker_client.generated.models.registry_service_config import RegistryServiceConfig
-from docker_client.generated.models.runtime import Runtime
-from docker_client.generated.models.swarm_info import SwarmInfo
-from docker_client.generated.models.system_info_default_address_pools_inner import SystemInfoDefaultAddressPoolsInner
+from docker_client.generated.docker_client.generated.models.commit import Commit
+from docker_client.generated.docker_client.generated.models.generic_resources_inner import GenericResourcesInner
+from docker_client.generated.docker_client.generated.models.plugins_info import PluginsInfo
+from docker_client.generated.docker_client.generated.models.registry_service_config import RegistryServiceConfig
+from docker_client.generated.docker_client.generated.models.runtime import Runtime
+from docker_client.generated.docker_client.generated.models.swarm_info import SwarmInfo
+from docker_client.generated.docker_client.generated.models.system_info_default_address_pools_inner import SystemInfoDefaultAddressPoolsInner
 from typing import Optional, Set
 from typing_extensions import Self
 

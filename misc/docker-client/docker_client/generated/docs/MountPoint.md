@@ -18,7 +18,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.mount_point import MountPoint
+from docker_client.generated.docker_client.generated.models.mount_point import MountPoint
 
 # TODO update the JSON string below
 json = "{}"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.history_response_item import HistoryResponseItem
+from docker_client.generated.docker_client.generated.models.history_response_item import HistoryResponseItem
 
 class TestHistoryResponseItem(unittest.TestCase):
     """HistoryResponseItem unit test stubs"""

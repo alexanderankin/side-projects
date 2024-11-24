@@ -19,9 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.container_status import ContainerStatus
-from docker_client.generated.models.port_status import PortStatus
-from docker_client.generated.models.task_state import TaskState
+from docker_client.generated.docker_client.generated.models.container_status import ContainerStatus
+from docker_client.generated.docker_client.generated.models.port_status import PortStatus
+from docker_client.generated.docker_client.generated.models.task_state import TaskState
 from typing import Optional, Set
 from typing_extensions import Self
 

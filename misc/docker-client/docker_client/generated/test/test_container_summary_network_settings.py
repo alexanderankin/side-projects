@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
+from docker_client.generated.docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
 
 class TestContainerSummaryNetworkSettings(unittest.TestCase):
     """ContainerSummaryNetworkSettings unit test stubs"""

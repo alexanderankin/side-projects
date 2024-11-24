@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.commit import Commit
+from docker_client.generated.docker_client.generated.models.commit import Commit
 
 # TODO update the JSON string below
 json = "{}"

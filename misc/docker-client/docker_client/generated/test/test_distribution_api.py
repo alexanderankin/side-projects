@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.distribution_api import DistributionApi
+from docker_client.generated.docker_client.generated.api.distribution_api import DistributionApi
 
 
 class TestDistributionApi(unittest.TestCase):

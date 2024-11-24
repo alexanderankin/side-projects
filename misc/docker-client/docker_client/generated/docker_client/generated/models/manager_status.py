@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.reachability import Reachability
+from docker_client.generated.docker_client.generated.models.reachability import Reachability
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -19,15 +19,15 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt, StrictStr
 from typing import Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.volume import Volume
-from docker_client.generated.models.volume_create_options import VolumeCreateOptions
-from docker_client.generated.models.volume_list_response import VolumeListResponse
-from docker_client.generated.models.volume_prune_response import VolumePruneResponse
-from docker_client.generated.models.volume_update_request import VolumeUpdateRequest
+from docker_client.generated.docker_client.generated.models.volume import Volume
+from docker_client.generated.docker_client.generated.models.volume_create_options import VolumeCreateOptions
+from docker_client.generated.docker_client.generated.models.volume_list_response import VolumeListResponse
+from docker_client.generated.docker_client.generated.models.volume_prune_response import VolumePruneResponse
+from docker_client.generated.docker_client.generated.models.volume_update_request import VolumeUpdateRequest
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class VolumeApi:

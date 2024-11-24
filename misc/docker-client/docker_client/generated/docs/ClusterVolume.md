@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.cluster_volume import ClusterVolume
+from docker_client.generated.docker_client.generated.models.cluster_volume import ClusterVolume
 
 # TODO update the JSON string below
 json = "{}"

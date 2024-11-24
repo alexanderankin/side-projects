@@ -19,12 +19,12 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt, StrictStr
 from typing import List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.node import Node
-from docker_client.generated.models.node_spec import NodeSpec
+from docker_client.generated.docker_client.generated.models.node import Node
+from docker_client.generated.docker_client.generated.models.node_spec import NodeSpec
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class NodeApi:

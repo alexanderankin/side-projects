@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.generic_resources_inner import GenericResourcesInner
+from docker_client.generated.docker_client.generated.models.generic_resources_inner import GenericResourcesInner
 
 # TODO update the JSON string below
 json = "{}"

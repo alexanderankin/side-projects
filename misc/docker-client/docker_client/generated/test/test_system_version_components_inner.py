@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_version_components_inner import SystemVersionComponentsInner
+from docker_client.generated.docker_client.generated.models.system_version_components_inner import SystemVersionComponentsInner
 
 class TestSystemVersionComponentsInner(unittest.TestCase):
     """SystemVersionComponentsInner unit test stubs"""

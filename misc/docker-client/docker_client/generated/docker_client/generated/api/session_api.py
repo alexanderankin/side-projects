@@ -17,9 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class SessionApi:

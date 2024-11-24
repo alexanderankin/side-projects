@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.volume_create_options import VolumeCreateOptions
+from docker_client.generated.docker_client.generated.models.volume_create_options import VolumeCreateOptions
 
 # TODO update the JSON string below
 json = "{}"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.generic_resources_inner_named_resource_spec import GenericResourcesInnerNamedResourceSpec
+from docker_client.generated.docker_client.generated.models.generic_resources_inner_named_resource_spec import GenericResourcesInnerNamedResourceSpec
 
 class TestGenericResourcesInnerNamedResourceSpec(unittest.TestCase):
     """GenericResourcesInnerNamedResourceSpec unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_restart_policy import TaskSpecRestartPolicy
+from docker_client.generated.docker_client.generated.models.task_spec_restart_policy import TaskSpecRestartPolicy
 
 class TestTaskSpecRestartPolicy(unittest.TestCase):
     """TaskSpecRestartPolicy unit test stubs"""

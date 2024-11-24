@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.config_api import ConfigApi
+from docker_client.generated.docker_client.generated.api.config_api import ConfigApi
 
 
 class TestConfigApi(unittest.TestCase):

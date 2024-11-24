@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.cluster_volume_spec_access_mode_capacity_range import ClusterVolumeSpecAccessModeCapacityRange
+from docker_client.generated.docker_client.generated.models.cluster_volume_spec_access_mode_capacity_range import ClusterVolumeSpecAccessModeCapacityRange
 
 class TestClusterVolumeSpecAccessModeCapacityRange(unittest.TestCase):
     """ClusterVolumeSpecAccessModeCapacityRange unit test stubs"""

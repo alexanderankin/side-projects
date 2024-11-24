@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.service_spec_mode_replicated import ServiceSpecModeReplicated
-from docker_client.generated.models.service_spec_mode_replicated_job import ServiceSpecModeReplicatedJob
+from docker_client.generated.docker_client.generated.models.service_spec_mode_replicated import ServiceSpecModeReplicated
+from docker_client.generated.docker_client.generated.models.service_spec_mode_replicated_job import ServiceSpecModeReplicatedJob
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_container_spec_configs_inner import TaskSpecContainerSpecConfigsInner
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_configs_inner import TaskSpecContainerSpecConfigsInner
 
 class TestTaskSpecContainerSpecConfigsInner(unittest.TestCase):
     """TaskSpecContainerSpecConfigsInner unit test stubs"""

@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
-from docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
-from docker_client.generated.models.mount_point import MountPoint
-from docker_client.generated.models.port import Port
+from docker_client.generated.docker_client.generated.models.container_summary_host_config import ContainerSummaryHostConfig
+from docker_client.generated.docker_client.generated.models.container_summary_network_settings import ContainerSummaryNetworkSettings
+from docker_client.generated.docker_client.generated.models.mount_point import MountPoint
+from docker_client.generated.docker_client.generated.models.port import Port
 from typing import Optional, Set
 from typing_extensions import Self
 

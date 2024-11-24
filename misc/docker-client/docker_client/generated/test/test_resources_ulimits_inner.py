@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
+from docker_client.generated.docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
 
 class TestResourcesUlimitsInner(unittest.TestCase):
     """ResourcesUlimitsInner unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.mount_volume_options import MountVolumeOptions
+from docker_client.generated.docker_client.generated.models.mount_volume_options import MountVolumeOptions
 
 class TestMountVolumeOptions(unittest.TestCase):
     """MountVolumeOptions unit test stubs"""

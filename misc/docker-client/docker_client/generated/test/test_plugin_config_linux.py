@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_config_linux import PluginConfigLinux
+from docker_client.generated.docker_client.generated.models.plugin_config_linux import PluginConfigLinux
 
 class TestPluginConfigLinux(unittest.TestCase):
     """PluginConfigLinux unit test stubs"""

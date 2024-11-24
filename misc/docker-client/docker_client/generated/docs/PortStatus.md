@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.port_status import PortStatus
+from docker_client.generated.docker_client.generated.models.port_status import PortStatus
 
 # TODO update the JSON string below
 json = "{}"

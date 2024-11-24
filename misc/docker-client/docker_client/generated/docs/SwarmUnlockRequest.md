@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
+from docker_client.generated.docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
 
 # TODO update the JSON string below
 json = "{}"

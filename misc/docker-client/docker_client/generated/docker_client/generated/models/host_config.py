@@ -20,15 +20,15 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.device_mapping import DeviceMapping
-from docker_client.generated.models.device_request import DeviceRequest
-from docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
-from docker_client.generated.models.mount import Mount
-from docker_client.generated.models.port_binding import PortBinding
-from docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
-from docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
-from docker_client.generated.models.restart_policy import RestartPolicy
-from docker_client.generated.models.throttle_device import ThrottleDevice
+from docker_client.generated.docker_client.generated.models.device_mapping import DeviceMapping
+from docker_client.generated.docker_client.generated.models.device_request import DeviceRequest
+from docker_client.generated.docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
+from docker_client.generated.docker_client.generated.models.mount import Mount
+from docker_client.generated.docker_client.generated.models.port_binding import PortBinding
+from docker_client.generated.docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
+from docker_client.generated.docker_client.generated.models.resources_ulimits_inner import ResourcesUlimitsInner
+from docker_client.generated.docker_client.generated.models.restart_policy import RestartPolicy
+from docker_client.generated.docker_client.generated.models.throttle_device import ThrottleDevice
 from typing import Optional, Set
 from typing_extensions import Self
 

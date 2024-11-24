@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_ca_config import SwarmSpecCAConfig
+from docker_client.generated.docker_client.generated.models.swarm_spec_ca_config import SwarmSpecCAConfig
 
 class TestSwarmSpecCAConfig(unittest.TestCase):
     """SwarmSpecCAConfig unit test stubs"""

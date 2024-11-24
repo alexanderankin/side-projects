@@ -24,9 +24,9 @@ The network must be either a local-scoped network or a swarm-scoped network with
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network_connect_request import NetworkConnectRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network_connect_request import NetworkConnectRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -94,10 +94,10 @@ Create a network
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network_create_request import NetworkCreateRequest
-from docker_client.generated.models.network_create_response import NetworkCreateResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network_create_request import NetworkCreateRequest
+from docker_client.generated.docker_client.generated.models.network_create_response import NetworkCreateResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -165,8 +165,8 @@ Remove a network
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -231,9 +231,9 @@ Disconnect a container from a network
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -300,9 +300,9 @@ Inspect a network
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network import Network
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network import Network
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -374,9 +374,9 @@ Returns a list of networks. For details on the format, see the [network inspect 
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network import Network
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network import Network
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -441,9 +441,9 @@ Delete unused networks
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.network_prune_response import NetworkPruneResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.network_prune_response import NetworkPruneResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

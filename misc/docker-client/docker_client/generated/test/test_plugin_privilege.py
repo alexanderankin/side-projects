@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_privilege import PluginPrivilege
+from docker_client.generated.docker_client.generated.models.plugin_privilege import PluginPrivilege
 
 class TestPluginPrivilege(unittest.TestCase):
     """PluginPrivilege unit test stubs"""

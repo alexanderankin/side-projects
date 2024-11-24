@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.networking_config import NetworkingConfig
+from docker_client.generated.docker_client.generated.models.networking_config import NetworkingConfig
 
 class TestNetworkingConfig(unittest.TestCase):
     """NetworkingConfig unit test stubs"""

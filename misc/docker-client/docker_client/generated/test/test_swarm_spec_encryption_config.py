@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_encryption_config import SwarmSpecEncryptionConfig
+from docker_client.generated.docker_client.generated.models.swarm_spec_encryption_config import SwarmSpecEncryptionConfig
 
 class TestSwarmSpecEncryptionConfig(unittest.TestCase):
     """SwarmSpecEncryptionConfig unit test stubs"""

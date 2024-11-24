@@ -19,7 +19,7 @@ import ssl
 
 import urllib3
 
-from docker_client.generated.exceptions import ApiException, ApiValueError
+from docker_client.generated.docker_client.generated.exceptions import ApiException, ApiValueError
 
 SUPPORTED_SOCKS_PROXIES = {"socks5", "socks5h", "socks4", "socks4a"}
 RESTResponseType = urllib3.HTTPResponse

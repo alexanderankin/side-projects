@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_wait_response import ContainerWaitResponse
+from docker_client.generated.docker_client.generated.models.container_wait_response import ContainerWaitResponse
 
 class TestContainerWaitResponse(unittest.TestCase):
     """ContainerWaitResponse unit test stubs"""

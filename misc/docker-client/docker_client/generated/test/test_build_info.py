@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.build_info import BuildInfo
+from docker_client.generated.docker_client.generated.models.build_info import BuildInfo
 
 class TestBuildInfo(unittest.TestCase):
     """BuildInfo unit test stubs"""

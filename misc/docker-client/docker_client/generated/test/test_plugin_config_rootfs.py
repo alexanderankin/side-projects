@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_config_rootfs import PluginConfigRootfs
+from docker_client.generated.docker_client.generated.models.plugin_config_rootfs import PluginConfigRootfs
 
 class TestPluginConfigRootfs(unittest.TestCase):
     """PluginConfigRootfs unit test stubs"""

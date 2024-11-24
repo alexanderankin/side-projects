@@ -20,10 +20,10 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.join_tokens import JoinTokens
-from docker_client.generated.models.object_version import ObjectVersion
-from docker_client.generated.models.swarm_spec import SwarmSpec
-from docker_client.generated.models.tls_info import TLSInfo
+from docker_client.generated.docker_client.generated.models.join_tokens import JoinTokens
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.swarm_spec import SwarmSpec
+from docker_client.generated.docker_client.generated.models.tls_info import TLSInfo
 from typing import Optional, Set
 from typing_extensions import Self
 

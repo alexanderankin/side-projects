@@ -21,10 +21,10 @@ Create a service
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.service_create_request import ServiceCreateRequest
-from docker_client.generated.models.service_create_response import ServiceCreateResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.service_create_request import ServiceCreateRequest
+from docker_client.generated.docker_client.generated.models.service_create_response import ServiceCreateResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -95,8 +95,8 @@ Delete a service
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -161,9 +161,9 @@ Inspect a service
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.service import Service
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.service import Service
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -232,9 +232,9 @@ List services
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.service import Service
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.service import Service
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -304,8 +304,8 @@ Get `stdout` and `stderr` logs from a service. See also [`/containers/{id}/logs`
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -386,10 +386,10 @@ Update a service
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.service_update_request import ServiceUpdateRequest
-from docker_client.generated.models.service_update_response import ServiceUpdateResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.service_update_request import ServiceUpdateRequest
+from docker_client.generated.docker_client.generated.models.service_update_response import ServiceUpdateResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

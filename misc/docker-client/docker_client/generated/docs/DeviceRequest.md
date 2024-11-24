@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.device_request import DeviceRequest
+from docker_client.generated.docker_client.generated.models.device_request import DeviceRequest
 
 # TODO update the JSON string below
 json = "{}"

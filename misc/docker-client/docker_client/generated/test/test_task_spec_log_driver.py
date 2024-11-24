@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_log_driver import TaskSpecLogDriver
+from docker_client.generated.docker_client.generated.models.task_spec_log_driver import TaskSpecLogDriver
 
 class TestTaskSpecLogDriver(unittest.TestCase):
     """TaskSpecLogDriver unit test stubs"""

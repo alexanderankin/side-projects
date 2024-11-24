@@ -30,9 +30,9 @@ Delete builder cache
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.build_prune_response import BuildPruneResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.build_prune_response import BuildPruneResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -103,8 +103,8 @@ Build an image from a tar archive with a `Dockerfile` in it.  The `Dockerfile` s
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -222,10 +222,10 @@ Create a new image from a container
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.container_config import ContainerConfig
-from docker_client.generated.models.id_response import IdResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.container_config import ContainerConfig
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -307,8 +307,8 @@ Pull or import an image.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -390,9 +390,9 @@ Remove an image, along with any untagged parent images that were referenced by t
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -465,8 +465,8 @@ Get a tarball containing all images and metadata for a repository.  If `name` is
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -533,8 +533,8 @@ Get a tarball containing all images and metadata for several image repositories.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -601,9 +601,9 @@ Return parent layers of an image.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.history_response_item import HistoryResponseItem
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.history_response_item import HistoryResponseItem
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -671,9 +671,9 @@ Return low-level information about an image.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.image_inspect import ImageInspect
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.image_inspect import ImageInspect
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -741,9 +741,9 @@ Returns a list of images on the server. Note that it uses a different, smaller r
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.image_summary import ImageSummary
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.image_summary import ImageSummary
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -816,8 +816,8 @@ Load a set of images and tags into a repository.  For details on the format, see
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -882,9 +882,9 @@ Delete unused images
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.image_prune_response import ImagePruneResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.image_prune_response import ImagePruneResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -951,8 +951,8 @@ Push an image to a registry.  If you wish to push an image on to a private regis
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1022,9 +1022,9 @@ Search for an image on Docker Hub.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.image_search_response_item import ImageSearchResponseItem
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -1095,8 +1095,8 @@ Tag an image so that it becomes part of a repository.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

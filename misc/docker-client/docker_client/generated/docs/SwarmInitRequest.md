@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.swarm_init_request import SwarmInitRequest
+from docker_client.generated.docker_client.generated.models.swarm_init_request import SwarmInitRequest
 
 # TODO update the JSON string below
 json = "{}"

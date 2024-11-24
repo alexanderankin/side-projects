@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.ipam_config import IPAMConfig
+from docker_client.generated.docker_client.generated.models.ipam_config import IPAMConfig
 
 # TODO update the JSON string below
 json = "{}"

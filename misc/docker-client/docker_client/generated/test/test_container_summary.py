@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_summary import ContainerSummary
+from docker_client.generated.docker_client.generated.models.container_summary import ContainerSummary
 
 class TestContainerSummary(unittest.TestCase):
     """ContainerSummary unit test stubs"""

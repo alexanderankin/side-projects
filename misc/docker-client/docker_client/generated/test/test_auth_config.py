@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.auth_config import AuthConfig
+from docker_client.generated.docker_client.generated.models.auth_config import AuthConfig
 
 class TestAuthConfig(unittest.TestCase):
     """AuthConfig unit test stubs"""

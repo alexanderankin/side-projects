@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.session_api import SessionApi
+from docker_client.generated.docker_client.generated.api.session_api import SessionApi
 
 
 class TestSessionApi(unittest.TestCase):

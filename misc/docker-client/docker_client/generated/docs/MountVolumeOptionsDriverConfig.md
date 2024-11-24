@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.mount_volume_options_driver_config import MountVolumeOptionsDriverConfig
+from docker_client.generated.docker_client.generated.models.mount_volume_options_driver_config import MountVolumeOptionsDriverConfig
 
 # TODO update the JSON string below
 json = "{}"

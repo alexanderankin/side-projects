@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.container_api import ContainerApi
+from docker_client.generated.docker_client.generated.api.container_api import ContainerApi
 
 
 class TestContainerApi(unittest.TestCase):

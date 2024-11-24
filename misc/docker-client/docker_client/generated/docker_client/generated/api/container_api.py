@@ -19,20 +19,20 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictBytes, StrictInt, StrictStr, field_validator
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from docker_client.generated.models.container_create_request import ContainerCreateRequest
-from docker_client.generated.models.container_create_response import ContainerCreateResponse
-from docker_client.generated.models.container_inspect_response import ContainerInspectResponse
-from docker_client.generated.models.container_prune_response import ContainerPruneResponse
-from docker_client.generated.models.container_summary import ContainerSummary
-from docker_client.generated.models.container_top_response import ContainerTopResponse
-from docker_client.generated.models.container_update_request import ContainerUpdateRequest
-from docker_client.generated.models.container_update_response import ContainerUpdateResponse
-from docker_client.generated.models.container_wait_response import ContainerWaitResponse
-from docker_client.generated.models.filesystem_change import FilesystemChange
+from docker_client.generated.docker_client.generated.models.container_create_request import ContainerCreateRequest
+from docker_client.generated.docker_client.generated.models.container_create_response import ContainerCreateResponse
+from docker_client.generated.docker_client.generated.models.container_inspect_response import ContainerInspectResponse
+from docker_client.generated.docker_client.generated.models.container_prune_response import ContainerPruneResponse
+from docker_client.generated.docker_client.generated.models.container_summary import ContainerSummary
+from docker_client.generated.docker_client.generated.models.container_top_response import ContainerTopResponse
+from docker_client.generated.docker_client.generated.models.container_update_request import ContainerUpdateRequest
+from docker_client.generated.docker_client.generated.models.container_update_response import ContainerUpdateResponse
+from docker_client.generated.docker_client.generated.models.container_wait_response import ContainerWaitResponse
+from docker_client.generated.docker_client.generated.models.filesystem_change import FilesystemChange
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class ContainerApi:

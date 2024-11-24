@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_update_request import ServiceUpdateRequest
+from docker_client.generated.docker_client.generated.models.service_update_request import ServiceUpdateRequest
 
 class TestServiceUpdateRequest(unittest.TestCase):
     """ServiceUpdateRequest unit test stubs"""

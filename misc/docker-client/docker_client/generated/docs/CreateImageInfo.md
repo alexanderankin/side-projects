@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.create_image_info import CreateImageInfo
+from docker_client.generated.docker_client.generated.models.create_image_info import CreateImageInfo
 
 # TODO update the JSON string below
 json = "{}"

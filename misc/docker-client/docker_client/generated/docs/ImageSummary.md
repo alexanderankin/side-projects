@@ -19,7 +19,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.image_summary import ImageSummary
+from docker_client.generated.docker_client.generated.models.image_summary import ImageSummary
 
 # TODO update the JSON string below
 json = "{}"

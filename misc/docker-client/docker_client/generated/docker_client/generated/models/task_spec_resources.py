@@ -19,8 +19,8 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.limit import Limit
-from docker_client.generated.models.resource_object import ResourceObject
+from docker_client.generated.docker_client.generated.models.limit import Limit
+from docker_client.generated.docker_client.generated.models.resource_object import ResourceObject
 from typing import Optional, Set
 from typing_extensions import Self
 

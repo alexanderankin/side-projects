@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.config_reference import ConfigReference
+from docker_client.generated.docker_client.generated.models.config_reference import ConfigReference
 
 class TestConfigReference(unittest.TestCase):
     """ConfigReference unit test stubs"""

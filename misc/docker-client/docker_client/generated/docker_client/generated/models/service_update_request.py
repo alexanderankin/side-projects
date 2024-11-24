@@ -19,12 +19,12 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.endpoint_spec import EndpointSpec
-from docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
-from docker_client.generated.models.service_spec_mode import ServiceSpecMode
-from docker_client.generated.models.service_spec_rollback_config import ServiceSpecRollbackConfig
-from docker_client.generated.models.service_spec_update_config import ServiceSpecUpdateConfig
-from docker_client.generated.models.task_spec import TaskSpec
+from docker_client.generated.docker_client.generated.models.endpoint_spec import EndpointSpec
+from docker_client.generated.docker_client.generated.models.network_attachment_config import NetworkAttachmentConfig
+from docker_client.generated.docker_client.generated.models.service_spec_mode import ServiceSpecMode
+from docker_client.generated.docker_client.generated.models.service_spec_rollback_config import ServiceSpecRollbackConfig
+from docker_client.generated.docker_client.generated.models.service_spec_update_config import ServiceSpecUpdateConfig
+from docker_client.generated.docker_client.generated.models.task_spec import TaskSpec
 from typing import Optional, Set
 from typing_extensions import Self
 

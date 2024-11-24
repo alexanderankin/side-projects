@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.push_image_info import PushImageInfo
+from docker_client.generated.docker_client.generated.models.push_image_info import PushImageInfo
 
 # TODO update the JSON string below
 json = "{}"

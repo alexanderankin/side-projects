@@ -20,10 +20,10 @@ Create a config
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.config_create_request import ConfigCreateRequest
-from docker_client.generated.models.id_response import IdResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.config_create_request import ConfigCreateRequest
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -90,8 +90,8 @@ Delete a config
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -156,9 +156,9 @@ Inspect a config
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.config import Config
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.config import Config
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -225,9 +225,9 @@ List configs
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.config import Config
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.config import Config
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -293,9 +293,9 @@ Update a Config
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.config_spec import ConfigSpec
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.config_spec import ConfigSpec
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_container_spec_privileges_se_linux_context import TaskSpecContainerSpecPrivilegesSELinuxContext
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_privileges_se_linux_context import TaskSpecContainerSpecPrivilegesSELinuxContext
 
 class TestTaskSpecContainerSpecPrivilegesSELinuxContext(unittest.TestCase):
     """TaskSpecContainerSpecPrivilegesSELinuxContext unit test stubs"""

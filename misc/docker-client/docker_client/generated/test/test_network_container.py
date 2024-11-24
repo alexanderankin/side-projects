@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.network_container import NetworkContainer
+from docker_client.generated.docker_client.generated.models.network_container import NetworkContainer
 
 class TestNetworkContainer(unittest.TestCase):
     """NetworkContainer unit test stubs"""

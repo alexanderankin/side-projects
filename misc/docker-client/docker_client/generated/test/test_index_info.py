@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.index_info import IndexInfo
+from docker_client.generated.docker_client.generated.models.index_info import IndexInfo
 
 class TestIndexInfo(unittest.TestCase):
     """IndexInfo unit test stubs"""

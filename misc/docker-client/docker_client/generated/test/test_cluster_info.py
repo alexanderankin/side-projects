@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.cluster_info import ClusterInfo
+from docker_client.generated.docker_client.generated.models.cluster_info import ClusterInfo
 
 class TestClusterInfo(unittest.TestCase):
     """ClusterInfo unit test stubs"""

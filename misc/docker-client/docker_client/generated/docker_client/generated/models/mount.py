@@ -19,9 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.mount_bind_options import MountBindOptions
-from docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
-from docker_client.generated.models.mount_volume_options import MountVolumeOptions
+from docker_client.generated.docker_client.generated.models.mount_bind_options import MountBindOptions
+from docker_client.generated.docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
+from docker_client.generated.docker_client.generated.models.mount_volume_options import MountVolumeOptions
 from typing import Optional, Set
 from typing_extensions import Self
 

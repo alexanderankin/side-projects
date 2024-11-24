@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_status import ContainerStatus
+from docker_client.generated.docker_client.generated.models.container_status import ContainerStatus
 
 class TestContainerStatus(unittest.TestCase):
     """ContainerStatus unit test stubs"""

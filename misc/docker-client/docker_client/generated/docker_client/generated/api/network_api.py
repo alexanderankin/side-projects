@@ -19,16 +19,16 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictStr
 from typing import List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.network import Network
-from docker_client.generated.models.network_connect_request import NetworkConnectRequest
-from docker_client.generated.models.network_create_request import NetworkCreateRequest
-from docker_client.generated.models.network_create_response import NetworkCreateResponse
-from docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
-from docker_client.generated.models.network_prune_response import NetworkPruneResponse
+from docker_client.generated.docker_client.generated.models.network import Network
+from docker_client.generated.docker_client.generated.models.network_connect_request import NetworkConnectRequest
+from docker_client.generated.docker_client.generated.models.network_create_request import NetworkCreateRequest
+from docker_client.generated.docker_client.generated.models.network_create_response import NetworkCreateResponse
+from docker_client.generated.docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
+from docker_client.generated.docker_client.generated.models.network_prune_response import NetworkPruneResponse
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class NetworkApi:

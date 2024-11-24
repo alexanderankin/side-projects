@@ -17,7 +17,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.cluster_volume_spec_access_mode import ClusterVolumeSpecAccessMode
+from docker_client.generated.docker_client.generated.models.cluster_volume_spec_access_mode import ClusterVolumeSpecAccessMode
 
 # TODO update the JSON string below
 json = "{}"

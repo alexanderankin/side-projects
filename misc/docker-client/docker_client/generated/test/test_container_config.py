@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_config import ContainerConfig
+from docker_client.generated.docker_client.generated.models.container_config import ContainerConfig
 
 class TestContainerConfig(unittest.TestCase):
     """ContainerConfig unit test stubs"""

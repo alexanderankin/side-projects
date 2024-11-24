@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.throttle_device import ThrottleDevice
+from docker_client.generated.docker_client.generated.models.throttle_device import ThrottleDevice
 
 class TestThrottleDevice(unittest.TestCase):
     """ThrottleDevice unit test stubs"""

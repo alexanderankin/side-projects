@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.endpoint_spec import EndpointSpec
+from docker_client.generated.docker_client.generated.models.endpoint_spec import EndpointSpec
 
 class TestEndpointSpec(unittest.TestCase):
     """EndpointSpec unit test stubs"""

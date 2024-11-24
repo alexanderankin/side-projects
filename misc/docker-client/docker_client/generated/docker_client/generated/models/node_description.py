@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.engine_description import EngineDescription
-from docker_client.generated.models.platform import Platform
-from docker_client.generated.models.resource_object import ResourceObject
-from docker_client.generated.models.tls_info import TLSInfo
+from docker_client.generated.docker_client.generated.models.engine_description import EngineDescription
+from docker_client.generated.docker_client.generated.models.platform import Platform
+from docker_client.generated.docker_client.generated.models.resource_object import ResourceObject
+from docker_client.generated.docker_client.generated.models.tls_info import TLSInfo
 from typing import Optional, Set
 from typing_extensions import Self
 

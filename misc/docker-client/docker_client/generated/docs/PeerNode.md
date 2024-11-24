@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.peer_node import PeerNode
+from docker_client.generated.docker_client.generated.models.peer_node import PeerNode
 
 # TODO update the JSON string below
 json = "{}"

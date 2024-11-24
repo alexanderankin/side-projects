@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.cluster_volume_publish_status_inner import ClusterVolumePublishStatusInner
+from docker_client.generated.docker_client.generated.models.cluster_volume_publish_status_inner import ClusterVolumePublishStatusInner
 
 class TestClusterVolumePublishStatusInner(unittest.TestCase):
     """ClusterVolumePublishStatusInner unit test stubs"""

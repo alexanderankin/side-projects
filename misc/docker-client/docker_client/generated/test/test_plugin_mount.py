@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_mount import PluginMount
+from docker_client.generated.docker_client.generated.models.plugin_mount import PluginMount
 
 class TestPluginMount(unittest.TestCase):
     """PluginMount unit test stubs"""

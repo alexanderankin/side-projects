@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.platform import Platform
+from docker_client.generated.docker_client.generated.models.platform1 import Platform
 
 # TODO update the JSON string below
 json = "{}"
@@ -27,5 +27,3 @@ platform_dict = platform_instance.to_dict()
 platform_from_dict = Platform.from_dict(platform_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

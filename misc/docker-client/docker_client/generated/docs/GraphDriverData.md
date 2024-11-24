@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.graph_driver_data import GraphDriverData
+from docker_client.generated.docker_client.generated.models.graph_driver_data import GraphDriverData
 
 # TODO update the JSON string below
 json = "{}"

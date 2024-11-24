@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.engine_description_plugins_inner import EngineDescriptionPluginsInner
+from docker_client.generated.docker_client.generated.models.engine_description_plugins_inner import EngineDescriptionPluginsInner
 
 class TestEngineDescriptionPluginsInner(unittest.TestCase):
     """EngineDescriptionPluginsInner unit test stubs"""

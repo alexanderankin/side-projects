@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
+from docker_client.generated.docker_client.generated.models.resources_blkio_weight_device_inner import ResourcesBlkioWeightDeviceInner
 
 class TestResourcesBlkioWeightDeviceInner(unittest.TestCase):
     """ResourcesBlkioWeightDeviceInner unit test stubs"""

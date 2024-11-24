@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.swarm_spec_dispatcher import SwarmSpecDispatcher
+from docker_client.generated.docker_client.generated.models.swarm_spec_dispatcher import SwarmSpecDispatcher
 
 # TODO update the JSON string below
 json = "{}"

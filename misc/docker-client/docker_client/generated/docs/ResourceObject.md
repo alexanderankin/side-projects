@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.resource_object import ResourceObject
+from docker_client.generated.docker_client.generated.models.resource_object import ResourceObject
 
 # TODO update the JSON string below
 json = "{}"

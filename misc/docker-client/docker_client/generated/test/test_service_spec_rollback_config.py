@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_spec_rollback_config import ServiceSpecRollbackConfig
+from docker_client.generated.docker_client.generated.models.service_spec_rollback_config import ServiceSpecRollbackConfig
 
 class TestServiceSpecRollbackConfig(unittest.TestCase):
     """ServiceSpecRollbackConfig unit test stubs"""

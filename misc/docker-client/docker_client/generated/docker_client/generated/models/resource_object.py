@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.generic_resources_inner import GenericResourcesInner
+from docker_client.generated.docker_client.generated.models.generic_resources_inner import GenericResourcesInner
 from typing import Optional, Set
 from typing_extensions import Self
 

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm import Swarm
+from docker_client.generated.docker_client.generated.models.swarm import Swarm
 
 class TestSwarm(unittest.TestCase):
     """Swarm unit test stubs"""

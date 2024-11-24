@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.event_message import EventMessage
+from docker_client.generated.docker_client.generated.models.event_message import EventMessage
 
 class TestEventMessage(unittest.TestCase):
     """EventMessage unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_summary import ImageSummary
+from docker_client.generated.docker_client.generated.models.image_summary import ImageSummary
 
 class TestImageSummary(unittest.TestCase):
     """ImageSummary unit test stubs"""

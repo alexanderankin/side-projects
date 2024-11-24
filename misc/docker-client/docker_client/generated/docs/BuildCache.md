@@ -21,7 +21,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.build_cache import BuildCache
+from docker_client.generated.docker_client.generated.models.build_cache import BuildCache
 
 # TODO update the JSON string below
 json = "{}"

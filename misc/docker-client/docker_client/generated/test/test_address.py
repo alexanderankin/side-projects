@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.address import Address
+from docker_client.generated.docker_client.generated.models.address import Address
 
 class TestAddress(unittest.TestCase):
     """Address unit test stubs"""

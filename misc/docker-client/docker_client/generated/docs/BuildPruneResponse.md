@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.build_prune_response import BuildPruneResponse
+from docker_client.generated.docker_client.generated.models.build_prune_response import BuildPruneResponse
 
 # TODO update the JSON string below
 json = "{}"

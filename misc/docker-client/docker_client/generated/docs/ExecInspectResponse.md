@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.exec_inspect_response import ExecInspectResponse
+from docker_client.generated.docker_client.generated.models.exec_inspect_response import ExecInspectResponse
 
 # TODO update the JSON string below
 json = "{}"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.mount_bind_options import MountBindOptions
+from docker_client.generated.docker_client.generated.models.mount_bind_options import MountBindOptions
 
 class TestMountBindOptions(unittest.TestCase):
     """MountBindOptions unit test stubs"""

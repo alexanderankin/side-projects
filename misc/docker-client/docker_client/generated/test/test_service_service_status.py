@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_service_status import ServiceServiceStatus
+from docker_client.generated.docker_client.generated.models.service_service_status import ServiceServiceStatus
 
 class TestServiceServiceStatus(unittest.TestCase):
     """ServiceServiceStatus unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.filesystem_change import FilesystemChange
+from docker_client.generated.docker_client.generated.models.filesystem_change import FilesystemChange
 
 class TestFilesystemChange(unittest.TestCase):
     """FilesystemChange unit test stubs"""

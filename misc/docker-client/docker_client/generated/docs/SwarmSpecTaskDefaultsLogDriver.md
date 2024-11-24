@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
+from docker_client.generated.docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
 
 # TODO update the JSON string below
 json = "{}"

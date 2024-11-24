@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.tls_info import TLSInfo
+from docker_client.generated.docker_client.generated.models.tls_info import TLSInfo
 
 class TestTLSInfo(unittest.TestCase):
     """TLSInfo unit test stubs"""

@@ -22,9 +22,9 @@ Initialize a new swarm
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.swarm_init_request import SwarmInitRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.swarm_init_request import SwarmInitRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -91,9 +91,9 @@ Inspect swarm
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.swarm import Swarm
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.swarm import Swarm
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -156,9 +156,9 @@ Join an existing swarm
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.swarm_join_request import SwarmJoinRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.swarm_join_request import SwarmJoinRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -223,8 +223,8 @@ Leave a swarm
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -288,9 +288,9 @@ Unlock a locked manager
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -354,9 +354,9 @@ Get the unlock key
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.unlock_key_response import UnlockKeyResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.unlock_key_response import UnlockKeyResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -418,9 +418,9 @@ Update a swarm
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.swarm_spec import SwarmSpec
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.swarm_spec import SwarmSpec
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

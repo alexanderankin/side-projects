@@ -26,7 +26,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.plugin_config import PluginConfig
+from docker_client.generated.docker_client.generated.models.plugin_config import PluginConfig
 
 # TODO update the JSON string below
 json = "{}"

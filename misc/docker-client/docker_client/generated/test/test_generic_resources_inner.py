@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.generic_resources_inner import GenericResourcesInner
+from docker_client.generated.docker_client.generated.models.generic_resources_inner import GenericResourcesInner
 
 class TestGenericResourcesInner(unittest.TestCase):
     """GenericResourcesInner unit test stubs"""

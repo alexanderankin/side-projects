@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.task_spec_placement_preferences_inner_spread import TaskSpecPlacementPreferencesInnerSpread
+from docker_client.generated.docker_client.generated.models.task_spec_placement_preferences_inner_spread import TaskSpecPlacementPreferencesInnerSpread
 
 # TODO update the JSON string below
 json = "{}"

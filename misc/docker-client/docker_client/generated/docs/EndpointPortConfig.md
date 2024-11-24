@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.endpoint_port_config import EndpointPortConfig
+from docker_client.generated.docker_client.generated.models.endpoint_port_config import EndpointPortConfig
 
 # TODO update the JSON string below
 json = "{}"

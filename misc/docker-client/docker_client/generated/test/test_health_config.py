@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.health_config import HealthConfig
+from docker_client.generated.docker_client.generated.models.health_config import HealthConfig
 
 class TestHealthConfig(unittest.TestCase):
     """HealthConfig unit test stubs"""

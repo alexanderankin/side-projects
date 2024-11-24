@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.engine_description_plugins_inner import EngineDescriptionPluginsInner
+from docker_client.generated.docker_client.generated.models.engine_description_plugins_inner import EngineDescriptionPluginsInner
 
 # TODO update the JSON string below
 json = "{}"

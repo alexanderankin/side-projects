@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.oci_platform import OCIPlatform
+from docker_client.generated.docker_client.generated.models.oci_platform import OCIPlatform
 
 # TODO update the JSON string below
 json = "{}"

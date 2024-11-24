@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.secret_api import SecretApi
+from docker_client.generated.docker_client.generated.api.secret_api import SecretApi
 
 
 class TestSecretApi(unittest.TestCase):

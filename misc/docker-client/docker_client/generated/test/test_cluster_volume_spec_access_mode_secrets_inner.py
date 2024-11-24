@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.cluster_volume_spec_access_mode_secrets_inner import ClusterVolumeSpecAccessModeSecretsInner
+from docker_client.generated.docker_client.generated.models.cluster_volume_spec_access_mode_secrets_inner import ClusterVolumeSpecAccessModeSecretsInner
 
 class TestClusterVolumeSpecAccessModeSecretsInner(unittest.TestCase):
     """ClusterVolumeSpecAccessModeSecretsInner unit test stubs"""

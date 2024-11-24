@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.node_spec import NodeSpec
+from docker_client.generated.docker_client.generated.models.node_spec import NodeSpec
 
 # TODO update the JSON string below
 json = "{}"

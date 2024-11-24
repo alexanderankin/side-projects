@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
+from docker_client.generated.docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
 
 # TODO update the JSON string below
 json = "{}"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_endpoint import ServiceEndpoint
+from docker_client.generated.docker_client.generated.models.service_endpoint import ServiceEndpoint
 
 class TestServiceEndpoint(unittest.TestCase):
     """ServiceEndpoint unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.peer_node import PeerNode
+from docker_client.generated.docker_client.generated.models.peer_node import PeerNode
 
 class TestPeerNode(unittest.TestCase):
     """PeerNode unit test stubs"""

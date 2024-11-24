@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_orchestration import SwarmSpecOrchestration
+from docker_client.generated.docker_client.generated.models.swarm_spec_orchestration import SwarmSpecOrchestration
 
 class TestSwarmSpecOrchestration(unittest.TestCase):
     """SwarmSpecOrchestration unit test stubs"""

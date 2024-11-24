@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.auth_config import AuthConfig
+from docker_client.generated.docker_client.generated.models.auth_config import AuthConfig
 
 # TODO update the JSON string below
 json = "{}"

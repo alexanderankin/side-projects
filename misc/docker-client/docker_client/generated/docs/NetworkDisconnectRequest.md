@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
+from docker_client.generated.docker_client.generated.models.network_disconnect_request import NetworkDisconnectRequest
 
 # TODO update the JSON string below
 json = "{}"

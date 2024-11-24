@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.task_spec_network_attachment_spec import TaskSpecNetworkAttachmentSpec
+from docker_client.generated.docker_client.generated.models.task_spec_network_attachment_spec import TaskSpecNetworkAttachmentSpec
 
 # TODO update the JSON string below
 json = "{}"

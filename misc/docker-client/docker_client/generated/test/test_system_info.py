@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_info import SystemInfo
+from docker_client.generated.docker_client.generated.models.system_info import SystemInfo
 
 class TestSystemInfo(unittest.TestCase):
     """SystemInfo unit test stubs"""

@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
+from docker_client.generated.docker_client.generated.models.image_delete_response_item import ImageDeleteResponseItem
 
 # TODO update the JSON string below
 json = "{}"

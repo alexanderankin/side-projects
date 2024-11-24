@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.port_binding import PortBinding
+from docker_client.generated.docker_client.generated.models.port_binding import PortBinding
 
 # TODO update the JSON string below
 json = "{}"

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_version import SystemVersion
+from docker_client.generated.docker_client.generated.models.system_version import SystemVersion
 
 class TestSystemVersion(unittest.TestCase):
     """SystemVersion unit test stubs"""

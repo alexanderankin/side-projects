@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.build_cache import BuildCache
+from docker_client.generated.docker_client.generated.models.build_cache import BuildCache
 
 class TestBuildCache(unittest.TestCase):
     """BuildCache unit test stubs"""

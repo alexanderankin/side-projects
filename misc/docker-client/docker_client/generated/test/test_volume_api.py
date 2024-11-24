@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.volume_api import VolumeApi
+from docker_client.generated.docker_client.generated.api.volume_api import VolumeApi
 
 
 class TestVolumeApi(unittest.TestCase):

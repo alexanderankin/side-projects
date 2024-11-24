@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.swarm_api import SwarmApi
+from docker_client.generated.docker_client.generated.api.swarm_api import SwarmApi
 
 
 class TestSwarmApi(unittest.TestCase):

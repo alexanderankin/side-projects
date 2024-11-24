@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.task_spec_container_spec_privileges import TaskSpecContainerSpecPrivileges
+from docker_client.generated.docker_client.generated.models.task_spec_container_spec_privileges import TaskSpecContainerSpecPrivileges
 
 # TODO update the JSON string below
 json = "{}"

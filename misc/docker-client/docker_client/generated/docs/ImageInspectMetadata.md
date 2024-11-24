@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
+from docker_client.generated.docker_client.generated.models.image_inspect_metadata import ImageInspectMetadata
 
 # TODO update the JSON string below
 json = "{}"

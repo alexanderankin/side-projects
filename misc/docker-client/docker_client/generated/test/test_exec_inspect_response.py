@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.exec_inspect_response import ExecInspectResponse
+from docker_client.generated.docker_client.generated.models.exec_inspect_response import ExecInspectResponse
 
 class TestExecInspectResponse(unittest.TestCase):
     """ExecInspectResponse unit test stubs"""

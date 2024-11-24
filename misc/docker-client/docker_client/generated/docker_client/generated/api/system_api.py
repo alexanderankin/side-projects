@@ -19,16 +19,16 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictStr, field_validator
 from typing import List, Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.auth_config import AuthConfig
-from docker_client.generated.models.event_message import EventMessage
-from docker_client.generated.models.system_auth_response import SystemAuthResponse
-from docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
-from docker_client.generated.models.system_info import SystemInfo
-from docker_client.generated.models.system_version import SystemVersion
+from docker_client.generated.docker_client.generated.models.auth_config import AuthConfig
+from docker_client.generated.docker_client.generated.models.event_message import EventMessage
+from docker_client.generated.docker_client.generated.models.system_auth_response import SystemAuthResponse
+from docker_client.generated.docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
+from docker_client.generated.docker_client.generated.models.system_info import SystemInfo
+from docker_client.generated.docker_client.generated.models.system_version import SystemVersion
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class SystemApi:

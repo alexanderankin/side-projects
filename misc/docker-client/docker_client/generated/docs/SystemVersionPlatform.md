@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.system_version_platform import SystemVersionPlatform
+from docker_client.generated.docker_client.generated.models.system_version_platform import SystemVersionPlatform
 
 # TODO update the JSON string below
 json = "{}"

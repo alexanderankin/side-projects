@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.registry_service_config import RegistryServiceConfig
+from docker_client.generated.docker_client.generated.models.registry_service_config import RegistryServiceConfig
 
 class TestRegistryServiceConfig(unittest.TestCase):
     """RegistryServiceConfig unit test stubs"""

@@ -19,11 +19,11 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.generic_resources_inner import GenericResourcesInner
-from docker_client.generated.models.object_version import ObjectVersion
-from docker_client.generated.models.task_spec import TaskSpec
-from docker_client.generated.models.task_state import TaskState
-from docker_client.generated.models.task_status import TaskStatus
+from docker_client.generated.docker_client.generated.models.generic_resources_inner import GenericResourcesInner
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.task_spec import TaskSpec
+from docker_client.generated.docker_client.generated.models.task_state import TaskState
+from docker_client.generated.docker_client.generated.models.task_status import TaskStatus
 from typing import Optional, Set
 from typing_extensions import Self
 

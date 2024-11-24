@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.object_version import ObjectVersion
+from docker_client.generated.docker_client.generated.models.object_version import ObjectVersion
 
 class TestObjectVersion(unittest.TestCase):
     """ObjectVersion unit test stubs"""

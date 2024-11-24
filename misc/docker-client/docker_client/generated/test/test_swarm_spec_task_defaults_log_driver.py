@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
+from docker_client.generated.docker_client.generated.models.swarm_spec_task_defaults_log_driver import SwarmSpecTaskDefaultsLogDriver
 
 class TestSwarmSpecTaskDefaultsLogDriver(unittest.TestCase):
     """SwarmSpecTaskDefaultsLogDriver unit test stubs"""

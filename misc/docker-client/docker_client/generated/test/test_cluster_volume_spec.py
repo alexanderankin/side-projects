@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.cluster_volume_spec import ClusterVolumeSpec
+from docker_client.generated.docker_client.generated.models.cluster_volume_spec import ClusterVolumeSpec
 
 class TestClusterVolumeSpec(unittest.TestCase):
     """ClusterVolumeSpec unit test stubs"""

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.error_response import ErrorResponse
+from docker_client.generated.docker_client.generated.models.error_response import ErrorResponse
 
 class TestErrorResponse(unittest.TestCase):
     """ErrorResponse unit test stubs"""

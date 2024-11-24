@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
+from docker_client.generated.docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
 
 class TestSystemDataUsageResponse(unittest.TestCase):
     """SystemDataUsageResponse unit test stubs"""

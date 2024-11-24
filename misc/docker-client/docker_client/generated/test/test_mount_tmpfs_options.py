@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
+from docker_client.generated.docker_client.generated.models.mount_tmpfs_options import MountTmpfsOptions
 
 class TestMountTmpfsOptions(unittest.TestCase):
     """MountTmpfsOptions unit test stubs"""

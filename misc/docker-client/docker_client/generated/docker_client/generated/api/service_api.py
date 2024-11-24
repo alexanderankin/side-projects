@@ -19,15 +19,15 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictBytes, StrictInt, StrictStr, field_validator
 from typing import List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from docker_client.generated.models.service import Service
-from docker_client.generated.models.service_create_request import ServiceCreateRequest
-from docker_client.generated.models.service_create_response import ServiceCreateResponse
-from docker_client.generated.models.service_update_request import ServiceUpdateRequest
-from docker_client.generated.models.service_update_response import ServiceUpdateResponse
+from docker_client.generated.docker_client.generated.models.service import Service
+from docker_client.generated.docker_client.generated.models.service_create_request import ServiceCreateRequest
+from docker_client.generated.docker_client.generated.models.service_create_response import ServiceCreateResponse
+from docker_client.generated.docker_client.generated.models.service_update_request import ServiceUpdateRequest
+from docker_client.generated.docker_client.generated.models.service_update_response import ServiceUpdateResponse
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class ServiceApi:

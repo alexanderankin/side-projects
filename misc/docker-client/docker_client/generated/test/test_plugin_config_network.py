@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.plugin_config_network import PluginConfigNetwork
+from docker_client.generated.docker_client.generated.models.plugin_config_network import PluginConfigNetwork
 
 class TestPluginConfigNetwork(unittest.TestCase):
     """PluginConfigNetwork unit test stubs"""

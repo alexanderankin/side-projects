@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.network_connect_request import NetworkConnectRequest
+from docker_client.generated.docker_client.generated.models.network_connect_request import NetworkConnectRequest
 
 class TestNetworkConnectRequest(unittest.TestCase):
     """NetworkConnectRequest unit test stubs"""

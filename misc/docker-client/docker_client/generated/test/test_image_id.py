@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.image_id import ImageID
+from docker_client.generated.docker_client.generated.models.image_id import ImageID
 
 class TestImageID(unittest.TestCase):
     """ImageID unit test stubs"""

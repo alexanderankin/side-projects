@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.task_spec_placement_preferences_inner import TaskSpecPlacementPreferencesInner
+from docker_client.generated.docker_client.generated.models.task_spec_placement_preferences_inner import TaskSpecPlacementPreferencesInner
 
 class TestTaskSpecPlacementPreferencesInner(unittest.TestCase):
     """TaskSpecPlacementPreferencesInner unit test stubs"""

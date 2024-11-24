@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.progress_detail import ProgressDetail
+from docker_client.generated.docker_client.generated.models.progress_detail import ProgressDetail
 
 class TestProgressDetail(unittest.TestCase):
     """ProgressDetail unit test stubs"""

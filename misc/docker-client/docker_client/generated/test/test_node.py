@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.node import Node
+from docker_client.generated.docker_client.generated.models.node import Node
 
 class TestNode(unittest.TestCase):
     """Node unit test stubs"""

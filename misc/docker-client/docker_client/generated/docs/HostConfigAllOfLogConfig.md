@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
+from docker_client.generated.docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
 
 # TODO update the JSON string below
 json = "{}"

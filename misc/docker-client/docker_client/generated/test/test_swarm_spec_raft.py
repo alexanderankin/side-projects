@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_raft import SwarmSpecRaft
+from docker_client.generated.docker_client.generated.models.swarm_spec_raft import SwarmSpecRaft
 
 class TestSwarmSpecRaft(unittest.TestCase):
     """SwarmSpecRaft unit test stubs"""

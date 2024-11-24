@@ -21,10 +21,10 @@ Run a command inside a running container.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.exec_config import ExecConfig
-from docker_client.generated.models.id_response import IdResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.exec_config import ExecConfig
+from docker_client.generated.docker_client.generated.models.id_response import IdResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -95,9 +95,9 @@ Return low-level information about an exec instance.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.exec_inspect_response import ExecInspectResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.exec_inspect_response import ExecInspectResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -165,8 +165,8 @@ Resize the TTY session used by an exec instance. This endpoint only works if `tt
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -237,9 +237,9 @@ Starts a previously set up exec instance. If detach is true, this endpoint retur
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.exec_start_config import ExecStartConfig
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.exec_start_config import ExecStartConfig
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

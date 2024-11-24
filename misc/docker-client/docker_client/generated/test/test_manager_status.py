@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.manager_status import ManagerStatus
+from docker_client.generated.docker_client.generated.models.manager_status import ManagerStatus
 
 class TestManagerStatus(unittest.TestCase):
     """ManagerStatus unit test stubs"""

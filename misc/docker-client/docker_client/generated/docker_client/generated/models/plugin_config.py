@@ -19,14 +19,14 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.plugin_config_args import PluginConfigArgs
-from docker_client.generated.models.plugin_config_interface import PluginConfigInterface
-from docker_client.generated.models.plugin_config_linux import PluginConfigLinux
-from docker_client.generated.models.plugin_config_network import PluginConfigNetwork
-from docker_client.generated.models.plugin_config_rootfs import PluginConfigRootfs
-from docker_client.generated.models.plugin_config_user import PluginConfigUser
-from docker_client.generated.models.plugin_env import PluginEnv
-from docker_client.generated.models.plugin_mount import PluginMount
+from docker_client.generated.docker_client.generated.models.plugin_config_args import PluginConfigArgs
+from docker_client.generated.docker_client.generated.models.plugin_config_interface import PluginConfigInterface
+from docker_client.generated.docker_client.generated.models.plugin_config_linux import PluginConfigLinux
+from docker_client.generated.docker_client.generated.models.plugin_config_network import PluginConfigNetwork
+from docker_client.generated.docker_client.generated.models.plugin_config_rootfs import PluginConfigRootfs
+from docker_client.generated.docker_client.generated.models.plugin_config_user import PluginConfigUser
+from docker_client.generated.docker_client.generated.models.plugin_env import PluginEnv
+from docker_client.generated.docker_client.generated.models.plugin_mount import PluginMount
 from typing import Optional, Set
 from typing_extensions import Self
 

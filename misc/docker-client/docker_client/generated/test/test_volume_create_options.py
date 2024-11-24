@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.volume_create_options import VolumeCreateOptions
+from docker_client.generated.docker_client.generated.models.volume_create_options import VolumeCreateOptions
 
 class TestVolumeCreateOptions(unittest.TestCase):
     """VolumeCreateOptions unit test stubs"""

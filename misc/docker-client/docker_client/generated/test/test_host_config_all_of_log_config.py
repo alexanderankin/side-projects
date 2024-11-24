@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
+from docker_client.generated.docker_client.generated.models.host_config_all_of_log_config import HostConfigAllOfLogConfig
 
 class TestHostConfigAllOfLogConfig(unittest.TestCase):
     """HostConfigAllOfLogConfig unit test stubs"""

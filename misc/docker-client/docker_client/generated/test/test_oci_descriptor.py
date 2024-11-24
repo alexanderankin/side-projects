@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.oci_descriptor import OCIDescriptor
+from docker_client.generated.docker_client.generated.models.oci_descriptor import OCIDescriptor
 
 class TestOCIDescriptor(unittest.TestCase):
     """OCIDescriptor unit test stubs"""

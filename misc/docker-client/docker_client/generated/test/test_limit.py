@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.limit import Limit
+from docker_client.generated.docker_client.generated.models.limit import Limit
 
 class TestLimit(unittest.TestCase):
     """Limit unit test stubs"""

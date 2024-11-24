@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_task_defaults import SwarmSpecTaskDefaults
+from docker_client.generated.docker_client.generated.models.swarm_spec_task_defaults import SwarmSpecTaskDefaults
 
 class TestSwarmSpecTaskDefaults(unittest.TestCase):
     """SwarmSpecTaskDefaults unit test stubs"""

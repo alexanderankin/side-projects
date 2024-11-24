@@ -26,11 +26,11 @@ from urllib.parse import quote
 from typing import Tuple, Optional, List, Dict, Union
 from pydantic import SecretStr
 
-from docker_client.generated.configuration import Configuration
-from docker_client.generated.api_response import ApiResponse, T as ApiResponseT
-import docker_client.generated.models
-from docker_client.generated import rest
-from docker_client.generated.exceptions import (
+from docker_client.generated.docker_client.generated.configuration import Configuration
+from docker_client.generated.docker_client.generated.api_response import ApiResponse, T as ApiResponseT
+import docker_client.generated.docker_client.generated.models
+from docker_client.generated.docker_client.generated import rest
+from docker_client.generated.docker_client.generated.exceptions import (
     ApiValueError,
     ApiException,
     BadRequestException,

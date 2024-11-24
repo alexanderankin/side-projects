@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.platform import Platform
+from docker_client.generated.docker_client.generated.models.platform1 import Platform
 
 class TestPlatform(unittest.TestCase):
     """Platform unit test stubs"""

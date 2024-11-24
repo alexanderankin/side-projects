@@ -19,16 +19,16 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictInt, StrictStr
 from typing import Optional
 from typing_extensions import Annotated
-from docker_client.generated.models.swarm import Swarm
-from docker_client.generated.models.swarm_init_request import SwarmInitRequest
-from docker_client.generated.models.swarm_join_request import SwarmJoinRequest
-from docker_client.generated.models.swarm_spec import SwarmSpec
-from docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
-from docker_client.generated.models.unlock_key_response import UnlockKeyResponse
+from docker_client.generated.docker_client.generated.models.swarm import Swarm
+from docker_client.generated.docker_client.generated.models.swarm_init_request import SwarmInitRequest
+from docker_client.generated.docker_client.generated.models.swarm_join_request import SwarmJoinRequest
+from docker_client.generated.docker_client.generated.models.swarm_spec import SwarmSpec
+from docker_client.generated.docker_client.generated.models.swarm_unlock_request import SwarmUnlockRequest
+from docker_client.generated.docker_client.generated.models.unlock_key_response import UnlockKeyResponse
 
-from docker_client.generated.api_client import ApiClient, RequestSerialized
-from docker_client.generated.api_response import ApiResponse
-from docker_client.generated.rest import RESTResponseType
+from docker_client.generated.docker_client.generated.api_client import ApiClient, RequestSerialized
+from docker_client.generated.docker_client.generated.api_response import ApiResponse
+from docker_client.generated.docker_client.generated.rest import RESTResponseType
 
 
 class SwarmApi:

@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.swarm_spec_ca_config_external_cas_inner import SwarmSpecCAConfigExternalCAsInner
+from docker_client.generated.docker_client.generated.models.swarm_spec_ca_config_external_cas_inner import SwarmSpecCAConfigExternalCAsInner
 
 class TestSwarmSpecCAConfigExternalCAsInner(unittest.TestCase):
     """SwarmSpecCAConfigExternalCAsInner unit test stubs"""

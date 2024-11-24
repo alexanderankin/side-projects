@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.service_spec import ServiceSpec
+from docker_client.generated.docker_client.generated.models.service_spec import ServiceSpec
 
 class TestServiceSpec(unittest.TestCase):
     """ServiceSpec unit test stubs"""

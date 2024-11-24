@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.api.network_api import NetworkApi
+from docker_client.generated.docker_client.generated.api.network_api import NetworkApi
 
 
 class TestNetworkApi(unittest.TestCase):

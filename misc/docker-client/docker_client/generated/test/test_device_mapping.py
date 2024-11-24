@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.device_mapping import DeviceMapping
+from docker_client.generated.docker_client.generated.models.device_mapping import DeviceMapping
 
 class TestDeviceMapping(unittest.TestCase):
     """DeviceMapping unit test stubs"""

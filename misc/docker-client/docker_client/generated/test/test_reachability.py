@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.reachability import Reachability
+from docker_client.generated.docker_client.generated.models.reachability import Reachability
 
 class TestReachability(unittest.TestCase):
     """Reachability unit test stubs"""

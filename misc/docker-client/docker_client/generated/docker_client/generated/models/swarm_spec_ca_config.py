@@ -19,7 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.swarm_spec_ca_config_external_cas_inner import SwarmSpecCAConfigExternalCAsInner
+from docker_client.generated.docker_client.generated.models.swarm_spec_ca_config_external_cas_inner import SwarmSpecCAConfigExternalCAsInner
 from typing import Optional, Set
 from typing_extensions import Self
 

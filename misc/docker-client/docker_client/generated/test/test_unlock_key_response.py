@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.unlock_key_response import UnlockKeyResponse
+from docker_client.generated.docker_client.generated.models.unlock_key_response import UnlockKeyResponse
 
 class TestUnlockKeyResponse(unittest.TestCase):
     """UnlockKeyResponse unit test stubs"""

@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
+from docker_client.generated.docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
 
 # TODO update the JSON string below
 json = "{}"

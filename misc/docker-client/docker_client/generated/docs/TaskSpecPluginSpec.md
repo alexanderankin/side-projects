@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.task_spec_plugin_spec import TaskSpecPluginSpec
+from docker_client.generated.docker_client.generated.models.task_spec_plugin_spec import TaskSpecPluginSpec
 
 # TODO update the JSON string below
 json = "{}"

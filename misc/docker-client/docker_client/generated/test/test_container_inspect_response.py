@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.container_inspect_response import ContainerInspectResponse
+from docker_client.generated.docker_client.generated.models.container_inspect_response import ContainerInspectResponse
 
 class TestContainerInspectResponse(unittest.TestCase):
     """ContainerInspectResponse unit test stubs"""

@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 ## Example
 
 ```python
-from docker_client.generated.models.cluster_volume_publish_status_inner import ClusterVolumePublishStatusInner
+from docker_client.generated.docker_client.generated.models.cluster_volume_publish_status_inner import ClusterVolumePublishStatusInner
 
 # TODO update the JSON string below
 json = "{}"

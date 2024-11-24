@@ -24,10 +24,10 @@ Validate credentials for a registry and, if available, get an identity token for
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.auth_config import AuthConfig
-from docker_client.generated.models.system_auth_response import SystemAuthResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.auth_config import AuthConfig
+from docker_client.generated.docker_client.generated.models.system_auth_response import SystemAuthResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -94,9 +94,9 @@ Get data usage information
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.system_data_usage_response import SystemDataUsageResponse
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -163,9 +163,9 @@ Stream real-time events from the server.  Various objects within Docker report e
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.event_message import EventMessage
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.event_message import EventMessage
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -235,9 +235,9 @@ Get system information
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.system_info import SystemInfo
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.system_info import SystemInfo
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -300,8 +300,8 @@ This is a dummy endpoint you can use to test if the server is accessible.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -364,8 +364,8 @@ This is a dummy endpoint you can use to test if the server is accessible.
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45
@@ -428,9 +428,9 @@ Returns the version of Docker that is running and various information about the 
 
 
 ```python
-import docker_client.generated
-from docker_client.generated.models.system_version import SystemVersion
-from docker_client.generated.rest import ApiException
+import docker_client.generated.docker_client.generated
+from docker_client.generated.docker_client.generated.models.system_version import SystemVersion
+from docker_client.generated.docker_client.generated.rest import ApiException
 from pprint import pprint
 
 # Defining the host is optional and defaults to http://localhost/v1.45

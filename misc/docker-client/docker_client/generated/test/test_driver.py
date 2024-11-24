@@ -14,7 +14,7 @@
 
 import unittest
 
-from docker_client.generated.models.driver import Driver
+from docker_client.generated.docker_client.generated.models.driver import Driver
 
 class TestDriver(unittest.TestCase):
     """Driver unit test stubs"""

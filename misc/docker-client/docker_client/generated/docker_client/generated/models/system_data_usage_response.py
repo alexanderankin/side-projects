@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
-from docker_client.generated.models.build_cache import BuildCache
-from docker_client.generated.models.container_summary import ContainerSummary
-from docker_client.generated.models.image_summary import ImageSummary
-from docker_client.generated.models.volume import Volume
+from docker_client.generated.docker_client.generated.models.build_cache import BuildCache
+from docker_client.generated.docker_client.generated.models.container_summary import ContainerSummary
+from docker_client.generated.docker_client.generated.models.image_summary import ImageSummary
+from docker_client.generated.docker_client.generated.models.volume import Volume
 from typing import Optional, Set
 from typing_extensions import Self
 
