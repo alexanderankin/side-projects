@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "openapi-client-generator"
+version = "0.1.0"
+description = "Python Library for generating clients from OpenAPI spec"
+authors = ["Dave Ankin"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+ruff = "^0.8.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

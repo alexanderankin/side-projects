@@ -1,0 +1,1 @@
+from openapi_client_generator import generate

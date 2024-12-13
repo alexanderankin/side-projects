@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "docker-client"
+version = "0.1.0"
+description = "Simple Python Client for the Docker Engine API"
+authors = ["Dave Ankin"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.32.3"
+openapi-client-generator = { path = "../openapi_client_generator", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+ruff = "^0.8.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
