@@ -47,7 +47,7 @@ def _ast_node_to_dict(ast_node: AST | Any) -> dict[str, Any]:
     the_node_as_dict = {"type": type(ast_node).__name__, "fields": the_node_fields}
 
     # noinspection PyProtectedMember
-    for f in ast_node._fields:
+    for f in [*ast_node._fields, *ast_node._attributes]:
         f_value: AST | list[AST] | None = getattr(ast_node, f, None)
 
         if f_value is None:
