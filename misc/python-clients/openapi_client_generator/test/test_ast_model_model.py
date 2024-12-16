@@ -1,7 +1,7 @@
 from textwrap import dedent
 
 from openapi_client_generator.ast_conversions import ast_to_source, dict_to_ast
-from openapi_client_generator.ast_model_model import AstModel, AstModule
+from openapi_client_generator.ast_model_model import AstModel, AstModelField, AstModule
 
 
 def render(ast_module: AstModule) -> str:
@@ -54,8 +54,8 @@ def test_imports_and_model():
     ast_module.ast_model = AstModel()
     ast_module.ast_model.name = "ExampleTestImportsAndModel"
     ast_module.ast_model.fields = [
-        ["count", "int"],
-        ["example", "int", 0],
+        AstModelField("count", "int"),
+        AstModelField("example", "int", 0),
     ]
     ast_module_source = render(ast_module)
     assert (

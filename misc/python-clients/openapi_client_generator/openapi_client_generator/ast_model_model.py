@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Union
+from textwrap import indent
+from typing import Any, Union
 
 blank_positions_dict = {
     "lineno": None,
@@ -26,9 +27,10 @@ class AstModule:
     """
 
     ast_model: Union["AstModel", None] = None
+    ast_models: list["AstModel"] | None = None
 
     def as_ast_dict(self):
-        body = []
+        body: list[dict[str, Any]] = []
         result = {"type": "Module", "fields": {"body": body, "type_ignores": []}}
 
         # handle plain imports
@@ -82,50 +84,86 @@ class AstModule:
             ]
         )
 
-        # handle the model
         if self.ast_model is not None:
+            self._ast_model(body, self.ast_model)
+
+        if self.ast_models:
+            for each in self.ast_models:
+                self._ast_model(body, each)
+
+        return result
+
+    @staticmethod
+    def _doc_str(comment: str):
+        return {
+            "type": "Expr",
+            "fields": {
+                "value": {
+                    "type": "Constant",
+                    "fields": {
+                        "value": comment,
+                        "kind": None,
+                        **blank_positions_dict,
+                    },
+                    **blank_positions_dict,
+                },
+            },
+        }
+
+    def _model_fields(self, each_model_field: "AstModelField"):
+        result = [{
+            "type": "AnnAssign",
+            "fields": {
+                "target": {
+                    "type": "Name",
+                    "fields": {
+                        "id": each_model_field.name,
+                        "ctx": {"type": "Store", "fields": {}},
+                        **blank_positions_dict,
+                    },
+                },
+                "annotation": {
+                    "type": "Name",
+                    "fields": {
+                        "id": each_model_field.type,
+                        "ctx": {"type": "Store", "fields": {}},
+                        **blank_positions_dict,
+                    },
+                },
+                "value": {
+                    "type": "Constant",
+                    "fields": {
+                        "value": each_model_field.default,
+                        "kind": None,
+                        **blank_positions_dict,
+                    },
+                }
+                if each_model_field.default is not None
+                else None,
+                "simple": 1,
+                **blank_positions_dict,
+            },
+        }]
+        if each_model_field.description:
+            result.append(self._doc_str(each_model_field.description))
+        return result
+
+    def _ast_model(self, body: list[dict[str, Any]], ast_model: "AstModel"):
+        # handle the model
+        doc_comment = [] if not ast_model.description else [self._doc_str(indent(ast_model.description, prefix=" " * 4).strip())]
+
+        if ast_model is not None:
             body.append(
                 {
                     "type": "ClassDef",
                     "fields": {
-                        "name": self.ast_model.name,
+                        "name": ast_model.name,
                         "bases": [],
                         "keywords": [],
-                        "body": [
-                            {
-                                "type": "AnnAssign",
-                                "fields": {
-                                    "target": {
-                                        "type": "Name",
-                                        "fields": {
-                                            "id": each_model_field[0],
-                                            "ctx": {"type": "Store", "fields": {}},
-                                            **blank_positions_dict,
-                                        },
-                                    },
-                                    "annotation": {
-                                        "type": "Name",
-                                        "fields": {
-                                            "id": each_model_field[1],
-                                            "ctx": {"type": "Store", "fields": {}},
-                                            **blank_positions_dict,
-                                        },
-                                    },
-                                    "value": {
-                                        "type": "Constant",
-                                        "fields": {
-                                            "value": each_model_field[2],
-                                            "kind": None,
-                                            **blank_positions_dict,
-                                        },
-                                    }
-                                    if len(each_model_field) > 2
-                                    else None,
-                                    "simple": 1,
-                                    **blank_positions_dict,
-                                },
-                            }
-                            for each_model_field in self.ast_model.fields
+                        "body": doc_comment + [
+                            each_ast_node
+                            for each_model_field in ast_model.fields
+                            for each_ast_node in self._model_fields(each_model_field)
                         ],
                         "decorator_list": [
                             {
@@ -143,15 +181,17 @@ class AstModule:
                 }
             )
 
-        return result
 
-
-AstModelFieldWithoutDefault = tuple[str, str]
-AstModelFieldWithDefault = tuple[str, str, str]
-AstModelField = AstModelFieldWithDefault | AstModelFieldWithoutDefault
+@dataclass
+class AstModelField:
+    name: str
+    type: str
+    default: Any | None = None
+    description: str | None = None
 
 
 @dataclass
 class AstModel:
     name: str | None = None
+    description: str | None = None
     fields: list[AstModelField] | None = None
