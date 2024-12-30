@@ -1,3 +1,35 @@
 plugins {
     id 'spring-conventions'
 }
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'org.liquibase:liquibase-core'
+
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+}
+
+
+def frontendProjectPath = ':misc:reference-projects:spring-boot-react-todo-frontend'
+
+// use public dir
+def dc = configurations.create('distConfig') { canBeConsumed false; canBeResolved true }
+dependencies { distConfig project(path: frontendProjectPath, configuration: 'dist') }
+java.sourceSets.named('main') { resources.srcDirs(dc.singleFile) }
+tasks.named('processResources') { dependsOn(dc) } // may also need inputs.files
+
+tasks.register('bootRunWithLocalProfile', JavaExec) {
+    mainClass.set 'org.example.ReactTodoApplication'
+    environment('SPRING_PROFILES_ACTIVE', 'local')
+    classpath sourceSets.main.runtimeClasspath
+}
