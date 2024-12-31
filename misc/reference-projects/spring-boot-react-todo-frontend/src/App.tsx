@@ -44,8 +44,7 @@ async function createTask(title: string) {
       "content-type": "application/json",
     },
   });
-  let body = await response.json();
-  return body;
+  return await response.json() as Promise<Task>;
 }
 
 function App() {
