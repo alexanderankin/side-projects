@@ -2,8 +2,9 @@ import viteLogo from "/vite.svg";
 import { useEffect, useState } from "react";
 import { Button, Container, Input, ListGroup, ListGroupItem } from "reactstrap";
 import reactLogo from "./assets/react.svg";
+import { tasksApi } from "./store.tsx";
 
-function HtmlAttributes({attributes}: { attributes: Record<string, string | false> }) {
+function HtmlAttributes({ attributes }: { attributes: Record<string, string | false> }) {
   // when attributes change, update them
   useEffect(() => {
     Object.entries(attributes).forEach(([key, value]) => {
@@ -18,67 +19,21 @@ function HtmlAttributes({attributes}: { attributes: Record<string, string | fals
   return null;
 }
 
-interface Task {
-  id?: string;
-  title: string;
-  description?: string;
-}
-
-interface Page<T> {
-  content: T[];
-  empty: boolean;
-  first: boolean;
-  last: boolean;
-  number: number;
-  numberOfElements: number;
-  size: string;
-  totalPages: number;
-  totalElements: number;
-}
-
-async function createTask(title: string) {
-  let response = await fetch("/api/tasks", {
-    method: "POST",
-    body: JSON.stringify({title}),
-    headers: {
-      "content-type": "application/json",
-    },
-  });
-  return await response.json() as Promise<Task>;
-}
-
 function App() {
   const [count, setCount] = useState(0);
-  const [tasks, setTasks] = useState(null as Page<Task> | null);
-  const [tasksFetchCounter, setTasksFetchCounter] = useState(0);
-  const [, setTasksFetchError] = useState("");
   const [createTaskTitle, setCreateTaskTitle] = useState("");
-  const [createStatus, setCreateStatus] = useState("idle");
-
-
-  useEffect(() => {
-    fetch("/api/tasks")
-      .then(r => r.json())
-      .then(tasks => setTasks(tasks));
-  }, [tasksFetchCounter]);
+  let getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 50 });
+  let [createTask, createTaskResult] = tasksApi.useCreateTaskMutation();
+  let [deleteTask, deleteTaskResult] = tasksApi.useDeleteTaskByIdMutation();
 
   function clickCreateTask() {
-    setCreateStatus("loading");
-    createTask(createTaskTitle)
-      .then(() => {
-        setTasksFetchCounter(t => t + 1);
-        setCreateStatus("idle");
-      })
-      .catch(e => {
-        setTasksFetchError(`${e}`);
-        setCreateStatus("error");
-      });
-
+    createTask({ title: createTaskTitle })
+      .then(() => setCreateTaskTitle(""));
   }
 
   return (
     <div className="container mt-5">
-      <HtmlAttributes attributes={{"data-bs-theme": "dark"}} />
+      <HtmlAttributes attributes={{ "data-bs-theme": "dark" }} />
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -109,10 +64,9 @@ function App() {
 
                 <div className="d-flex">
                   <Button color="light"
-                          size="lg"
                           type="button"
                           className="me-2"
-                          disabled={createStatus !== "idle"}
+                          disabled={createTaskResult.isLoading}
                           onClick={clickCreateTask}>
                     Create
                   </Button>
@@ -126,15 +80,54 @@ function App() {
                   </form>
                 </div>
 
-                {!tasks?.content?.length
-                  ? <p className="col-md-8 fs-4">
-                    There are no tasks yet!
-                  </p>
-                  : <ListGroup className="pt-2 px-1">
-                    {tasks.content.map(t => (
-                      <ListGroupItem key={t.id}>{t.title}</ListGroupItem>
-                    ))}
-                  </ListGroup>}
+                {createTaskResult.isError
+                  ? <div className="alert alert-secondary" role="alert">
+                    There was an error: {(createTaskResult.error as Record<string, any>)?.data?.error}
+                  </div>
+                  : null}
+
+                <div className="">
+                  <div className="z-3 w-100 top-0 bottom-0 left-0 right-0">
+                    {getTasks.isLoading || getTasks.isFetching
+                      ? <>
+                        <div className="d-flex justify-content-center align-items-center h-100 mt-3">
+                          <div className="spinner-border" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      </>
+                      : getTasks.data?.content?.length === 0
+                        ? <p className="col-md-8 fs-4">
+                          No tasks
+                        </p>
+                        : <>
+                          <ListGroup className="pt-2 px-1">
+                            {getTasks.data?.content.map(t => (
+                              <ListGroupItem key={t.id}>
+                                <div className="d-flex w-100 justify-content-between">
+                                  <span>
+                                    {t.title}
+                                  </span>
+
+                                  <div className="d-flex">
+                                    <button role="button" className="btn btn-sm btn-success ms-2">
+                                      Update
+                                    </button>
+                                    <button role="button"
+                                            className="btn btn-sm btn-danger ms-2"
+                                            onClick={() => deleteTask(t)}
+                                            disabled={deleteTaskResult.isLoading}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              </ListGroupItem>
+                            ))}
+                          </ListGroup>
+                        </>}
+                  </div>
+                </div>
               </Container>
             </div>
           </div>

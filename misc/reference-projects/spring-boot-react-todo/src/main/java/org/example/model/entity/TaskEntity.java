@@ -1,7 +1,7 @@
 package org.example.model.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -25,7 +25,7 @@ public class TaskEntity {
     @ToString.Include
     UUID id;
 
-    @NotNull
+    @NotBlank
     String title;
 
     String description;
