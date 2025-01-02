@@ -1,8 +1,8 @@
 import viteLogo from "/vite.svg";
-import { useEffect, useState } from "react";
-import { Button, Container, Input, ListGroup, ListGroupItem } from "reactstrap";
+import { FC, PropsWithChildren, useEffect, useRef, useState } from "react";
+import { Button, Input, ListGroup, ListGroupItem } from "reactstrap";
 import reactLogo from "./assets/react.svg";
-import { tasksApi } from "./store.tsx";
+import { tasksApi, tasksUi, useAppDispatch, useAppSelector } from "./store.tsx";
 
 function HtmlAttributes({ attributes }: { attributes: Record<string, string | false> }) {
   // when attributes change, update them
@@ -19,12 +19,83 @@ function HtmlAttributes({ attributes }: { attributes: Record<string, string | fa
   return null;
 }
 
+function Spinner() {
+  return <div className="d-flex justify-content-center align-items-center h-100 mt-3">
+    <div className="spinner-border" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>;
+}
+
+function TaskList() {
+  const editedTasks = useAppSelector(s => s.tasksUi.tasks);
+  let appDispatch = useAppDispatch();
+  const getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 100 });
+  const [deleteTask, deleteTaskResult] = tasksApi.useDeleteTaskByIdMutation();
+  const [updateTask, updateTaskResult] = tasksApi.useUpdateTaskByIdMutation();
+  let inputRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  return <ListGroup className="pt-2 px-1">
+    {getTasks.data?.content.map((t, index) => {
+      let editedTask = editedTasks[t.id] || { editing: false };
+      let editing = editedTask.editing;
+
+      return (
+        <ListGroupItem key={t.id}>
+          <div className="d-flex w-100 justify-content-between">
+            <form className={editing ? "" : "d-none"} onSubmit={e => {
+              e.preventDefault();
+              updateTask(editedTask.newData)
+                .then((t) => {
+                  t.data && appDispatch(tasksUi.actions.stopEditingPost(t.data.id));
+                });
+            }}>
+              <input
+                ref={el => inputRef.current[index] = el}
+                disabled={updateTaskResult.isLoading}
+                value={editedTask.newData?.title || ""}
+                onBlur={() => appDispatch(tasksUi.actions.stopEditingPost(t.id))}
+                onKeyDown={e => !(e.key === "Escape" && appDispatch(tasksUi.actions.stopEditingPost(t.id)))}
+                onChange={e => appDispatch(tasksUi.actions.edit({ ...t, title: e.target.value }))}
+              >
+              </input>
+            </form>
+            <span className={editing ? "d-none" : ""}>
+              {t.title}
+            </span>
+
+            <div className="d-flex">
+              <button role="button"
+                      className="btn btn-sm btn-success ms-2"
+                      onClick={() => {
+                        appDispatch(tasksUi.actions.startEditingPost(t));
+                        setTimeout(() => {
+                          inputRef.current[index]!.focus();
+                        });
+                      }}
+              >
+                Update
+              </button>
+              <button role="button"
+                      className="btn btn-sm btn-danger ms-2"
+                      onClick={() => deleteTask(t)}
+                      disabled={deleteTaskResult.isLoading}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </ListGroupItem>
+      );
+    })}
+  </ListGroup>;
+}
+
 function App() {
   const [count, setCount] = useState(0);
   const [createTaskTitle, setCreateTaskTitle] = useState("");
-  let getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 50 });
+  let getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 100 });
   let [createTask, createTaskResult] = tasksApi.useCreateTaskMutation();
-  let [deleteTask, deleteTaskResult] = tasksApi.useDeleteTaskByIdMutation();
 
   function clickCreateTask() {
     createTask({ title: createTaskTitle })
@@ -55,86 +126,70 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
 
-      <div className="container mt-3 mt-sm-5">
-        <div className="row">
-          <div className="col">
-            <div className="p-2 p-sm-5 mb-4 bg-secondary rounded-3">
-              <Container fluid className="py-3 py-sm-5">
-                <h1 className="display-5 fw-bold">Tasks To Do:</h1>
+      <CustomJumboTron>
+        <h1 className="display-5 fw-bold">Tasks To Do:</h1>
 
-                <div className="d-flex">
-                  <Button color="light"
-                          type="button"
-                          className="me-2"
-                          disabled={createTaskResult.isLoading}
-                          onClick={clickCreateTask}>
-                    Create
-                  </Button>
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    clickCreateTask();
-                  }}>
-                    <Input type="text" value={createTaskTitle}
-                           onChange={e => setCreateTaskTitle(e.target.value)}>
-                    </Input>
-                  </form>
-                </div>
+        <div className="d-flex">
+          <Button color="light"
+                  type="button"
+                  className="me-2"
+                  disabled={createTaskResult.isLoading}
+                  onClick={clickCreateTask}>
+            Create
+          </Button>
 
-                {createTaskResult.isError
-                  ? <div className="alert alert-secondary" role="alert">
-                    There was an error: {(createTaskResult.error as Record<string, any>)?.data?.error}
-                  </div>
-                  : null}
+          <form onSubmit={e => {
+            e.preventDefault();
+            clickCreateTask();
+          }}>
+            <Input
+              type="text"
+              value={createTaskTitle}
+              onChange={e => setCreateTaskTitle(e.target.value)}
+            >
+            </Input>
+          </form>
+        </div>
 
-                <div className="">
-                  <div className="z-3 w-100 top-0 bottom-0 left-0 right-0">
-                    {getTasks.isLoading || getTasks.isFetching
-                      ? <>
-                        <div className="d-flex justify-content-center align-items-center h-100 mt-3">
-                          <div className="spinner-border" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                        </div>
-                      </>
-                      : getTasks.data?.content?.length === 0
-                        ? <p className="col-md-8 fs-4">
-                          No tasks
-                        </p>
-                        : <>
-                          <ListGroup className="pt-2 px-1">
-                            {getTasks.data?.content.map(t => (
-                              <ListGroupItem key={t.id}>
-                                <div className="d-flex w-100 justify-content-between">
-                                  <span>
-                                    {t.title}
-                                  </span>
+        {createTaskResult.isError
+          ? <div className="alert alert-secondary" role="alert">
+            There was an error: {(createTaskResult.error as Record<string, any>)?.data?.error}
+          </div>
+          : null}
 
-                                  <div className="d-flex">
-                                    <button role="button" className="btn btn-sm btn-success ms-2">
-                                      Update
-                                    </button>
-                                    <button role="button"
-                                            className="btn btn-sm btn-danger ms-2"
-                                            onClick={() => deleteTask(t)}
-                                            disabled={deleteTaskResult.isLoading}
-                                    >
-                                      Delete
-                                    </button>
-                                  </div>
-                                </div>
-                              </ListGroupItem>
-                            ))}
-                          </ListGroup>
-                        </>}
-                  </div>
-                </div>
-              </Container>
+        <div>
+          <div className="z-3 w-100 top-0 bottom-0 left-0 right-0">
+            {getTasks.isLoading || getTasks.isFetching
+              ? <Spinner />
+              : getTasks.data?.content?.length === 0
+                ? (
+                  <p className="col-md-8 fs-4">No tasks</p>
+                )
+                : (
+                  <TaskList />
+                )
+            }
+          </div>
+        </div>
+      </CustomJumboTron>
+    </div>
+  );
+}
+
+const CustomJumboTron: FC<PropsWithChildren> = function ({ children }) {
+  return <>
+    <div className="container mt-3 mt-sm-5">
+      <div className="row">
+        <div className="col">
+          <div className="p-2 p-sm-5 mb-4 bg-secondary rounded-3">
+            <div className="container-fluid py-3 py-sm-5">
+              {children}
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-}
+  </>;
+};
 
 export default App;

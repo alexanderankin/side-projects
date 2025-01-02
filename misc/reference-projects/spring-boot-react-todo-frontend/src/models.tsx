@@ -3,8 +3,14 @@ export interface Pageable {
   size?: number;
 }
 
-export interface Task {
+export interface NewTask {
   id?: string;
+  title: string;
+  description?: string;
+}
+
+export interface Task {
+  id: string;
   title: string;
   description?: string;
 }
