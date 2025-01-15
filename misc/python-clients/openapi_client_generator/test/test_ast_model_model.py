@@ -1,7 +1,12 @@
 from textwrap import dedent
 
 from openapi_client_generator.ast_conversions import ast_to_source, dict_to_ast
-from openapi_client_generator.ast_model_model import AstModel, AstModelField, AstModule
+from openapi_client_generator.ast_model_model import (
+    AstModel,
+    AstModelField,
+    AstModule,
+    AstTypeAlias,
+)
 
 
 def render(ast_module: AstModule) -> str:
@@ -68,6 +73,18 @@ def test_imports_and_model():
         class ExampleTestImportsAndModel:
             count: int
             example: int = 0
+        """).strip()
+        == ast_module_source
+    )
+
+
+def test_type_alias():
+    ata = AstTypeAlias(name="ExampleAlias", value="list[SomeOtherClass]")
+    ast_module = AstModule(ast_type_aliases=[ata])
+    ast_module_source = render(ast_module)
+    assert (
+        dedent("""
+        ExampleAlias = list[SomeOtherClass]
         """).strip()
         == ast_module_source
     )
