@@ -12,10 +12,7 @@ class ExampleDocs:
     description: str | None = None
     """optional description"""
     info: Union["ExampleDocs.Info", None] = None
-    """info about the example
-    
-    if given, indicates information about the example
-    """
+    """info about the example\n    \n    if given, indicates information about the example\n"""
 
     @dataclass
     class Info:

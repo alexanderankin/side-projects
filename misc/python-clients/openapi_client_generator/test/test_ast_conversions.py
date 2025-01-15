@@ -38,4 +38,9 @@ def test_ast_conversions_round_trip(object_from_module: Any):
 
 
 def _rm_whitespace(s):
-    "\n".join(split("\n+", s))
+    s = "".join(filter(bool, split("\"\"\"", s)))
+    s = "".join(filter(bool, split("'''", s)))
+    s = "".join(filter(bool, split("'", s)))
+    s = "".join(filter(bool, split('"', s)))
+    s = "".join(filter(bool, split("\n", s)))
+    return s.strip()
