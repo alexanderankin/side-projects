@@ -57,6 +57,10 @@ export interface TaskUiTask {
 export const tasksUi = createSlice({
   name: "tasksUi",
   initialState: {
+    pageable: {
+      page: 0,
+      size: 3,
+    },
     tasks: ({} as Record<string, TaskUiTask>),
   },
   reducers: {
@@ -72,7 +76,13 @@ export const tasksUi = createSlice({
     edit(state, action: PayloadAction<Task>) {
       state.tasks[action.payload.id] = state.tasks[action.payload.id] || {};
       state.tasks[action.payload.id].newData = action.payload;
-    }
+    },
+    goToPage(state, action: PayloadAction<number>) {
+      state.pageable.page = action.payload;
+    },
+    changePageSize(state, action: PayloadAction<number>) {
+      state.pageable.size = action.payload;
+    },
   },
 });
 

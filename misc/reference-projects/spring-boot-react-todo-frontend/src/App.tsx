@@ -30,30 +30,30 @@ function Spinner() {
 function TaskList() {
   const editedTasks = useAppSelector(s => s.tasksUi.tasks);
   let appDispatch = useAppDispatch();
-  const getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 100 });
+  const pageable = useAppSelector(s => s.tasksUi.pageable);
+  const getTasks = tasksApi.useGetTasksQuery(pageable);
   const [deleteTask, deleteTaskResult] = tasksApi.useDeleteTaskByIdMutation();
   const [updateTask, updateTaskResult] = tasksApi.useUpdateTaskByIdMutation();
-  let inputRef = useRef<(HTMLInputElement | null)[]>([]);
+  let inputRef = useRef<HTMLInputElement[]>([]);
 
   return <ListGroup className="pt-2 px-1">
     {getTasks.data?.content.map((t, index) => {
-      let editedTask = editedTasks[t.id] || { editing: false };
-      let editing = editedTask.editing;
+      let editing = editedTasks[t.id]?.editing;
 
       return (
         <ListGroupItem key={t.id}>
           <div className="d-flex w-100 justify-content-between">
             <form className={editing ? "" : "d-none"} onSubmit={e => {
               e.preventDefault();
-              updateTask(editedTask.newData)
+              updateTask(editedTasks[t.id].newData)
                 .then((t) => {
                   t.data && appDispatch(tasksUi.actions.stopEditingPost(t.data.id));
                 });
             }}>
               <input
-                ref={el => inputRef.current[index] = el}
+                ref={el => el && (inputRef.current[index] = el)}
                 disabled={updateTaskResult.isLoading}
-                value={editedTask.newData?.title || ""}
+                value={editedTasks[t.id]?.newData?.title || ""}
                 onBlur={() => appDispatch(tasksUi.actions.stopEditingPost(t.id))}
                 onKeyDown={e => !(e.key === "Escape" && appDispatch(tasksUi.actions.stopEditingPost(t.id)))}
                 onChange={e => appDispatch(tasksUi.actions.edit({ ...t, title: e.target.value }))}
@@ -94,7 +94,8 @@ function TaskList() {
 function App() {
   const [count, setCount] = useState(0);
   const [createTaskTitle, setCreateTaskTitle] = useState("");
-  let getTasks = tasksApi.useGetTasksQuery({ page: 0, size: 100 });
+  const pageable = useAppSelector(s => s.tasksUi.pageable);
+  let getTasks = tasksApi.useGetTasksQuery(pageable);
   let [createTask, createTaskResult] = tasksApi.useCreateTaskMutation();
 
   function clickCreateTask() {
@@ -129,26 +130,33 @@ function App() {
       <CustomJumboTron>
         <h1 className="display-5 fw-bold">Tasks To Do:</h1>
 
-        <div className="d-flex">
-          <Button color="light"
-                  type="button"
-                  className="me-2"
-                  disabled={createTaskResult.isLoading}
-                  onClick={clickCreateTask}>
-            Create
-          </Button>
+        <div className="d-flex justify-content-between">
+          <div className="d-flex">
+            <Button color="light"
+                    type="button"
+                    className="me-2"
+                    disabled={createTaskResult.isLoading}
+                    onClick={clickCreateTask}>
+              Create
+            </Button>
 
-          <form onSubmit={e => {
-            e.preventDefault();
-            clickCreateTask();
-          }}>
-            <Input
-              type="text"
-              value={createTaskTitle}
-              onChange={e => setCreateTaskTitle(e.target.value)}
-            >
-            </Input>
-          </form>
+            <form onSubmit={e => {
+              e.preventDefault();
+              clickCreateTask();
+            }}>
+              <Input
+                type="text"
+                value={createTaskTitle}
+                onChange={e => setCreateTaskTitle(e.target.value)}
+              >
+              </Input>
+            </form>
+          </div>
+
+          <PaginationControls className="d-none d-md-flex" />
+        </div>
+        <div className="d-flex justify-content-end">
+          <PaginationControls className="d-flex d-md-none" />
         </div>
 
         {createTaskResult.isError
@@ -175,6 +183,53 @@ function App() {
     </div>
   );
 }
+
+const PaginationControls: FC<{ className?: string }> = function (props) {
+  let appDispatch = useAppDispatch();
+  let tasksUiSlice = useAppSelector(tasksUi.selectSlice);
+  let getTasks = tasksApi.useGetTasksQuery(tasksUiSlice.pageable);
+
+  return (
+    <div className={"btn-group " + (props.className || "")} role="group" aria-label="Button group with nested dropdown">
+      {Array(getTasks.data?.totalPages || 0).fill(null).map((_, i) => (
+        <button key={i}
+                type="button"
+                className="btn btn-outline"
+                onClick={() => appDispatch(tasksUi.actions.goToPage(i))}
+        >
+          {i + 1}
+        </button>
+      ))}
+
+      <div className="btn-group" role="group">
+        <button
+          type="button"
+          className="btn btn-outline dropdown-toggle"
+          data-bs-toggle="dropdown"
+          aria-expanded="false">
+          Page size: {tasksUiSlice.pageable.size}
+        </button>
+        <ul className="dropdown-menu">
+          {[3, 5, 10, 20, 50].map((pageSize, index) => (
+            <li key={index}>
+              <a
+                className="dropdown-item"
+                href="#"
+                onClick={() => appDispatch(tasksUi.actions.changePageSize(pageSize))}
+              >
+                {pageSize}
+              </a>
+            </li>
+          ))}
+          <li><a className="dropdown-item" href="#">3</a></li>
+          <li><a className="dropdown-item" href="#">5</a></li>
+          <li><a className="dropdown-item" href="#">10</a></li>
+          <li><a className="dropdown-item" href="#">10</a></li>
+        </ul>
+      </div>
+    </div>
+  );
+};
 
 const CustomJumboTron: FC<PropsWithChildren> = function ({ children }) {
   return <>
