@@ -1,0 +1,66 @@
+import java.util.concurrent.TimeUnit
+
+plugins {
+    id 'com.github.node-gradle.node' version '7.1.0'
+}
+
+node {
+    download = false // set to true for reproducible node version
+    npmInstallCommand = 'ci'
+}
+
+def dist = tasks.register('dist', NpmTask) { n ->
+    n.group 'build'
+    n.description 'build the "distributable" bundle'
+    def outputDir = n.project.layout.buildDirectory.file('frontend-build').get().asFile.toString()
+
+    // define inputs and outputs so gradle will cache the result
+    n.inputs.files('./src')
+    n.outputs.dir(outputDir)
+    n.args = ['run', 'build']
+
+    // check if we need to run install
+    doFirst { ensurePackagesInstalled(n.project.projectDir) }
+
+    doLast {
+        copy {
+            // where it builds
+            from './dist'
+            // where spring boot expects it (static relative to exported dir)
+            into outputDir + '/static'
+        }
+    }
+}
+
+configurations.create('dist') { canBeConsumed = true; canBeResolved = false }
+artifacts.add('dist', dist)
+
+// helper method
+static def ensurePackagesInstalled(File moduleDir) {
+    if (new File(moduleDir, 'node_modules').exists()) return
+
+    var re = new RuntimeException('tried to install with bun and npm ci and install')
+
+    try {
+        assert 0 == new ProcessBuilder('bun', 'install').directory(moduleDir).inheritIO().start().tap { waitFor(30, TimeUnit.SECONDS) }.exitValue()
+        return
+    } catch (Throwable e) {
+        re.addSuppressed(e)
+    }
+
+    try {
+        assert 0 == new ProcessBuilder('npm', 'ci').directory(moduleDir).inheritIO().start().tap { waitFor(30, TimeUnit.SECONDS) }.exitValue()
+        return
+    } catch (Throwable e) {
+        re.addSuppressed(e)
+    }
+
+    try {
+        assert 0 == new ProcessBuilder('npm', 'install').directory(moduleDir).inheritIO().start().tap { waitFor(30, TimeUnit.SECONDS) }.exitValue()
+        return
+    } catch (Throwable e) {
+        re.addSuppressed(e)
+    }
+
+    throw re
+}
