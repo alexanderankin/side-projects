@@ -10,8 +10,8 @@ node {
 }
 
 def dist = tasks.register('dist', NpmTask) { n ->
-    n.group 'build'
-    n.description 'build the "distributable" bundle'
+    n.group = 'build'
+    n.description = 'build the "distributable" bundle'
     def outputDir = n.project.layout.buildDirectory.file('frontend-build').get().asFile.toString()
 
     // define inputs and outputs so gradle will cache the result

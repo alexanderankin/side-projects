@@ -25,7 +25,7 @@ dependencies {
 def frontendProjectPath = ':misc:reference-projects:spring-boot-react-todo-frontend'
 
 // use public dir
-def dc = configurations.create('distConfig') { canBeConsumed false; canBeResolved true }
+def dc = configurations.create('distConfig') { canBeConsumed = false; canBeResolved = true }
 dependencies { distConfig project(path: frontendProjectPath, configuration: 'dist') }
 java.sourceSets.named('main') { resources.srcDirs(dc.singleFile) }
 tasks.named('processResources') { dependsOn(dc) } // may also need inputs.files
