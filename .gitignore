@@ -5,3 +5,4 @@ build/
 .terraform*
 !.terraform.lock.hcl
 *.tfstate*
+__pycache__/
