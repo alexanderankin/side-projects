@@ -1,0 +1,10 @@
+name: FirstPlugin
+version: 0.0.1
+author: author
+description: Demonstrates Plugin Capabilities
+website: https://github.com/alexanderankin/side-projects
+
+api-version: '1.13'
+main: org.example.mc.FirstPlugin
+
+depend: []
