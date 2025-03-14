@@ -40,6 +40,7 @@ public class Totp4j {
     @Data
     @Command(
             name = "list",
+            aliases = "l",
             description = "list tokens which have been added",
             mixinStandardHelpOptions = true
     )
@@ -55,6 +56,7 @@ public class Totp4j {
     @Data
     @Command(
             name = "add",
+            aliases = "a",
             description = "set up a new token for OTP generation",
             mixinStandardHelpOptions = true
     )
@@ -151,6 +153,7 @@ public class Totp4j {
     @Data
     @Command(
             name = "generate",
+            aliases = {"g", "gen"},
             description = "generate an OTP for a token",
             mixinStandardHelpOptions = true
     )
