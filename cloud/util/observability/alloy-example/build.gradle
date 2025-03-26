@@ -1,0 +1,38 @@
+plugins {
+    id 'spring-conventions'
+    id 'jib-conventions'
+}
+
+dependencies {
+    annotationProcessor 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+
+jib {
+    from {
+        image = 'eclipse-temurin:21-jre-alpine@sha256:4e9ab608d97796571b1d5bbcd1c9f430a89a5f03fe5aa6c093888ceb6756c502'
+    }
+    to {
+        image = 'daveankin/alloy-example:latest'
+    }
+    container.entrypoint = [
+            'sh',
+            '-c',
+            'exec java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file'
+    ]
+}

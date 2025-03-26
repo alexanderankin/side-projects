@@ -3,8 +3,8 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:3.4.1')
-    implementation platform('org.springframework.boot:spring-boot-dependencies:3.4.1')
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:3.4.4')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.4.4')
     implementation platform('org.springframework.cloud:spring-cloud-dependencies:2024.0.0')
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
