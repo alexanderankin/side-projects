@@ -19,9 +19,7 @@ import org.apache.commons.compress.archivers.ar.ArArchiveOutputStream;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,6 +55,8 @@ class DebMaker {
         throw e;
     }
 
+    @Data
+    @Accessors(chain = true)
     @Command(
             name = "build",
             description = "build a debian package",
@@ -81,11 +81,7 @@ class DebMaker {
             return outputDirectory == null || outputDirectory.toFile().isDirectory();
         }
 
-        @SneakyThrows
-        @Override
-        public void run() {
-            log.debug("building with flags: {}", this);
-
+        private Configuration readConfig() throws IOException {
             Configuration configuration;
             try (var factory = Validation.buildDefaultValidatorFactory()) {
                 Validator validator = factory.getValidator();
@@ -105,10 +101,23 @@ class DebMaker {
                         .filter(Predicate.not(Set::isEmpty))
                         .ifPresent(e -> throwException(new ConstraintViolationException(e)));
             }
+            return configuration;
+        }
 
+        @SneakyThrows
+        @Override
+        public void run() {
+            log.debug("building with flags: {}", this);
+            var output = run(readConfig());
+            Files.copy(output.getValue(), output.getKey());
+        }
+
+        @SneakyThrows
+        Map.Entry<Path, InputStream> run(Configuration configuration) {
             var name = configuration.getName();
 
             Map<String, String> arContents = new LinkedHashMap<>();
+            arContents.put("debian-binary", "2.0");
             arContents.put(
                     "debian/control",
                     "Package: " + name + "\n" +
@@ -120,13 +129,13 @@ class DebMaker {
                     name + ".install",
                     configuration.getFiles().stream()
                             .map(installedFile -> {
-                                return name + ".files/" + Path.of(installedFile.getBuildPath()).getFileName() + " " + installedFile.getInstalledPath();
+                                return name + ".files/" + installedFile.getBuildPath().getFileName() + " " + installedFile.getInstalledPath();
                             })
                             .collect(Collectors.joining(System.lineSeparator()))
             );
 
             for (Configuration.InstalledFile file : configuration.getFiles()) {
-                Path buildPath = Path.of(file.getBuildPath());
+                Path buildPath = file.getBuildPath();
                 arContents.put(name + ".files/" + buildPath.getFileName(), Files.readString(buildPath));
             }
 
@@ -142,12 +151,10 @@ class DebMaker {
                 }
             }
 
-            byte[] contents = os.toByteArray();
-
             var outputFileName = name + "_" + configuration.getVersion() + ".deb";
 
             log.debug("writing output .deb as {} to {}", outputFileName, outputDirectory);
-            Files.write(outputDirectory.resolve(outputFileName), contents);
+            return Map.entry(outputDirectory.resolve(outputFileName), new ByteArrayInputStream(os.toByteArray()));
         }
     }
 
@@ -165,9 +172,9 @@ class DebMaker {
         @Accessors(chain = true)
         static class InstalledFile {
             @NotBlank
-            String installedPath;
+            Path installedPath;
             @NotBlank
-            String buildPath;
+            Path buildPath;
         }
     }
 }
