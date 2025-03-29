@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
         version = "0.0.1",
         mixinStandardHelpOptions = true,
         sortOptions = false,
+        scope = CommandLine.ScopeType.INHERIT,
         subcommands = {
                 Totp4j.List.class,
                 Totp4j.Add.class,
