@@ -1,0 +1,50 @@
+{
+  "name": "mc-discord-ip-whitelist",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "nodemon": "nodemon",
+    "test": "mocha --require=ts-node/esm --timeout 30_000",
+    "test:backend": "npm run test -- ./server/test/**/*.{ts,js} **/*.test.js",
+    "test:backend:watch": "npm run test -- ./server/test/**/*.{ts,js} **/*.test.js --node-option=watch",
+    "dev": "vite",
+    "dev:backend": "ts-node ./server/server.js",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "better-auth": "^1.2.7",
+    "classnames": "^2.5.1",
+    "connect-session-knex": "^5.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "knex": "^3.1.0",
+    "morgan": "^1.10.0",
+    "pg-native": "^3.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "chai": "^5.2.0",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "mocha": "^11.1.0",
+    "nodemon": "^3.1.9",
+    "testcontainers": "^10.24.2",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.2.0"
+  }
+}

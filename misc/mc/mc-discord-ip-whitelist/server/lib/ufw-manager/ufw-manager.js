@@ -1,0 +1,5 @@
+export class UfwManager {
+  isAvailable() {
+
+  }
+}
