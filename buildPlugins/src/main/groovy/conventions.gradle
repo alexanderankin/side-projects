@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'idea'
-    id 'jacoco'
+    // id 'jacoco'
 }
 
 group = 'info.ankin.side-projects'
@@ -90,9 +90,11 @@ def integrationTest = tasks.register('integrationTest', Test) {
 }
 
 // pick up integrationTest coverage file in report
+/*
 jacocoTestReport {
     getExecutionData().from(fileTree(project.layout.buildDirectory).include("jacoco/*.exec"))
 }
+*/
 
 check.dependsOn integrationTest
 

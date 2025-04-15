@@ -1,0 +1,8 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    itestImplementation 'org.testcontainers:testcontainers'
+}
