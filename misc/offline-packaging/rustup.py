@@ -39,7 +39,7 @@ class WgetNCache:
         self.keys = []
 
         destination = self.cache_dir
-        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.mkdir(parents=True, exist_ok=True)
 
     def get(self, url: str, key: str, append: bool = True):
         if append:
