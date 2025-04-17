@@ -141,15 +141,15 @@ wget_cache.get(manifest_sha_url_actual, url_path_to_file_name(manifest_sha_url))
 
 manifest = toml.load(wget_cache.cache_dir / url_path_to_file_name(manifest_url))
 
-COMPONENTS = ["cargo", "clippy", "rust-docs", "rust-std", "rustc", "rustfmt"]
+COMPONENTS = ["cargo", "clippy", "rust-docs", "rust-std", "rustc", "rustfmt", "rust-src"]
 
 
 def get_component_url_from_manifest(each_component, manifest):
     if each_component in manifest["pkg"]:
-        component_url = manifest["pkg"][each_component]["target"][arch].get("xz_url")
+        component_url = manifest["pkg"][each_component]["target"]["*" if each_component == "rust-src" else arch].get("xz_url")
     elif each_component in manifest["renames"]:
         each_component = manifest["renames"][each_component]["to"]
-        component_url = manifest["pkg"][each_component]["target"][arch].get("xz_url")
+        component_url = manifest["pkg"][each_component]["target"]["*" if each_component == "rust-src" else arch].get("xz_url")
     else:
         raise Exception(f"no component {each_component}, even in renames")
     return component_url
@@ -185,7 +185,7 @@ with ZipFile(output, "w") as zip_f:
         
         while ! (echo > /dev/tcp/localhost/8080) >/dev/null 2>&1; do echo "Waiting for port 8080 on localhost..."; sleep 1; done
         export RUSTUP_DIST_SERVER=http://localhost:8080
-        ./offline-rustup/rustup/dist/{arch}/rustup-init -y
+        ./offline-rustup/rustup/dist/{arch}/rustup-init -c rust-src -y
     """).strip() + "\n"
     zip_f.writestr(rust_up_zip_file, compresslevel=0, data=rust_up_zip_file_data)
 
