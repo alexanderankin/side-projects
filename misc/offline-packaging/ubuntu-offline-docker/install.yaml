@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/canonical/subiquity/refs/heads/main/autoinstall-schema.json
+version: 1
+interactive-sections: []
+locale: en_US.UTF-8
+refresh-installer:
+  update: false
+keyboard:
+  layout: us
+
+source:
+  search_drivers: false
+
+storage:
+  layout:
+    name: zfs
+    # this part doesn't work
+    match:
+      ssd: true
+    sizing-policy: all
+    reset-partition: 10G
+
+identity:
+  realname: User
+  username: toor
+  # root
+  password: '$y$j9T$Hlhd8Zo3fEmX0zGkle3to1$grl.WC97t36nDI3877hrRWjKlz/PJAzjpqTpL3urpy5'
+  hostname: some_host
+
+ssh:
+  install-server: true
+
+codecs:
+  install: true
+drivers:
+  install: true
+oem:
+  install: true
+debconf-selections: |
+  openssh-server openssh-server/permit-root-login boolean false
+  ufw ufw/enable boolean false
+#   ufw ufw/enable boolean true
+#   ufw ufw/allow_known_ports SSH,HTTP,HTTPS
+
+# packages:
+#   - python3
+#   - python-is-python3
+#   - git
+#   - jq
+#   - htop
+
+kernel-crash-dumps:
+  enabled: false
+
+timezone: America/Los_Angeles
+
+updates: all
+
+shutdown: poweroff
