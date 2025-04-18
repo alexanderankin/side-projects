@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://github.com/alexanderankin/simple-deb-4j/releases/download/v0.0.4/simple-deb-config-schema.json
+meta:
+  name: starship-legacy
+  version: 0.0.1
+  arch: amd64
+control:
+  depends: ""
+  recommends: ""
+  section: "main"
+  priority: "optional"
+  homepage: "https://github.com/starship/starship"
+  maintainer: "https://github.com/starship"
+  description: "starship"
+files:
+  controlFiles: []
+  dataFiles:
+    -
