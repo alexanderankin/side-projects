@@ -14,4 +14,26 @@ control:
 files:
   controlFiles: []
   dataFiles:
-    -
+    - { type: file, path: usr/share/doc/starship/changelog.Debian.gz, sourcePath: ./data-files/original/usr/share/doc/starship/changelog.Debian.gz }
+    - { type: file, path: usr/share/doc/starship/presets/no-runtimes.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/no-runtimes.md }
+    - { type: file, path: usr/share/doc/starship/presets/jetpack.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/jetpack.md }
+    - { type: file, path: usr/share/doc/starship/presets/no-empty-icons.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/no-empty-icons.md }
+    - { type: file, path: usr/share/doc/starship/presets/pure-preset.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/pure-preset.md }
+    - { type: file, path: usr/share/doc/starship/presets/nerd-font.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/nerd-font.md }
+    - { type: file, path: usr/share/doc/starship/presets/pastel-powerline.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/pastel-powerline.md }
+    - { type: file, path: usr/share/doc/starship/presets/tokyo-night.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/tokyo-night.md }
+    - { type: file, path: usr/share/doc/starship/presets/bracketed-segments.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/bracketed-segments.md }
+    - { type: file, path: usr/share/doc/starship/presets/no-nerd-font.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/no-nerd-font.md }
+    - { type: file, path: usr/share/doc/starship/presets/gruvbox-rainbow.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/gruvbox-rainbow.md }
+    - { type: file, path: usr/share/doc/starship/presets/plain-text.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/plain-text.md }
+    - { type: file, path: usr/share/doc/starship/presets/README.md, sourcePath: ./data-files/original/usr/share/doc/starship/presets/README.md }
+    - { type: file, path: usr/share/doc/starship/README.Debian, sourcePath: ./data-files/original/usr/share/doc/starship/README.Debian }
+    - { type: file, path: usr/share/doc/starship/copyright, sourcePath: ./data-files/original/usr/share/doc/starship/copyright }
+    - { type: file, path: usr/share/doc/starship/config/README.md.gz, sourcePath: ./data-files/original/usr/share/doc/starship/config/README.md.gz }
+    - { type: file, path: usr/share/doc/starship/advanced-config/README.md.gz, sourcePath: ./data-files/original/usr/share/doc/starship/advanced-config/README.md.gz }
+    - { type: file, path: usr/share/doc/starship/README.md.gz, sourcePath: ./data-files/original/usr/share/doc/starship/README.md.gz }
+    - { type: file, path: usr/share/bash-completion/completions/starship, sourcePath: ./data-files/original/usr/share/bash-completion/completions/starship }
+    - { type: file, path: usr/share/lintian/overrides/starship, sourcePath: ./data-files/original/usr/share/lintian/overrides/starship }
+    - { type: file, path: usr/share/zsh/vendor-completions/_starship, sourcePath: ./data-files/original/usr/share/zsh/vendor-completions/_starship }
+    - { type: file, path: usr/share/fish/vendor_completions.d/starship.fish, sourcePath: ./data-files/original/usr/share/fish/vendor_completions.d/starship.fish }
+    - { type: file, path: usr/bin/starship, sourcePath: ./data-files/original/usr/bin/starship, mode: 0x755 }

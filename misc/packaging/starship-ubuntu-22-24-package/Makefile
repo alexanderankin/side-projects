@@ -11,23 +11,20 @@ build/.exists:
 build/simple-deb-4j-all.jar: build/.exists
 	cd build && wget -N https://github.com/alexanderankin/simple-deb-4j/releases/download/v0.0.4/simple-deb-4j-all.jar
 
-# download release information
-build/releases: build/.exists
-	cd build && wget -N https://api.github.com/repos/starship/starship/releases
+# download original package
+build/original.zip: build/.exists
+	cd build && mkdir -p original && docker run --rm -it -v $(shell pwd)/build/original:/w -w /w ubuntu:25.04 sh -c 'apt update && apt download starship && chmod 777 *.deb' && zip -r original.zip original/
 
-# parse latest release
-build/latest_release: build/releases
-	cat build/releases | jq -r .[0].name | tr -d 'v' > $@
+build/original_version.txt: build/original.zip
+	zipinfo -1 build/original.zip | grep .deb | sed -e 's.original/..' | cut -d_ -f2 > $@
 
 # build config file
-build/config.yaml: config.yaml build/.exists
-	cat config.yaml | yaml2json | jq '.meta.version = "'$(shell cat ./build/latest_release)'"' | json2yaml > $@
+build/config.yaml: config.yaml build/.exists build/original_version.txt
+	cat config.yaml | yaml2json | jq '.meta.version = "'$(shell cat ./build/original_version.txt)'"' | json2yaml > $@
 
-# download latest release
-build/starship-x86_64-unknown-linux-gnu.tar.gz: build/latest_release
-	# http://archive.ubuntu.com/ubuntu/pool/universe/s/starship/starship_1.22.1-2_amd64.deb
-	cd build && wget -N https://github.com/starship/starship/releases/download/v$(shell cat ./build/latest_release)/starship-x86_64-unknown-linux-gnu.tar.gz
+build/files: build/original.zip
+	cd build && mkdir -p data-files && unzip -f -d data-files original.zip && cd data-files/original && ar xf *.deb && tar xaf data.*
 
 # repackage release
-build/deb.zip: build/simple-deb-4j-all.jar build/config.yaml
-	[[ -f ~/.sdkman/bin/sdkman-init.sh ]] && . ~/.sdkman/bin/sdkman-init.sh; java -jar build/simple-deb-4j-all.jar b -c build/config.yaml -o build/
+build/deb.zip: build/simple-deb-4j-all.jar build/config.yaml build/files
+	cd build && [[ -f ~/.sdkman/bin/sdkman-init.sh ]] && . ~/.sdkman/bin/sdkman-init.sh; java -jar ./simple-deb-4j-all.jar b -c ./config.yaml -o ./ && zip deb.zip ./*.deb
