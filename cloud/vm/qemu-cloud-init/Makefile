@@ -18,11 +18,29 @@ build/seed.iso: build/user-data
 	cloud-localds $@ build/user-data
 
 clean:
-	find build/ -type f -not -name '*.img' -delete
+	find build/ -type f -not -name '*cloudimg*.img*' -delete
 
-build/noble-server-cloudimg-amd64.img: build/.check_wget
+build/noble-server-cloudimg-amd64.img_: build/.check_wget
 	$(shell cd build; wget -N https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img)
+	touch $@
 
-start_vm: build/noble-server-cloudimg-amd64.img build/seed.iso
-	qemu-system-x86_64 -cpu host -m 2048 -smp 2 -enable-kvm -drive file=build/noble-server-cloudimg-amd64.img,format=qcow2,if=virtio -cdrom build/seed.iso -netdev user,id=net0,hostfwd=tcp::2222-:22 -device virtio-net-pci,netdev=net0 -display none
-# -serial mon:stdio
+# this must happen every time if you want a clean vm
+.PHONY: build/vm.img
+build/vm.img: build/noble-server-cloudimg-amd64.img_
+	$(shell cd build; cp noble-server-cloudimg-amd64.img vm.img)
+
+# "Ctrl+a, x" exits the vm
+start_vm: build/vm.img build/seed.iso
+	qemu-system-x86_64 \
+	  -cpu host \
+	  -m 4096 \
+	  -smp 2 \
+	  -enable-kvm \
+	  -drive file=build/vm.img,format=qcow2,if=virtio \
+	  -cdrom build/seed.iso \
+	  -netdev user,id=net0,hostfwd=tcp::2222-:22 \
+	  -device virtio-net-pci,netdev=net0 \
+	  -display none \
+	  -serial mon:stdio
+
+#  -nic tap \

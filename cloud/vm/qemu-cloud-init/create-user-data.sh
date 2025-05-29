@@ -35,11 +35,11 @@ users:
 ssh_pwauth: true
 disable_root: true
 
-package_update: true
-packages: [ htop, jq, curl, wget, git, net-tools, gpg ]
+#package_update: true
+#packages: [ htop, jq, curl, wget, git, net-tools, gpg ]
 
 EOF
-exit 0
+#exit 0
 
 cat <<'EOF'
 runcmd:
@@ -65,8 +65,8 @@ runcmd:
       done
     }
 
-    wget -q https://packagecloud.io/fdio/release/gpgkey -O /usr/share/keyrings/vpp.asc
-    echo "deb [signed-by=/usr/share/keyrings/vpp.asc] https://packagecloud.io/fdio/master/ubuntu $(. /etc/os-release; echo $VERSION_CODENAME) main" | tee /etc/apt/sources.list.d/vpp.list
+    wget -q https://packagecloud.io/fdio/release/gpgkey -O /etc/apt/keyrings/vpp.asc
+    echo "deb [signed-by=/etc/apt/keyrings/vpp.asc] https://packagecloud.io/fdio/release/ubuntu $(. /etc/os-release; echo $VERSION_CODENAME) main" | tee /etc/apt/sources.list.d/vpp.list
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install vpp vpp-plugin-core vpp-plugin-dpdk -y
 EOF
