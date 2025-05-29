@@ -1,4 +1,0 @@
-name: test
-files:
-  - installedPath: /etc/test1
-    buildPath: /home/toor/.bashrc
