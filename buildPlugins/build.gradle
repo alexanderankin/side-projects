@@ -8,4 +8,5 @@ repositories {
 
 dependencies {
     implementation 'com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin:3.4.5'
+    implementation 'com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:8.3.6'
 }

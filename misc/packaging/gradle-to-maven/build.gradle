@@ -1,7 +1,5 @@
 plugins {
-    id 'spring-conventions'
-    id 'application'
-    id 'com.gradleup.shadow' version '8.3.5'
+    id 'picocli-conventions'
 }
 
 // so it can run everywhere else
@@ -13,10 +11,6 @@ java {
 application.mainClass.set('side.pkg.gradle2maven.GradleToMavenCli')
 
 dependencies {
-    implementation('ch.qos.logback:logback-classic')
-
     // https://mvnrepository.com/artifact/commons-codec/commons-codec
     implementation 'commons-codec:commons-codec:1.17.1'
-    implementation 'info.picocli:picocli:4.7.5'
-    annotationProcessor 'info.picocli:picocli-codegen:4.7.5'
 }
