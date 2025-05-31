@@ -1,0 +1,10 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.jmonkeyengine:jme3-examples:3.8.1-stable'
+    implementation 'org.jmonkeyengine:jme3-core:3.8.1-stable'
+
+    implementation('ch.qos.logback:logback-classic')
+}
