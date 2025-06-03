@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import side.oci.helpers.OciHelpersConfig;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -17,6 +18,10 @@ public class Config {
     @JsonAnyGetter
     @JsonAnySetter
     Map<String, Profile> profiles;
+
+    public Profile getDefaultProfile(OciHelpersConfig config) {
+        return profiles == null ? null : profiles.get(config.getProfile());
+    }
 
     @Data
     @Accessors(chain = true)

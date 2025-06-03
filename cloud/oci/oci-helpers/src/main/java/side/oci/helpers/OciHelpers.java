@@ -38,10 +38,14 @@ public class OciHelpers {
         return loaded;
     }
 
+    public Config.Profile getOrLoadDefailtProfile() {
+        return getOrLoadConfig().getDefaultProfile(getCliConfig());
+    }
+
     @SneakyThrows
     public List<NamedOciEntity<CompartmentListItem>> listCompartments() {
         // oci iam compartment list --compartment-id ${tenancy_id} --name ${compartment} | jq -r .data[].id
-        var result = run("oci iam compartment list --compartment-id " + getOrLoadConfig().getProfiles().get(cliConfig.getProfile()).getTenancy());
+        var result = run("oci iam compartment list --compartment-id " + getOrLoadDefailtProfile().getTenancy());
         var compartments = mapper.readValue(result.output(), new TypeReference<BaseOciDataList<CompartmentListItem>>() {
         });
         return compartments.getData().stream().map(e -> new NamedOciEntity<CompartmentListItem>().setEntity(e)).toList();
@@ -49,7 +53,7 @@ public class OciHelpers {
 
     @SneakyThrows
     public CompartmentListItem getCompartment(String name) {
-        String tenancy = getOrLoadConfig().getProfiles().get(cliConfig.getProfile()).getTenancy();
+        String tenancy = getOrLoadDefailtProfile().getTenancy();
         var result = run("oci iam compartment list --compartment-id " + tenancy + " --name " + name);
         var compartments = mapper.readValue(result.output(), new TypeReference<BaseOciDataList<CompartmentListItem>>() {
         });

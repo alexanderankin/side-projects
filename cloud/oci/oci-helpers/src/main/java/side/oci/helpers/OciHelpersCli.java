@@ -164,7 +164,7 @@ class OciHelpersCli implements Runnable {
         private void printSession(SessionItem session, int port, String host) throws JsonProcessingException {
             System.err.println(INSTANCE.mapper.writeValueAsString(session.getSshMetadata()));
             System.err.flush();
-            System.out.println("ssh -N -L 127.0.0.1:" + port + ":" + host + ":" + port + " -p 22 " + session.getId() + "@host.bastion.us-sanjose-1.oci.oraclecloud.com");
+            System.out.println("ssh -N -L 127.0.0.1:" + port + ":" + host + ":" + port + " -p 22 " + session.getId() + "@host.bastion." + INSTANCE.getOrLoadDefailtProfile().getRegion() + ".oci.oraclecloud.com");
             System.out.flush();
         }
 
@@ -175,7 +175,7 @@ class OciHelpersCli implements Runnable {
             // todo work out retry strategy
             do {
                 start = System.nanoTime();
-                exitCode = new ProcessBuilder(("ssh -N -L 127.0.0.1:" + port + ":" + host + ":" + port + " -p 22 " + session.getId() + "@host.bastion.us-sanjose-1.oci.oraclecloud.com").split(" "))
+                exitCode = new ProcessBuilder(("ssh -N -L 127.0.0.1:" + port + ":" + host + ":" + port + " -p 22 " + session.getId() + "@host.bastion." + INSTANCE.getOrLoadDefailtProfile().getRegion() + ".oci.oraclecloud.com").split(" "))
                         .inheritIO()
                         .start()
                         .waitFor();
