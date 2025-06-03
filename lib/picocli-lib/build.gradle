@@ -1,0 +1,5 @@
+plugins {
+    id 'picocli-conventions'
+}
+
+application.mainClass.set 'java.util.prefs.Base64'

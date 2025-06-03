@@ -1,0 +1,28 @@
+plugins {
+    id 'spring-conventions'
+    id 'picocli-conventions'
+}
+
+// so it can run everywhere else
+java {
+    sourceCompatibility = JavaVersion.toVersion(17)
+    targetCompatibility = JavaVersion.toVersion(17)
+    withSourcesJar()
+}
+
+application.mainClass.set('side.oci.helpers.OciHelpersCli')
+
+dependencies {
+    // // https://mvnrepository.com/artifact/commons-codec/commons-codec
+    // implementation 'commons-codec:commons-codec:1.17.1'
+
+    implementation project(':lib:picocli-lib')
+
+    // https://mvnrepository.com/artifact/org.ini4j/ini4j
+    implementation 'org.ini4j:ini4j:0.5.4'
+
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+
+    // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-retry
+    implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'
+}
