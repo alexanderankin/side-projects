@@ -26,3 +26,10 @@ dependencies {
     // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-retry
     implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'
 }
+
+/*
+./gradlew :cloud:oci:oci-helpers:shadowJar -q \
+    && cp ./cloud/oci/oci-helpers/build/libs/oci-helpers-all.jar ~/.local/bin/ \
+    && echo -e '#!/usr/bin/env bash\njava -jar ~/.local/bin/oci-helpers-all.jar "$@"' > ~/.local/bin/oci-helpers \
+    && chmod +x ~/.local/bin/oci-helpers
+*/
