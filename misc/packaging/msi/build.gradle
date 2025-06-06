@@ -1,0 +1,17 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.apache.poi/poi
+    implementation 'org.apache.poi:poi:5.4.1'
+    implementation 'org.apache.poi:poi-examples:5.4.1'
+    implementation 'org.slf4j:slf4j-api'
+
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-to-slf4j
+    implementation 'org.apache.logging.log4j:log4j-to-slf4j:2.24.3'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    testImplementation 'ch.qos.logback:logback-classic'
+}
