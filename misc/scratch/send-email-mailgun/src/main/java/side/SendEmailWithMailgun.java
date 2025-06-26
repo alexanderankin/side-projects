@@ -1,12 +1,14 @@
 package side;
 
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.client.RestClient;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +43,14 @@ class SendEmailWithMailgun {
                 .defaultHeaders(headers -> headers.setBasicAuth("api", Objects.requireNonNull(System.getenv("SENDING_KEY"), "SENDING_KEY")))
                 .build();
 
+        // noinspection Convert2Diamond
         var response = restClient.post()
                 .uri("/v3/{domain}/messages", domain)
-                .body(new MultiValueMapAdapter<>(Map.ofEntries(
+                .body(new MultiValueMapAdapter<String, String>(Map.ofEntries(
                         Map.entry("from", List.of(from)),
                         Map.entry("to", List.of(to)),
                         Map.entry("subject", List.of(subject)),
-                        Map.entry(html ? "html" : "text", List.of(content))
+                        Map.entry(html ? "html" : "text", List.of(content.actualContent()))
                 )))
                 .retrieve()
                 .toEntity(String.class);
@@ -63,5 +66,10 @@ class SendEmailWithMailgun {
         String content;
         @CommandLine.Option(names = {"-cf", "--content-file"})
         Path contentFile;
+
+        @SneakyThrows
+        public String actualContent() {
+            return content == null ? Files.readString(contentFile) : content;
+        }
     }
 }
