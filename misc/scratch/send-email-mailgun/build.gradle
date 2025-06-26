@@ -1,0 +1,11 @@
+plugins {
+    id 'spring-conventions'
+    id 'picocli-conventions'
+    id 'jib-conventions'
+}
+
+application.mainClass = 'side.SendEmailWithMailgun'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}
