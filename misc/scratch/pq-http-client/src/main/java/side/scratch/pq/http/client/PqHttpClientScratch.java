@@ -51,7 +51,7 @@ public class PqHttpClientScratch {
     }
 
     @SneakyThrows
-    private static HttpClient httpClient(PemPair pemPair) {
+    static HttpClient httpClient(PemPair pemPair) {
         // 1. TLS context: OpenSSL provider + TLS-1.3 + ONLY X25519Kyber768Draft00
         SslContext sslCtx = SslContextBuilder.forClient()
                 // needs netty-tcnative-boringssl
@@ -61,14 +61,14 @@ public class PqHttpClientScratch {
                 .option(OpenSslContextOption.GROUPS,
                         new String[]{"X25519Kyber768Draft00"})
                 // Trust your self-signed server cert; swap for a real TrustManager in prod
-                .trustManager(pemPair.tmf())
+                .trustManager(pemPair == null ? null : pemPair.tmf())
                 .build();
 
         return HttpClient.create()
                 .secure(spec -> spec.sslContext(sslCtx));
     }
 
-    private static DisposableServer httpServer(PemPair pemPair) throws Exception {
+    static DisposableServer httpServer(PemPair pemPair) throws Exception {
         SslContext sslCtx = SslContextBuilder.forServer(pemPair.certStream(), pemPair.privateKeyStream(), null)
                 .option(OpenSslContextOption.GROUPS, new String[]{"X25519Kyber768Draft00"})
                 // use BoringSSL

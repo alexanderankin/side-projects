@@ -1,26 +1,39 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id 'spring-conventions'
-    id 'application'
+    id 'picocli-conventions'
 }
 
-application.mainClass = 'side.scratch.pq.http.client.PqHttpClientScratch'
+// for shadow, use the client CLI
+application.mainClass = 'side.scratch.pq.http.client.Http'
+
+// for gradle task, run the demo
+tasks.named('run', JavaExec) {
+    mainClass = 'side.scratch.pq.http.client.PqHttpClientScratch'
+}
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework:spring-core'
+
     // // https://mvnrepository.com/artifact/io.projectreactor/reactor-bom
     // implementation platform('io.projectreactor:reactor-bom:2024.0.7')
     implementation 'io.projectreactor.netty:reactor-netty'
 
     // // https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.72.Final'
+    // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final'
     if (Os.isFamily(Os.FAMILY_MAC)) {
-        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:osx-aarch_64'
+        // noinspection DependencyNotationArgument
+        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'osx-aarch_64'
     } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:windows-x86_64'
+        // noinspection DependencyNotationArgument
+        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'windows-x86_64'
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:linux-x86_64'
+        // noinspection DependencyNotationArgument
+        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'linux-x86_64'
     }
 
     // https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/
