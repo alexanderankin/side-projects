@@ -15,12 +15,12 @@ dependencies {
 
     // // https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.72.Final'
-    if (Os.isFamily(Os.FAMILY_UNIX)) {
-        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:linux-x86_64'
+    if (Os.isFamily(Os.FAMILY_MAC)) {
+        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:osx-aarch_64'
     } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:windows-x86_64'
-    } else if (Os.isFamily(Os.FAMILY_MAC)) {
-        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:osx-aarch_64'
+    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+        implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final:linux-x86_64'
     }
 
     // https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/
