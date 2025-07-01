@@ -7,6 +7,7 @@ import picocli.AutoComplete;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import side.picocli.LogbackVerbosityMixin;
 
 import java.net.URI;
 import java.util.List;
@@ -27,6 +28,8 @@ import java.util.Set;
 public class Http implements Runnable {
     static final Set<CliHttpMethod> DATA_ALLOWED = Set.of(CliHttpMethod.POST, CliHttpMethod.PUT);
 
+    @CommandLine.Mixin
+    LogbackVerbosityMixin verbosityMixin;
     @CommandLine.Option(names = {"-m", "--method"}, defaultValue = "GET")
     CliHttpMethod cliHttpMethod;
     @CommandLine.Option(names = {"-d", "--data"})

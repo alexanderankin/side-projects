@@ -38,4 +38,6 @@ dependencies {
 
     // https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.81'
+
+    implementation project(':lib:picocli-lib')
 }
