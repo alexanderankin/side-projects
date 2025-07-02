@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim AS build
 
 ARG OPENSSL_VER=openssl-3.5.0
-ARG NGINX_VER=1.29.1
+ARG NGINX_VER=1.29.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -13,18 +13,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /usr/local/src
 
-RUN wget https://www.openssl.org/source/${OPENSSL_VER}.tar.gz && \
+RUN wget https://nginx.org/download/nginx-${NGINX_VER}.tar.gz
+RUN wget https://www.openssl.org/source/${OPENSSL_VER}.tar.gz
+RUN \
     tar xzf ${OPENSSL_VER}.tar.gz && \
     cd ${OPENSSL_VER} && \
     ./Configure linux-x86_64 no-tests shared \
         --prefix=/opt/openssl && \
     make -j"$(nproc)" && \
-    make install    # headers + libs only
+    # headers + libs only
+    make install_sw && \
+    mkdir -p /opt/openssl/ssl/ && \
+    cp $(find . -name openssl.cnf | head -n1 || :;) /opt/openssl/ssl/openssl.cnf
 
 ENV PATH="/opt/openssl/bin:${PATH}" \
     LD_LIBRARY_PATH="/opt/openssl/lib:${LD_LIBRARY_PATH}"
 
-RUN wget https://nginx.org/download/nginx-${NGINX_VER}.tar.gz && \
+RUN \
     tar xzf nginx-${NGINX_VER}.tar.gz && \
     cd nginx-${NGINX_VER} && \
     ./configure \
@@ -89,6 +94,7 @@ RUN <<EOT bash
         "        ssl_certificate_key server.key;" \
         "        ssl_protocols       TLSv1.3;" \
         "        ssl_conf_command    Groups X25519MLKEM768;" \
+        "        # works with nginx but not chrome: ssl_conf_command    Groups MLKEM768;" \
         "" \
         "        location / {" \
         "            root  html;" \
