@@ -54,6 +54,7 @@ public class Http implements Runnable {
             log.info("group is supplied: {}", group);
             PqHttpClientScratch.opensslGroup = group.name();
         }
+        log.info("group being used is: {}", PqHttpClientScratch.opensslGroup);
 
         HttpClient httpClient = PqHttpClientScratch.httpClient(trustAll ? InsecureTrustManagerFactory.INSTANCE : null);
 
