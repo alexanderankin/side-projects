@@ -53,6 +53,17 @@ dependencies {
 
     constraints {
         [
+                ['org.slf4j:slf4j-bom', '2.0.17'],
+                ['org.bouncycastle:bcpkix-jdk18on', '1.81'],
+        ].each { l ->
+            ['implementation'].each { String c ->
+                add(c, l.getFirst()) { version { prefer l.getLast() } }
+            }
+        }
+    }
+
+    constraints {
+        [
                 ['org.projectlombok:lombok', '1.18.30'],
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
