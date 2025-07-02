@@ -23,11 +23,12 @@ import java.security.cert.X509Certificate;
 
 /**
  * program version of:
- * {@code openssl s_client -connect localhost:8443 -groups X25519Kyber768Draft00}
+ * {@code openssl s_client -connect localhost:8443 -groups X25519MLKEM768}
  * <p>
  */
 @Slf4j
 public class PqHttpClientScratch {
+    static String opensslGroup = "X25519MLKEM768";
 
     @SneakyThrows
     public static void main(String[] args) {
@@ -50,18 +51,24 @@ public class PqHttpClientScratch {
         log.info("done");
     }
 
-    @SneakyThrows
     static HttpClient httpClient(PemPair pemPair) {
-        // 1. TLS context: OpenSSL provider + TLS-1.3 + ONLY X25519Kyber768Draft00
+        return httpClient(pemPair == null ? null : pemPair.tmf());
+    }
+
+    /**
+     * 1. TLS context: OpenSSL provider + TLS-1.3 + ONLY {@link #opensslGroup}
+     */
+    @SneakyThrows
+    static HttpClient httpClient(TrustManagerFactory tmf) {
         SslContext sslCtx = SslContextBuilder.forClient()
                 // needs netty-tcnative-boringssl
                 .sslProvider(SslProvider.OPENSSL)
                 .protocols("TLSv1.3")
                 // restrict the key-share list
                 .option(OpenSslContextOption.GROUPS,
-                        new String[]{"X25519Kyber768Draft00"})
+                        new String[]{opensslGroup})
                 // Trust your self-signed server cert; swap for a real TrustManager in prod
-                .trustManager(pemPair == null ? null : pemPair.tmf())
+                .trustManager(tmf)
                 .build();
 
         return HttpClient.create()
@@ -70,7 +77,7 @@ public class PqHttpClientScratch {
 
     static DisposableServer httpServer(PemPair pemPair) throws Exception {
         SslContext sslCtx = SslContextBuilder.forServer(pemPair.certStream(), pemPair.privateKeyStream(), null)
-                .option(OpenSslContextOption.GROUPS, new String[]{"X25519Kyber768Draft00"})
+                .option(OpenSslContextOption.GROUPS, new String[]{opensslGroup})
                 // use BoringSSL
                 .sslProvider(io.netty.handler.ssl.SslProvider.OPENSSL)
                 // no TLS 1.2 fallback
@@ -78,7 +85,7 @@ public class PqHttpClientScratch {
                 .build();
 
         // gpt line that doesn't work, needs investigating
-        // ((OpenSslContext) sslCtx).setKeyShareGroups("X25519Kyber768Draft00");
+        // ((OpenSslContext) sslCtx).setKeyShareGroups(opensslGroup);
 
         return HttpServer.create()
                 .port(8443)

@@ -1,6 +1,7 @@
 package side.scratch.pq.http.client;
 
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import picocli.AutoComplete;
@@ -16,7 +17,7 @@ import java.util.Set;
 @Slf4j
 @CommandLine.Command(
         name = "http",
-        description = "basic http cli client which can test pqc (X25519Kyber768Draft00)",
+        description = "basic http cli client which can test pqc",
         version = "0.0.1",
         mixinStandardHelpOptions = true,
         sortOptions = false,
@@ -36,6 +37,10 @@ public class Http implements Runnable {
     String data;
     @CommandLine.Option(names = {"-H", "--header"})
     List<String> headers;
+    @CommandLine.Option(names = {"-k", "--insecure"})
+    boolean trustAll;
+    @CommandLine.Option(names = {"--algorithm"})
+    WellKnownGroup group;
     @CommandLine.Parameters(arity = "1")
     URI uri;
 
@@ -45,7 +50,12 @@ public class Http implements Runnable {
 
     @Override
     public void run() {
-        HttpClient httpClient = PqHttpClientScratch.httpClient(null);
+        if (group != null) {
+            log.info("group is supplied: {}", group);
+            PqHttpClientScratch.opensslGroup = group.name();
+        }
+
+        HttpClient httpClient = PqHttpClientScratch.httpClient(trustAll ? InsecureTrustManagerFactory.INSTANCE : null);
 
         httpClient
                 .headers(httpHeaders -> {
@@ -85,5 +95,14 @@ public class Http implements Runnable {
         HttpMethod toNetty() {
             return HttpMethod.valueOf(name());
         }
+    }
+
+    /**
+     * @see <a href="https://docs.openssl.org/3.5/man3/SSL_CTX_set1_curves/#history">
+     *     https://docs.openssl.org/3.5/man3/SSL_CTX_set1_curves/#history
+     * </a>
+     */
+    public enum WellKnownGroup {
+        X25519MLKEM768, X25519Kyber768Draft00, MLKEM768, MLKEM1024
     }
 }
