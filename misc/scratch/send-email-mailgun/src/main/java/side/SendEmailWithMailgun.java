@@ -4,7 +4,9 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMapAdapter;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 import picocli.CommandLine;
 
@@ -43,17 +45,23 @@ class SendEmailWithMailgun {
                 .defaultHeaders(headers -> headers.setBasicAuth("api", Objects.requireNonNull(System.getenv("SENDING_KEY"), "SENDING_KEY")))
                 .build();
 
-        // noinspection Convert2Diamond
-        var response = restClient.post()
-                .uri("/v3/{domain}/messages", domain)
-                .body(new MultiValueMapAdapter<String, String>(Map.ofEntries(
-                        Map.entry("from", List.of(from)),
-                        Map.entry("to", List.of(to)),
-                        Map.entry("subject", List.of(subject)),
-                        Map.entry(html ? "html" : "text", List.of(content.actualContent()))
-                )))
-                .retrieve()
-                .toEntity(String.class);
+        ResponseEntity<String> response;
+        try {
+            // noinspection Convert2Diamond
+            response = restClient.post()
+                    .uri("/v3/{domain}/messages", domain)
+                    .body(new MultiValueMapAdapter<String, String>(Map.ofEntries(
+                            Map.entry("from", List.of(from)),
+                            Map.entry("to", List.of(to)),
+                            Map.entry("subject", List.of(subject)),
+                            Map.entry(html ? "html" : "text", List.of(content.actualContent()))
+                    )))
+                    .retrieve()
+                    .toEntity(String.class);
+        } catch (HttpServerErrorException e) {
+            log.error("MailGun API Exception: {}: {} (response headers: {})", e.getStatusCode(), e.getResponseBodyAsString(), e.getResponseHeaders());
+            throw e;
+        }
 
         log.info("response: {}", response);
         log.info("response body: {}", response.getBody());
