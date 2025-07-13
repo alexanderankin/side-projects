@@ -1,0 +1,12 @@
+plugins {
+    id 'picocli-conventions'
+}
+
+// for shadow, use the client CLI
+application.mainClass = 'side.pki.ca.SelfSignedCaTool'
+
+dependencies {
+    implementation project(':lib:picocli-lib')
+
+    implementation 'org.bouncycastle:bcpkix-jdk18on'
+}
