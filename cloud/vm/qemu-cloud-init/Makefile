@@ -26,8 +26,12 @@ build/noble-server-cloudimg-amd64.img_: build/.check_wget
 
 # this must happen every time if you want a clean vm
 .PHONY: build/vm.img
-build/vm.img: build/noble-server-cloudimg-amd64.img_
-	$(shell cd build; cp noble-server-cloudimg-amd64.img vm.img)
+build/vm.img: build/noble-server-cloudimg-amd64.img
+	qemu-img create -f qcow2 -b noble-server-cloudimg-amd64.img -F qcow2 build/vm.img
+
+.PHONY: clean_vm
+clean_vm:
+	rm -f build/vm.img
 
 # "Ctrl+a, x" exits the vm
 start_vm: build/vm.img build/seed.iso
@@ -38,7 +42,7 @@ start_vm: build/vm.img build/seed.iso
 	  -enable-kvm \
 	  -drive file=build/vm.img,format=qcow2,if=virtio \
 	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22 \
+	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  -display none \
 	  -serial mon:stdio
