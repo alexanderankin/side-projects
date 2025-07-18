@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Callable
 from dataclasses import dataclass
+from ipaddress import IPv4Network
 from json import dumps, loads
 from logging import getLogger
 from pathlib import Path
@@ -11,6 +13,10 @@ from typing import Any, NotRequired, TypedDict
 VERSION = "0.1.0"
 
 log = getLogger(__name__)
+
+
+def truncate_datetime_to_millis_like_json(d: datetime) -> str:
+    return d.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-4] + 'Z'
 
 
 def get_config_location():
@@ -125,11 +131,8 @@ class S3RangeBackend(RangeBackend):
         pass
 
 
-def execute_range_add(args: dict[str, Any]) -> None:
-    pass
-
-
-def execute_range_list(args: dict[str, Any]) -> None:
+def get_range_backend(_: dict[str, Any]) -> RangeBackend:
+    # todo consider args when selecting backend not just default backend
     backends = {
         "fs": FileRangeBackend,
         "s3": S3RangeBackend,
@@ -143,6 +146,25 @@ def execute_range_list(args: dict[str, Any]) -> None:
         raise ValueError(f"default backend {b_name} not known. known: {known}")
 
     backend = b_class(config)
+    return backend
+
+
+def execute_range_add(args: dict[str, Any]) -> None:
+    backend = get_range_backend(args)
+    ranges = backend.read_ranges()
+    if args["name"] in ranges:
+        raise ValueError(f"range already exists: {args['name']}")
+    ranges[args["name"]] = RangeEntity(
+        range=args["range"],
+        # comment=args["comment"] if "comment" in args else "",
+        **({"comment": args["comment"]} if args.get("comment") else dict()),
+        state=dict(),
+    )
+    backend.write_ranges(ranges)
+
+
+def execute_range_list(args: dict[str, Any]) -> None:
+    backend = get_range_backend(args)
     ranges = backend.read_ranges()
     range_names = list(ranges.keys())
     print(dumps(range_names))
@@ -153,11 +175,35 @@ def execute_range_remove(args: dict[str, Any]) -> None:
 
 
 def execute_range_reserve(args: dict[str, Any]) -> None:
-    pass
+    backend = get_range_backend(args)
+    ranges = backend.read_ranges()
+    the_range = ranges.get(args["range"])
+    if not the_range:
+        raise ValueError(f"range {args['range']} not found")
+
+    ip_range = the_range["range"]
+    new_ip: str | None = None
+    for ip in IPv4Network(ip_range):
+        ip_str = str(ip)
+        if ip_str not in the_range["state"]:
+            new_ip = ip_str
+            break
+
+    if new_ip is None:
+        raise ValueError(f"ip address {ip_range} is full")
+
+    json_now = truncate_datetime_to_millis_like_json(datetime.now())
+    new_entry = {new_ip: {"created_at": json_now}}
+    the_range["state"].update(new_entry)
+
+    backend.write_ranges(ranges)
+    print(dumps(new_entry))
 
 
-def execute_range_stats(args: dict[str, Any]) -> None:
-    pass
+def execute_range_info(args: dict[str, Any]) -> None:
+    backend = get_range_backend(args)
+    ranges = backend.read_ranges()
+    print(dumps(ranges[args["range"]]))
 
 
 def execute_range_unreserve(args: dict[str, Any]) -> None:
@@ -170,7 +216,7 @@ def execute_range(args: dict[str, Any]) -> None:
         "list": execute_range_list,
         "remove": execute_range_remove,
         "reserve": execute_range_reserve,
-        "stats": execute_range_stats,
+        "info": execute_range_info,
         "unreserve": execute_range_unreserve,
     }
     func = range_commands.get(args["range_subcommand"])
@@ -225,7 +271,7 @@ def parse_args(args: list[str]) -> dict[str, Any]:
     add_parser = range_subparsers.add_parser("add")
     add_parser.add_argument("name")
     add_parser.add_argument("--range", required=True)
-    add_parser.add_argument("--comment", default="")
+    add_parser.add_argument("--comment", default=None)
     add_parser.add_argument("--dry-run", action="store_true")
 
     remove_parser = range_subparsers.add_parser("remove")
@@ -241,8 +287,8 @@ def parse_args(args: list[str]) -> dict[str, Any]:
     unreserve_parser.add_argument("reservation")
     unreserve_parser.add_argument("--dry-run", action="store_true")
 
-    stats_parser = range_subparsers.add_parser("stats")
-    stats_parser.add_argument("range")
+    info_parser = range_subparsers.add_parser("info")
+    info_parser.add_argument("range")
 
     # # Parse and print args for demonstration
     args = parser.parse_args(args)
