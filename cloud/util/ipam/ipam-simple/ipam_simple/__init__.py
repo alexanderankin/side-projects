@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Callable
-from dataclasses import dataclass
+from datetime import datetime
 from ipaddress import IPv4Network
 from json import dumps, loads
 from logging import getLogger
@@ -16,7 +15,7 @@ log = getLogger(__name__)
 
 
 def truncate_datetime_to_millis_like_json(d: datetime) -> str:
-    return d.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-4] + 'Z'
+    return d.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4] + "Z"
 
 
 def get_config_location():
@@ -171,7 +170,12 @@ def execute_range_list(args: dict[str, Any]) -> None:
 
 
 def execute_range_remove(args: dict[str, Any]) -> None:
-    pass
+    backend = get_range_backend(args)
+    ranges = backend.read_ranges()
+    old = ranges.pop(args["name"], None)
+    if old is None:
+        raise ValueError(f"no such range: {args['name']}")
+    backend.write_ranges(ranges)
 
 
 def execute_range_reserve(args: dict[str, Any]) -> None:
