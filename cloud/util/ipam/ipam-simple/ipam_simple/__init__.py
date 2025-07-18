@@ -207,7 +207,19 @@ def execute_range_info(args: dict[str, Any]) -> None:
 
 
 def execute_range_unreserve(args: dict[str, Any]) -> None:
-    pass
+    backend = get_range_backend(args)
+    ranges = backend.read_ranges()
+    the_range = ranges.get(args["range"])
+    if not the_range:
+        raise ValueError(f"range {args['range']} not found")
+
+    reservation = args["reservation"]
+
+    old = the_range["state"].pop(reservation, None)
+    if old is None:
+        raise ValueError(f"reservation {reservation} not in '{args['range']}'")
+
+    backend.write_ranges(ranges)
 
 
 def execute_range(args: dict[str, Any]) -> None:
