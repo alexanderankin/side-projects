@@ -14,23 +14,32 @@ VERSION = "0.1.0"
 log = getLogger(__name__)
 
 
+def _now() -> datetime:
+    return datetime.now()
+
+
 def truncate_datetime_to_millis_like_json(d: datetime) -> str:
     return d.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-4] + "Z"
 
 
-def get_config_location():
+def get_default_config_location():
     return Path.home() / ".config" / "ipam-simple.json"
+
+
+def get_default_fs_file_path():
+    return Path.home() / ".cache" / "ipam-simple.json"
 
 
 def get_default_config():
     return {
         "default_backend": "fs",
+        "file_path": str(get_default_fs_file_path()),
     }
 
 
 def read_config() -> dict[str, Any]:
     try:
-        config = loads(get_config_location().read_text())
+        config = loads(get_default_config_location().read_text())
     except FileNotFoundError:
         config = None
 
@@ -38,7 +47,7 @@ def read_config() -> dict[str, Any]:
         return config
 
     config = get_default_config()
-    get_config_location().write_text(dumps(config))
+    get_default_config_location().write_text(dumps(config))
     return config
 
 
@@ -55,7 +64,7 @@ def config_get(args: dict[str, Any]) -> None:
 def config_set(args: dict[str, Any]) -> None:
     config = read_config()
     config[args["key"]] = args["value"]
-    get_config_location().write_text(dumps(config))
+    get_default_config_location().write_text(dumps(config))
     print(dumps(config))
 
 
@@ -187,7 +196,11 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
 
     ip_range = the_range["range"]
     new_ip: str | None = None
-    for ip in IPv4Network(ip_range):
+    network = IPv4Network(ip_range)
+    iterator = iter(network)
+    next(iterator)
+
+    for ip in iterator:
         ip_str = str(ip)
         if ip_str not in the_range["state"]:
             new_ip = ip_str
@@ -196,7 +209,7 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
     if new_ip is None:
         raise ValueError(f"ip address {ip_range} is full")
 
-    json_now = truncate_datetime_to_millis_like_json(datetime.now())
+    json_now = truncate_datetime_to_millis_like_json(_now())
     new_entry = {new_ip: {"created_at": json_now}}
     the_range["state"].update(new_entry)
 
