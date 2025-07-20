@@ -4,6 +4,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Callable
 from datetime import datetime
 from ipaddress import IPv4Network
+from itertools import islice
 from json import dumps, loads
 from logging import getLogger
 from pathlib import Path
@@ -87,6 +88,8 @@ class RangeEntity(TypedDict):
 
 
 class RangeBackend(ABC):
+    config: dict[str, Any]
+
     @abstractmethod
     def __init__(self, config: dict[str, Any]):
         self.config = config
@@ -99,10 +102,8 @@ class RangeBackend(ABC):
 
 
 class FileRangeBackend(RangeBackend):
-    config: dict[str, Any]
-
     def __init__(self, config: dict[str, Any]):
-        self.config = config
+        super().__init__(config)
 
         if not self.config:
             raise ValueError("need config")
@@ -122,10 +123,8 @@ class FileRangeBackend(RangeBackend):
 
 
 class S3RangeBackend(RangeBackend):
-    config: dict[str, Any]
-
     def __init__(self, config: dict[str, Any]):
-        self.config = config
+        super().__init__(config)
 
         if not self.config:
             raise ValueError("need config")
@@ -198,9 +197,9 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
     new_ip: str | None = None
     network = IPv4Network(ip_range)
     iterator = iter(network)
-    next(iterator)
+    iterator_sliced = islice(iterator, 1, network.num_addresses - 1)
 
-    for ip in iterator:
+    for ip in iterator_sliced:
         ip_str = str(ip)
         if ip_str not in the_range["state"]:
             new_ip = ip_str

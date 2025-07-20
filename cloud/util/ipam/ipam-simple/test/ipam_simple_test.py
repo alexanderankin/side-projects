@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from json import dumps
 from pathlib import Path
+from re import compile, Pattern
 from typing import Any, NotRequired, TypedDict
 
 import pytest
@@ -134,6 +135,47 @@ class SequenceStep(TypedDict):
 test_scenarios_params = [
     pytest.param(
         [
+            {
+                "command": "config",
+                "error": True,
+                "err": compile("usage: .*"),
+            },
+        ],
+        id="config",
+    ),
+    pytest.param(
+        [
+            {
+                # read the default config and write it back to disk
+                "command": "config list",
+                "out": compile(
+                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*/data.json"\\s*}'
+                ),
+            },
+            {
+                # read the config from disk
+                "command": "config list",
+                "out": compile(
+                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*/data.json"\\s*}'
+                ),
+            },
+        ],
+        id="config list",
+    ),
+    pytest.param(
+        [
+            {"command": "config set file_path dne"},
+            {"command": "config set default_backend s3"},
+            {"command": "config get file_path", "out": '"dne"'},
+            {
+                "command": "config list",
+                "out": '{"default_backend": "s3", "file_path": "dne"}',
+            },
+        ],
+        id="config editing",
+    ),
+    pytest.param(
+        [
             {"command": "range list", "error": False, "out": "[]", "err": ""},
             {"command": "range add r1 --range 10.0.0.0/16", "out": "", "err": ""},
             {"command": "range list", "out": '["r1"]', "err": ""},
@@ -237,10 +279,37 @@ test_scenarios_params = [
     ),
     pytest.param(
         [
-            {"command": "range add d1 --range 10.0.0.0/16"},
-            {"command": "range add d1 --range 10.0.0.0/16", "error": True},
+            {"command": "range add d1 --range 10.0.0.0/31"},
+            {"command": "range reserve d1", "error": True},
         ],
-        id="reserve an ip in a range that is full",
+        id="reserve an ip in a 31 range that is full",
+    ),
+    pytest.param(
+        [
+            {"command": "range add d1 --range 10.0.0.0/30"},
+            {
+                "command": "range reserve d1",
+                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {
+                "command": "range reserve d1",
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {"command": "range reserve d1", "error": True},
+            {"command": "range unreserve d1 10.0.0.1"},
+            {
+                "command": "range reserve d1",
+                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {"command": "range reserve d1", "error": True},
+            {"command": "range unreserve d1 10.0.0.2"},
+            {
+                "command": "range reserve d1",
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {"command": "range reserve d1", "error": True},
+        ],
+        id="reserve an ip in a 30 range that is full",
     ),
 ]
 
@@ -272,9 +341,35 @@ def test_scenarios(
         out, err = capfd.readouterr()
 
         if "out" in step:
-            assert step["out"] == out.strip(), f"out on step {step}"
+            step_out = step["out"]
+            if isinstance(step_out, str):
+                assert step_out == out.strip(), f"out on step {step}"
+            elif isinstance(step_out, Pattern):
+                assert step_out.match(out.strip()) is not None, (
+                    f"out on step {step} does not match regex"
+                )
 
         if "err" in step:
-            assert step["err"] == err.strip(), f"err on step {step}"
+            step_err = step["err"]
+            if isinstance(step_err, str):
+                assert step_err == err.strip(), f"err on step {step}"
+            elif isinstance(step_err, Pattern):
+                assert step_err.match(err) is not None, (
+                    f"err on step {step} does not match regex"
+                )
         else:
             assert "" == err.strip(), f"err was not blank on step {step}"
+
+
+def test_backend_constructors():
+    from ipam_simple import FileRangeBackend, S3RangeBackend
+
+    with pytest.raises(ValueError):
+        FileRangeBackend(dict())
+    with pytest.raises(ValueError):
+        S3RangeBackend(dict())
+
+    with pytest.raises(ValueError):
+        FileRangeBackend(dict(truthy="dict"))
+    with pytest.raises(ValueError):
+        S3RangeBackend(dict(truthy="dict"))
