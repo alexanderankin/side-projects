@@ -1,5 +1,8 @@
+from contextlib import AbstractContextManager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from json import dumps
+from os import environ
 from pathlib import Path
 from re import compile, Pattern
 from typing import Any, NotRequired, TypedDict
@@ -373,3 +376,66 @@ def test_backend_constructors():
         FileRangeBackend(dict(truthy="dict"))
     with pytest.raises(ValueError):
         S3RangeBackend(dict(truthy="dict"))
+
+
+@dataclass
+class TempEnvVar(AbstractContextManager):
+    name: str
+    value: str
+    environ: dict[str, str] = field(default_factory=lambda: environ)
+    old_value: str | None = None
+
+    def __enter__(self) -> "TempEnvVar":
+        self.old_value = environ.pop(self.name, None)
+        environ[self.name] = self.value
+        return self
+
+    def __exit__(self, *args) -> None:
+        if self.old_value is None:
+            environ.pop(self.name, None)
+        else:
+            environ[self.name] = self.old_value
+        self.old_value = None
+
+
+def test_temp_env_var():
+    assert None == environ.get("test_temp_env_var")
+    with TempEnvVar("test_temp_env_var", "value"):
+        assert "value" == environ.get("test_temp_env_var")
+    assert None == environ.get("test_temp_env_var")
+
+    assert None is not environ.get("HOME")
+    with TempEnvVar("HOME", "value"):
+        assert "value" == environ.get("HOME")
+    assert None is not environ.get("HOME")
+
+
+def test_fs_backend(tmp_path: Path) -> None:
+    from ipam_simple import FileRangeBackend
+
+    backend = FileRangeBackend(dict(file_path=str(tmp_path / "data.json")))
+    assert dict() == backend.read_ranges()
+    ranges = dict()
+    backend.write_ranges(ranges)
+    assert ranges == backend.read_ranges()
+
+
+'''
+def test_s3_backend(tmp_path: Path) -> None:
+    """
+    this one works by first creating a localstack container,
+    then configuring aws cli with a random profile,
+    """
+    from ipam_simple import S3RangeBackend
+
+    with (
+        TempEnvVar("AWS_CONFIG_FILE", str(tmp_path / "config")),
+        TempEnvVar("AWS_SHARED_CREDENTIALS_FILE", str(tmp_path / "credentials")),
+    ):
+        backend = S3RangeBackend(dict(s3_uri="dict"))
+        assert dict() == backend.read_ranges()
+        ranges = dict()
+        backend.write_ranges(ranges)
+        assert ranges == backend.read_ranges()
+        print("ok")
+'''
