@@ -197,7 +197,7 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
     new_ip: str | None = None
     network = IPv4Network(ip_range)
     iterator = iter(network)
-    iterator_sliced = islice(iterator, 1, network.num_addresses - 1)
+    iterator_sliced = islice(iterator, 2, network.num_addresses - 1)
 
     for ip in iterator_sliced:
         ip_str = str(ip)

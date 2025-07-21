@@ -202,17 +202,17 @@ test_scenarios_params = [
             {"command": "range add r1 --range 10.0.0.0/16", "out": "", "err": ""},
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
-                "err": "",
-            },
-            {
-                "command": "range reserve r1",
                 "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
                 "err": "",
             },
             {
                 "command": "range reserve r1",
                 "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "err": "",
+            },
+            {
+                "command": "range reserve r1",
+                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"}}',
                 "err": "",
             },
         ],
@@ -239,32 +239,32 @@ test_scenarios_params = [
             {"command": "range add r1 --range 10.0.0.0/16", "out": ""},
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
-            },
-            {
-                "command": "range reserve r1",
                 "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
             {
                 "command": "range reserve r1",
                 "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
-            {"command": "range unreserve r1 10.0.0.1", "out": ""},
+            {
+                "command": "range reserve r1",
+                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {"command": "range unreserve r1 10.0.0.2", "out": ""},
             {
                 "command": "range info r1",
                 "out": dumps(
                     {
                         "range": "10.0.0.0/16",
                         "state": {
-                            "10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"},
                             "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"},
+                            "10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"},
                         },
                     }
                 ),
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
         ],
         id="reserve an address out of order",
@@ -292,17 +292,25 @@ test_scenarios_params = [
             {"command": "range add d1 --range 10.0.0.0/30"},
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
+            {"command": "range reserve d1", "error": True},
+        ],
+        id="reserve an ip in a 30 range that is full",
+    ),
+    pytest.param(
+        [
+            {"command": "range add d1 --range 10.0.0.0/29"},
             {
                 "command": "range reserve d1",
                 "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
-            {"command": "range reserve d1", "error": True},
-            {"command": "range unreserve d1 10.0.0.1"},
+            {"command": "range reserve d1"},  # 3
+            {"command": "range reserve d1"},  # 4
+            {"command": "range reserve d1"},  # 5
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.1": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.6": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
             {"command": "range reserve d1", "error": True},
             {"command": "range unreserve d1 10.0.0.2"},
@@ -311,8 +319,14 @@ test_scenarios_params = [
                 "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
             },
             {"command": "range reserve d1", "error": True},
+            {"command": "range unreserve d1 10.0.0.3"},
+            {
+                "command": "range reserve d1",
+                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+            },
+            {"command": "range reserve d1", "error": True},
         ],
-        id="reserve an ip in a 30 range that is full",
+        id="reserve an ip in a 29 range that is full",
     ),
 ]
 
