@@ -8,6 +8,8 @@ from itertools import islice
 from json import dumps, loads
 from logging import getLogger
 from pathlib import Path
+from subprocess import CalledProcessError, run
+from tempfile import TemporaryDirectory
 from typing import Any, NotRequired, TypedDict
 
 VERSION = "0.1.0"
@@ -132,10 +134,46 @@ class S3RangeBackend(RangeBackend):
             raise ValueError("need file_path in config")
 
     def read_ranges(self) -> dict[str, RangeEntity]:
-        pass
+        with TemporaryDirectory() as tmp_dir:
+            temp_range_file = Path(tmp_dir) / "ranges.json"
+            try:
+                run(
+                    [
+                        "aws",
+                        "s3",
+                        "cp",
+                        "--content-type=application/json",
+                        self.config["s3_uri"],
+                        str(temp_range_file),
+                    ],
+                    check=True,
+                    encoding="utf-8",
+                    capture_output=True,
+                )
+            except CalledProcessError as e:
+                if "fatal error: An error occurred (404)" in e.stderr:
+                    new_ranges = dict()
+                    self.write_ranges(new_ranges)
+                    return new_ranges
+                else:
+                    raise e
+            return loads(temp_range_file.read_text())
 
     def write_ranges(self, ranges: dict[str, RangeEntity]) -> None:
-        pass
+        with TemporaryDirectory() as tmp_dir:
+            temp_range_file = Path(tmp_dir) / "ranges.json"
+            temp_range_file.write_text(dumps(ranges))
+            run(
+                [
+                    "aws",
+                    "s3",
+                    "cp",
+                    "--content-type=application/json",
+                    str(temp_range_file),
+                    self.config["s3_uri"],
+                ],
+                check=True,
+            )
 
 
 def get_range_backend(_: dict[str, Any]) -> RangeBackend:
@@ -318,9 +356,7 @@ def parse_args(args: list[str]) -> dict[str, Any]:
     info_parser = range_subparsers.add_parser("info")
     info_parser.add_argument("range")
 
-    # # Parse and print args for demonstration
     args = parser.parse_args(args)
-    # print(args)
     return {**vars(args)}
 
 
