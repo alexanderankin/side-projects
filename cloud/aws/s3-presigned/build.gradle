@@ -1,0 +1,9 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.4.0')
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'software.amazon.awssdk:s3'
+}
