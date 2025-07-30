@@ -254,8 +254,8 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
         raise ValueError(f"ip address {ip_range} is full")
 
     json_now = truncate_datetime_to_millis_like_json(_now())
-    meta = loads(args.get("meta") or "{}")
     base_value = {"created_at": json_now, "managed": True}
+    meta = loads(args.get("meta") or "{}")
 
     # intentionally unsafe lol
     # meta.update(base_value)
@@ -291,7 +291,9 @@ def execute_range_unreserve(args: dict[str, Any]) -> None:
     old = state[reservation]
     managed = isinstance(old, dict) and old.get("managed")
     if not managed:
-        raise ValueError(f"reservation {reservation} in '{args['range']}' is not managed by this script")
+        raise ValueError(
+            f"reservation {reservation} in '{args['range']}' is not managed by this script"
+        )
     del state[reservation]
 
     backend.write_ranges(ranges)
@@ -368,7 +370,9 @@ def get_parser() -> ArgumentParser:
 
     reserve_parser = range_subparsers.add_parser("reserve")
     reserve_parser.add_argument("range")
-    reserve_parser.add_argument("--meta", help="JSON string to add to the reservation object", default="{}")
+    reserve_parser.add_argument(
+        "--meta", help="JSON string to add to the reservation object", default="{}"
+    )
     reserve_parser.add_argument("--dry-run", action="store_true")
 
     unreserve_parser = range_subparsers.add_parser("unreserve")

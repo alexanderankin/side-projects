@@ -25,7 +25,10 @@ from ipam_simple import (
 def test_get_default_config_location(profile_value):
     with TempEnvVar.of("IPAM_SIMPLE_PROFILE", profile_value):
         if profile_value:
-            assert f"ipam-simple-{profile_value}.json" == Path(get_default_config_location()).name
+            assert (
+                f"ipam-simple-{profile_value}.json"
+                == Path(get_default_config_location()).name
+            )
         else:
             assert "ipam-simple.json" == Path(get_default_config_location()).name
 
@@ -300,8 +303,14 @@ test_scenarios_params = [
                     {
                         "range": "10.0.0.0/16",
                         "state": {
-                            "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
-                            "10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
+                            "10.0.0.3": {
+                                "created_at": "2025-07-19T14:14:00.00Z",
+                                "managed": True,
+                            },
+                            "10.0.0.4": {
+                                "created_at": "2025-07-19T14:14:00.00Z",
+                                "managed": True,
+                            },
                         },
                     }
                 ),
@@ -379,24 +388,37 @@ test_scenarios_params = [
             {"command": "range reserve d1"},
             {
                 "command": "range info d1",
-                "out": dumps({
-                    "range": "10.0.0.0/16",
-                    "state": {
-                        "10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": False},
-                        "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
-                    },
-                }),
+                "out": dumps(
+                    {
+                        "range": "10.0.0.0/16",
+                        "state": {
+                            "10.0.0.2": {
+                                "created_at": "2025-07-19T14:14:00.00Z",
+                                "managed": False,
+                            },
+                            "10.0.0.3": {
+                                "created_at": "2025-07-19T14:14:00.00Z",
+                                "managed": True,
+                            },
+                        },
+                    }
+                ),
             },
             {"command": "range unreserve d1 10.0.0.2", "error": True},
             {"command": "range unreserve d1 10.0.0.3"},
             {
                 "command": "range info d1",
-                "out": dumps({
-                    "range": "10.0.0.0/16",
-                    "state": {
-                        "10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": False},
-                    },
-                }),
+                "out": dumps(
+                    {
+                        "range": "10.0.0.0/16",
+                        "state": {
+                            "10.0.0.2": {
+                                "created_at": "2025-07-19T14:14:00.00Z",
+                                "managed": False,
+                            },
+                        },
+                    }
+                ),
             },
         ],
         id="unreserve a range that is managed externally fails",
