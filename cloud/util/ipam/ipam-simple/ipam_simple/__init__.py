@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from functools import lru_cache
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Callable
@@ -11,6 +12,7 @@ from pathlib import Path
 from subprocess import CalledProcessError, run
 from tempfile import TemporaryDirectory
 from typing import Any, NotRequired, TypedDict
+from os import getenv
 
 VERSION = "0.1.0"
 
@@ -26,7 +28,9 @@ def truncate_datetime_to_millis_like_json(d: datetime) -> str:
 
 
 def get_default_config_location():
-    return Path.home() / ".config" / "ipam-simple.json"
+    ipam_profile = getenv("IPAM_SIMPLE_PROFILE")
+    suffix = f"-{ipam_profile}" if ipam_profile is not None else ""
+    return Path.home() / ".config" / f"ipam-simple{suffix}.json"
 
 
 def get_default_fs_file_path():
@@ -54,6 +58,10 @@ def read_config() -> dict[str, Any]:
     return config
 
 
+def write_config(config: dict[str, Any]) -> None:
+    get_default_config_location().write_text(dumps(config))
+
+
 def config_list(_: dict[str, Any]) -> None:
     config = read_config()
     print(dumps(config))
@@ -67,7 +75,7 @@ def config_get(args: dict[str, Any]) -> None:
 def config_set(args: dict[str, Any]) -> None:
     config = read_config()
     config[args["key"]] = args["value"]
-    get_default_config_location().write_text(dumps(config))
+    write_config(config)
     print(dumps(config))
 
 
@@ -92,7 +100,6 @@ class RangeEntity(TypedDict):
 class RangeBackend(ABC):
     config: dict[str, Any]
 
-    @abstractmethod
     def __init__(self, config: dict[str, Any]):
         self.config = config
 
@@ -247,7 +254,15 @@ def execute_range_reserve(args: dict[str, Any]) -> None:
         raise ValueError(f"ip address {ip_range} is full")
 
     json_now = truncate_datetime_to_millis_like_json(_now())
-    new_entry = {new_ip: {"created_at": json_now}}
+    meta = loads(args.get("meta") or "{}")
+    base_value = {"created_at": json_now, "managed": True}
+
+    # intentionally unsafe lol
+    # meta.update(base_value)
+    base_value.update(meta)
+    meta = base_value
+
+    new_entry = {new_ip: meta}
     the_range["state"].update(new_entry)
 
     backend.write_ranges(ranges)
@@ -269,9 +284,15 @@ def execute_range_unreserve(args: dict[str, Any]) -> None:
 
     reservation = args["reservation"]
 
-    old = the_range["state"].pop(reservation, None)
-    if old is None:
+    state = the_range["state"]
+    if reservation not in state:
         raise ValueError(f"reservation {reservation} not in '{args['range']}'")
+
+    old = state[reservation]
+    managed = isinstance(old, dict) and old.get("managed")
+    if not managed:
+        raise ValueError(f"reservation {reservation} in '{args['range']}' is not managed by this script")
+    del state[reservation]
 
     backend.write_ranges(ranges)
 
@@ -303,7 +324,8 @@ def execute_args(args: dict[str, Any]) -> None:
     func(args)
 
 
-def parse_args(args: list[str]) -> dict[str, Any]:
+@lru_cache()
+def get_parser() -> ArgumentParser:
     parser = ArgumentParser(prog="ipam_simple")
     parser.add_argument("-v", "--version", action="version", version=VERSION)
 
@@ -346,6 +368,7 @@ def parse_args(args: list[str]) -> dict[str, Any]:
 
     reserve_parser = range_subparsers.add_parser("reserve")
     reserve_parser.add_argument("range")
+    reserve_parser.add_argument("--meta", help="JSON string to add to the reservation object", default="{}")
     reserve_parser.add_argument("--dry-run", action="store_true")
 
     unreserve_parser = range_subparsers.add_parser("unreserve")
@@ -355,14 +378,17 @@ def parse_args(args: list[str]) -> dict[str, Any]:
 
     info_parser = range_subparsers.add_parser("info")
     info_parser.add_argument("range")
+    return parser
 
+
+def parse_args(args: list[str]) -> dict[str, Any]:
+    parser = get_parser()
     args = parser.parse_args(args)
     return {**vars(args)}
 
 
 def main():
     from sys import argv
-    from os import getenv
     from logging import basicConfig, WARN, DEBUG
 
     debug = bool(getenv("DEBUG", None))

@@ -1,7 +1,7 @@
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from json import dumps
+from json import dumps, loads
 from os import environ
 from pathlib import Path
 from re import compile, Pattern
@@ -11,7 +11,24 @@ import pytest
 from pytest import CaptureFixture, MonkeyPatch
 
 import ipam_simple
-from ipam_simple import execute_args, parse_args
+from ipam_simple import (
+    RangeBackend,
+    RangeEntity,
+    execute_args,
+    get_default_config,
+    get_default_config_location,
+    parse_args,
+)
+
+
+@pytest.mark.parametrize("profile_value", [None, "a", "profile", "A"])
+def test_get_default_config_location(profile_value):
+    with TempEnvVar.of("IPAM_SIMPLE_PROFILE", profile_value):
+        if profile_value:
+            assert f"ipam-simple-{profile_value}.json" == Path(get_default_config_location()).name
+        else:
+            assert "ipam-simple.json" == Path(get_default_config_location()).name
+
 
 test_cli_params = [
     pytest.param(
@@ -83,6 +100,7 @@ test_cli_params = [
             "range_subcommand": "reserve",
             "range": "my_range",
             "dry_run": False,
+            "meta": "{}",
         },
     ),
     pytest.param(
@@ -92,6 +110,7 @@ test_cli_params = [
             "range_subcommand": "reserve",
             "range": "my_range",
             "dry_run": True,
+            "meta": "{}",
         },
     ),
     pytest.param(
@@ -135,6 +154,31 @@ class SequenceStep(TypedDict):
     err: NotRequired[str]
 
 
+class InMemoryBackend(RangeBackend):
+    ranges: dict[str, RangeEntity]
+
+    def __init__(self, config: dict[str, Any]):
+        super().__init__(config)
+        self.ranges = dict()
+
+    def read_ranges(self) -> dict[str, RangeEntity]:
+        return self.ranges
+
+    def write_ranges(self, ranges: dict[str, RangeEntity]) -> None:
+        self.ranges = loads(dumps(ranges))
+
+
+@dataclass
+class ConfigBackend:
+    data: dict[str, Any]
+
+    def get_data(self) -> dict[str, Any]:
+        return self.data
+
+    def set_data(self, data: dict[str, Any]) -> None:
+        self.data = data
+
+
 test_scenarios_params = [
     pytest.param(
         [
@@ -152,14 +196,14 @@ test_scenarios_params = [
                 # read the default config and write it back to disk
                 "command": "config list",
                 "out": compile(
-                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*/data.json"\\s*}'
+                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*\\.json"\\s*}'
                 ),
             },
             {
                 # read the config from disk
                 "command": "config list",
                 "out": compile(
-                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*/data.json"\\s*}'
+                    '{"default_backend":\\s*"fs",\\s*"file_path":\\s*".*\\.json"\\s*}'
                 ),
             },
         ],
@@ -202,17 +246,17 @@ test_scenarios_params = [
             {"command": "range add r1 --range 10.0.0.0/16", "out": "", "err": ""},
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
                 "err": "",
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
                 "err": "",
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
                 "err": "",
             },
         ],
@@ -239,15 +283,15 @@ test_scenarios_params = [
             {"command": "range add r1 --range 10.0.0.0/16", "out": ""},
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range unreserve r1 10.0.0.2", "out": ""},
             {
@@ -256,15 +300,15 @@ test_scenarios_params = [
                     {
                         "range": "10.0.0.0/16",
                         "state": {
-                            "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"},
-                            "10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z"},
+                            "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
+                            "10.0.0.4": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
                         },
                     }
                 ),
             },
             {
                 "command": "range reserve r1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
         ],
         id="reserve an address out of order",
@@ -292,7 +336,7 @@ test_scenarios_params = [
             {"command": "range add d1 --range 10.0.0.0/30"},
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range reserve d1", "error": True},
         ],
@@ -303,30 +347,59 @@ test_scenarios_params = [
             {"command": "range add d1 --range 10.0.0.0/29"},
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range reserve d1"},  # 3
             {"command": "range reserve d1"},  # 4
             {"command": "range reserve d1"},  # 5
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.6": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.6": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range reserve d1", "error": True},
             {"command": "range unreserve d1 10.0.0.2"},
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range reserve d1", "error": True},
             {"command": "range unreserve d1 10.0.0.3"},
             {
                 "command": "range reserve d1",
-                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z"}}',
+                "out": '{"10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": true}}',
             },
             {"command": "range reserve d1", "error": True},
         ],
         id="reserve an ip in a 29 range that is full",
+    ),
+    pytest.param(
+        [
+            {"command": "range add d1 --range 10.0.0.0/16"},
+            {"command": 'range reserve d1 --meta {"managed":false}'},
+            {"command": "range reserve d1"},
+            {
+                "command": "range info d1",
+                "out": dumps({
+                    "range": "10.0.0.0/16",
+                    "state": {
+                        "10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": False},
+                        "10.0.0.3": {"created_at": "2025-07-19T14:14:00.00Z", "managed": True},
+                    },
+                }),
+            },
+            {"command": "range unreserve d1 10.0.0.2", "error": True},
+            {"command": "range unreserve d1 10.0.0.3"},
+            {
+                "command": "range info d1",
+                "out": dumps({
+                    "range": "10.0.0.0/16",
+                    "state": {
+                        "10.0.0.2": {"created_at": "2025-07-19T14:14:00.00Z", "managed": False},
+                    },
+                }),
+            },
+        ],
+        id="unreserve a range that is managed externally fails",
     ),
 ]
 
@@ -338,14 +411,15 @@ def test_scenarios(
     monkeypatch: MonkeyPatch,
     capfd: CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr(
-        ipam_simple, "get_default_config_location", lambda: tmp_path / "config.json"
-    )
-    monkeypatch.setattr(
-        ipam_simple, "get_default_fs_file_path", lambda: tmp_path / "data.json"
-    )
     now = datetime(2025, 7, 19, 14, 14, 0, 0, tzinfo=timezone.utc)
     monkeypatch.setattr(ipam_simple, "_now", lambda: now)
+
+    backend = InMemoryBackend(dict())
+    monkeypatch.setattr(ipam_simple, "get_range_backend", lambda *a, **k: backend)
+
+    config = ConfigBackend(get_default_config())
+    monkeypatch.setattr(ipam_simple, "write_config", config.set_data)
+    monkeypatch.setattr(ipam_simple, "read_config", config.get_data)
 
     for step in sequence:
         argv = step["command"].split(" ")
@@ -395,13 +469,18 @@ def test_backend_constructors():
 @dataclass
 class TempEnvVar(AbstractContextManager):
     name: str
-    value: str
+    value: str | None
     environ: dict[str, str] = field(default_factory=lambda: environ)
     old_value: str | None = None
 
+    @staticmethod
+    def of(name: str, value: str | None) -> "TempEnvVar":
+        return TempEnvVar(name, value)
+
     def __enter__(self) -> "TempEnvVar":
         self.old_value = environ.pop(self.name, None)
-        environ[self.name] = self.value
+        if self.value is not None:
+            environ[self.name] = self.value
         return self
 
     def __exit__(self, *args) -> None:
