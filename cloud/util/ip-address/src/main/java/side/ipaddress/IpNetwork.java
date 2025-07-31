@@ -41,7 +41,9 @@ public abstract class IpNetwork {
 
     public abstract int getMaskBits();
 
-    public abstract IpAddress ip();
+    public IpAddress ip() {
+        return getAddress();
+    }
 
     public abstract IpNetwork network();
 
@@ -58,11 +60,6 @@ public abstract class IpNetwork {
     public static class Ipv4Network extends IpNetwork {
         final Ipv4Address address;
         final int maskBits;
-
-        @Override
-        public IpAddress ip() {
-            throw new UnsupportedOperationException();
-        }
 
         @Override
         public IpNetwork network() {
@@ -86,11 +83,6 @@ public abstract class IpNetwork {
     public static class Ipv6Network extends IpNetwork {
         final Ipv6Address address;
         final int maskBits;
-
-        @Override
-        public IpAddress ip() {
-            throw new UnsupportedOperationException();
-        }
 
         @Override
         public IpNetwork network() {

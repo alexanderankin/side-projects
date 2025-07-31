@@ -21,6 +21,7 @@ dependencies {
     // implementation platform('io.projectreactor:reactor-bom:2024.0.7')
     implementation 'io.projectreactor.netty:reactor-netty'
 
+    // // https://mvnrepository.com/artifact/io.netty/netty-tcnative // openssl, dynamic
     // // https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.72.Final'
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final'
