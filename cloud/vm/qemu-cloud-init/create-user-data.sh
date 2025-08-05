@@ -11,15 +11,15 @@ user:
   groups: sudo, users, admin
   shell: /bin/bash
   lock_passwd: false
-  # passwd: "$(mkpasswd ubuntu)"
-  # hashed_passwd: "$(mkpasswd ubuntu)"
-  # ssh_authorized_keys: $(cat \
+  passwd: "$(mkpasswd ubuntu)"
+  hashed_passwd: "$(mkpasswd ubuntu)"
+  ssh_authorized_keys: $(cat \
     <(cat ~/.ssh/id_rsa.pub) \
     <(curl -fSsL https://github.com/alexanderankin.keys) \
     | sed -e '/^$/d' -e 's/^/"/' -e 's/$/"/' \
     | jq -sc)
-  plain_text_passwd: ubuntu1
-  ssh_authorized_keys: []
+  # plain_text_passwd: ubuntu
+  # ssh_authorized_keys: []
 
 users:
   - default

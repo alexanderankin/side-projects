@@ -9,9 +9,14 @@ build/.check_%:
 	@echo "$* found"
 	@touch $@
 
-build/.dependencies: build/.check_mkpasswd build/.check_cloud-localds
+check-package_%: $(CHECK_UP_PREFIX)%
+build/.check-package_%:
+	@mkdir -p build
+	@dpkg -L $* >/dev/null 2>&1 || { echo "$* not found in dpkg -L" >&2; exit 1; }
+	@echo "$* found"
+	@touch $@
 
-build/user-data: build/.dependencies
+build/user-data: build/.check_mkpasswd build/.check_cloud-localds
 	./create-user-data.sh > $@
 
 build/seed.iso: build/user-data
@@ -20,32 +25,7 @@ build/seed.iso: build/user-data
 clean:
 	find build/ -type f -not -name '*cloudimg*.img*' -delete
 
-build/noble-server-cloudimg-amd64.img_: build/.check_wget
-	$(shell cd build; wget -N https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img)
-	touch $@
-
-# this must happen every time if you want a clean vm
-.PHONY: build/vm.img
-build/vm.img: build/noble-server-cloudimg-amd64.img
-	qemu-img create -f qcow2 -b noble-server-cloudimg-amd64.img -F qcow2 build/vm.img
-
-.PHONY: clean_vm
-clean_vm:
-	rm -f build/vm.img
-
-# "Ctrl+a, x" exits the vm
-start_vm: build/vm.img build/seed.iso
-	qemu-system-x86_64 \
-	  -cpu host \
-	  -m 4096 \
-	  -smp 2 \
-	  -enable-kvm \
-	  -drive file=build/vm.img,format=qcow2,if=virtio \
-	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
-	  -device virtio-net-pci,netdev=net0 \
-	  -display none \
-	  -serial mon:stdio
+include vm_*.mk
 
 #	  # from vagrant:
 #	  -netdev tap,fd=33,vhost=true,vhostfd=35,id=hostua-net-0 \
