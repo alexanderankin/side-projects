@@ -1,0 +1,17 @@
+import com.github.gradle.node.npm.task.NpmTask
+
+plugins {
+    id 'base'
+    id 'com.github.node-gradle.node' // version '7.1.0'
+}
+
+clean.delete 'dist'
+
+tasks.register('nodeGradleNpmCi', NpmTask) { n ->
+    n.group = 'build'
+    n.description = 'node-gradle-conventions "npm ci" task'
+
+    n.inputs.file('package.json')
+    n.outputs.dir('node_modules')
+    n.args = ['ci']
+}

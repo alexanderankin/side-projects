@@ -1,0 +1,34 @@
+plugins {
+    id 'node-gradle-conventions'
+}
+
+def buildDist = tasks.register('buildDist', NpmTask) {
+    group = 'build'
+    description = 'npm run build'
+
+    inputs.dir('public')
+    inputs.dir('src')
+    inputs.file('package.json')
+    outputs.dir('dist')
+
+    it.args = ['run', 'build']
+
+    it.dependsOn 'nodeGradleNpmCi'
+}
+
+// rearrange for embedding into jar
+def buildDistCopy = tasks.register('buildDistCopy', Copy) {
+    from(buildDist) {
+        into 'public'
+    }
+    into layout.buildDirectory.dir('dist')
+}
+
+// package it for consumption in backend project
+configurations {
+    dist { canBeConsumed = true; canBeResolved = false }
+}
+
+artifacts {
+    add('dist', buildDistCopy)
+}
