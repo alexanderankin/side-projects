@@ -27,7 +27,7 @@ build/files: build/original.zip
 
 # repackage release
 build/deb.zip: build/simple-deb-4j-all.jar build/config.yaml build/files
-	cd build && [[ -f ~/.sdkman/bin/sdkman-init.sh ]] && . ~/.sdkman/bin/sdkman-init.sh; java -jar ./simple-deb-4j-all.jar b -c ./config.yaml -o ./ && zip deb.zip ./*.deb
+	cd build; if [[ -f ~/.sdkman/bin/sdkman-init.sh ]] then . ~/.sdkman/bin/sdkman-init.sh; fi; java -jar ./simple-deb-4j-all.jar b -c ./config.yaml -o ./ && zip deb.zip ./*.deb
 
 .PHONY: clean
 clean:
