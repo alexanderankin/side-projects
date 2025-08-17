@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from os import linesep
+from csv import reader, writer
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from json import dump, dumps, load
 from pathlib import Path
 from sys import argv, stderr, stdin, stdout
 from tomllib import loads as toml_loads
-from typing import Any, Iterable
+from typing import Any, Iterable, TextIO
 
 from yaml import safe_dump as yaml_safe_dump, safe_load as yaml_safe_load
 
@@ -17,11 +19,10 @@ def eprint(*args: Any) -> None:
     print(*args, file=stderr)
 
 
-def json_dump_streaming_array(items: Iterable[Any]) -> None:
+def json_dump_streaming_array(items: Iterable[Any], out: TextIO) -> None:
     """
     Stream JSON array to stdout without building it in memory.
     """
-    out = stdout
     out.write("[")
     first = True
     for item in items:
@@ -35,24 +36,43 @@ def json_dump_streaming_array(items: Iterable[Any]) -> None:
 
 
 # ---------- Converters ----------
+def _parse_io(ns: Namespace) -> tuple[TextIO, TextIO]:
+    input = getattr(ns, "input", None)
+    if input:
+        open_input = open(input)
+    else:
+        open_input = stdin
+    output = getattr(ns, "output", None)
+    if output:
+        open_output = open(output)
+    else:
+        open_output = stdout
+    return open_input, open_output
+
 
 def cmd_json2yaml(_ns: Namespace) -> int:
-    data = load(stdin)
-    yaml_safe_dump(data, stdout, sort_keys=False, allow_unicode=True)
+    open_input, open_output = _parse_io(_ns)
+    data = load(open_input)
+    yaml_safe_dump(data, open_output, sort_keys=False, allow_unicode=True)
+    open_output.flush()
     return 0
 
 
 def cmd_yaml2json(_ns: Namespace) -> int:
-    data = yaml_safe_load(stdin)
-    dump(data, stdout, ensure_ascii=False)
-    stdout.flush()
+    open_input, open_output = _parse_io(_ns)
+    data = yaml_safe_load(open_input)
+    dump(data, open_output, ensure_ascii=False)
+    open_output.write(linesep)
+    open_output.flush()
     return 0
 
 
 def cmd_toml2json(_ns: Namespace) -> int:
-    data = toml_loads(stdin.read())
-    dump(data, stdout, ensure_ascii=False)
-    stdout.flush()
+    open_input, open_output = _parse_io(_ns)
+    data = toml_loads(open_input.read())
+    dump(data, open_output, ensure_ascii=False)
+    open_output.write(linesep)
+    open_output.flush()
     return 0
 
 
@@ -62,8 +82,9 @@ def cmd_json2toml(_ns: Namespace) -> int:
 
 def cmd_json2csv(ns: Namespace) -> int:
     headers: bool = ns.headers
-    writer = writer(stdout, lineterminator="\n")
-    data = load(stdin)
+    open_input, open_output = _parse_io(ns)
+    csv_writer = writer(open_output, lineterminator="\n")
+    data = load(open_input)
 
     if headers:
         if not isinstance(data, list) or (data and not isinstance(data[0], dict)):
@@ -72,13 +93,13 @@ def cmd_json2csv(ns: Namespace) -> int:
         if not data:
             return 0
         hdrs = list(data[0].keys())
-        writer.writerow(hdrs)
+        csv_writer.writerow(hdrs)
         for obj in data:
             if not isinstance(obj, dict):
                 eprint("json2csv --headers expects a JSON array of objects")
                 return 2
             row = ["" if obj.get(k) is None else str(obj.get(k)) for k in hdrs]
-            writer.writerow(row)
+            csv_writer.writerow(row)
     else:
         if not isinstance(data, list):
             eprint("json2csv --no-headers expects a JSON array of arrays")
@@ -87,39 +108,57 @@ def cmd_json2csv(ns: Namespace) -> int:
             if not isinstance(arr, list):
                 eprint("json2csv --no-headers expects a JSON array of arrays")
                 return 2
-            writer.writerow(["" if v is None else str(v) for v in arr])
+            csv_writer.writerow(["" if v is None else str(v) for v in arr])
 
     return 0
 
 
 def cmd_csv2json(ns: Namespace) -> int:
-    reader = reader(stdin)
+    open_input, open_output = _parse_io(ns)
+    csv_reader = reader(open_input)
     headers: bool = ns.headers
 
     if headers:
         try:
-            hdrs = next(reader)
+            hdrs = next(csv_reader)
         except StopIteration:
-            stdout.write("[]")
+            open_output.write("[]")
             return 0
 
         def gen():
-            for row in reader:
+            for row in csv_reader:
                 # pad or trim
                 if len(row) < len(hdrs):
                     row = row + [""] * (len(hdrs) - len(row))
                 elif len(row) > len(hdrs):
-                    row = row[:len(hdrs)]
+                    row = row[: len(hdrs)]
                 yield {h: v for h, v in zip(hdrs, row)}
 
-        json_dump_streaming_array(gen())
+        json_dump_streaming_array(gen(), open_output)
     else:
-        json_dump_streaming_array(reader)
+        json_dump_streaming_array(csv_reader, open_output)
 
+    open_output.write(linesep)
     return 0
 
 
 # ---------- CLI dispatch ----------
+def _add_csv_flags(sp_: ArgumentParser):
+    g = sp_.add_mutually_exclusive_group()
+    g.add_argument(
+        "--headers",
+        dest="headers",
+        action=BooleanOptionalAction,
+        default=True,
+        help="Treat first row as headers (default true).",
+    )
+    return sp_
+
+
+def _add_io_flags(sp_: ArgumentParser):
+    sp_.add_argument("-i", "--input", dest="input", metavar="INPUT_FILE")
+    sp_.add_argument("-o", "--output", dest="output", metavar="OUTPUT_FILE")
+
 
 def _build_parser() -> ArgumentParser:
     p = ArgumentParser(
@@ -128,28 +167,17 @@ def _build_parser() -> ArgumentParser:
     )
     sub = p.add_subparsers(dest="command", required=False)
 
-    def csv_flags(sp_: ArgumentParser):
-        g = sp_.add_mutually_exclusive_group()
-        g.add_argument(
-            "--headers",
-            dest="headers",
-            action=BooleanOptionalAction,
-            default=True,
-            help="Treat first row as headers (default true).",
-        )
-        return sp_
-
-    for name, fn, add_flags in [
-        ("json2yaml", cmd_json2yaml, None),
-        ("yaml2json", cmd_yaml2json, None),
-        ("toml2json", cmd_toml2json, None),
-        ("json2toml", cmd_json2toml, None),
-        ("json2csv", cmd_json2csv, csv_flags),
-        ("csv2json", cmd_csv2json, csv_flags),
+    for name, fn, flag_fns in [
+        ("json2yaml", cmd_json2yaml, [_add_io_flags]),
+        ("yaml2json", cmd_yaml2json, [_add_io_flags]),
+        ("toml2json", cmd_toml2json, [_add_io_flags]),
+        ("json2toml", cmd_json2toml, [_add_io_flags]),
+        ("json2csv", cmd_json2csv, [_add_io_flags, _add_csv_flags]),
+        ("csv2json", cmd_csv2json, [_add_io_flags, _add_csv_flags]),
     ]:
         sp = sub.add_parser(name, help=f"{name} converter")
-        if add_flags:
-            add_flags(sp)
+        for each_fn in flag_fns:
+            each_fn(sp)
         sp.set_defaults(_handler=fn)
 
     return p
@@ -177,7 +205,6 @@ def main(main_argv=None) -> int:
         parser.error("unknown command")
 
     result = int(handler(ns))
-    print()
     return result
 
 
