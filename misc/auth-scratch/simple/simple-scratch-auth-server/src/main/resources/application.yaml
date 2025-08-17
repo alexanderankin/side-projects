@@ -1,0 +1,110 @@
+server:
+  port: 9000
+
+logging:
+  level:
+    org.springframework.security: TRACE
+
+app:
+  rsa:
+    private-key: |
+      -----BEGIN PRIVATE KEY-----
+      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
+      K70biZE/lRHvNL6FHCIIe3onLaL5jpI=
+      -----END PRIVATE KEY-----
+
+    public-key: |
+      -----BEGIN PUBLIC KEY-----
+      MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAubnezBCeuKVGJH5mb24t
+      51kUb89o8U1cfM9VAEhRurFOnk0FlLU00kebLaP23BC3vJJ00ok3jtqpVLiGGNuE
+      +DzBaJO8i6bWYtpmyxFHSuC31k/f3m+e2aWtoV3RwsVeeBIQaxNOOQMFKEF57hu2
+      wtag+x6djaUqphNLtPd563lI2AN5gfJmILZhHc4w7PwuIMWOdtLjZl0NbpJOPE1/
+      jEMsN7jhWmgtzFMtcyfK3a0TGJXlQYMpzNT4qaA9/FywVOpUJYuQ9H+5bykPHrT+
+      EKpgmG9it8qTAP3b8ULP8zkTl27jS4C9i2wQLRGU8czswKZJCS+dDj1GHfoAkj+C
+      G3SROYDjfehYDezXm4leNPNo6kdwPJ7aAHbh/zNnGEsh+c16iu5KoOWGxK/dJHSC
+      6nIYCP7PIoEWgsgojFxLPoh2tR6NAkSpTXWvxHQY88tsD5rcij/bPR8loBOMWLo9
+      et302g3A5uIgZIUF3S3/3wSThC8ugbCa6l0DNNnHpUSZhV+eEbdhUyQmzpHRyvVt
+      Jwiasjuy/W3zD/bq2ah3wlr9vwoXN1qE5ABP4xXZkuPQs2KPkYOFLky133dIUvhf
+      hrBZ/10kzPSgTS6YE/p6jhVmlF0608mqc7TxQwvHdlzLH0SAO7SA7CXVlx8cwyxS
+      RCvrm0sIhwF6vVU+hGhUrPkCAwEAAQ==
+      -----END PUBLIC KEY-----
+
+spring:
+  application:
+    name: simple-scratch-auth-server
+
+  h2:
+    console:
+      enabled: true
+
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          login-client:
+            registration:
+              client-id: hello
+              client-secret: "{noop}world"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+                - "client_credentials"
+              redirect-uris:
+                - "http://localhost:8080/login/oauth2/code/spring-login"
+                - "http://localhost:8080"
+              post-logout-redirect-uris:
+                - "http://localhost:8080/logged-out"
+              scopes:
+                - "openid"
+                - "profile"
+            require-authorization-consent: false

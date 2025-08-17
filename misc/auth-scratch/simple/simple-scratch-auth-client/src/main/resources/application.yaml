@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+app:
+  base-uri: 'http://localhost:${server.port}'
+  oauth:
+    client-id: hello
+    client-secret: world
+
+logging:
+  level:
+    org.springframework.security: TRACE
+
+spring:
+  application:
+    name: simple-scratch-auth-client
+
+  h2:
+    console:
+      enabled: true
+
+  security:
+    oauth2:
+      client:
+        provider:
+          spring:
+            issuer-uri: http://localhost:9000
+
+        registration:
+          spring-login:
+            provider: spring
+            client-name: ${app.oauth.client-id}
+            client-id: ${app.oauth.client-id}
+            client-secret: ${app.oauth.client-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${app.base-uri}/login/oauth2/code/{registrationId}
+            scope:
+              - openid
+              - profile
