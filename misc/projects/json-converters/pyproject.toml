@@ -1,0 +1,25 @@
+[project]
+name = "json-conv"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "David Ankin", email = "daveankin@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.poetry.dependencies]
+PyYAML = "^6.0.2"
+
+[tool.poetry.scripts]
+json-conv = "json_conv.cli:main"
+json2yaml = "json_conv.cli:main"
+yaml2json = "json_conv.cli:main"
+toml2json = "json_conv.cli:main"
+json2toml = "json_conv.cli:main"
+json2csv = "json_conv.cli:main"
+csv2json = "json_conv.cli:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
