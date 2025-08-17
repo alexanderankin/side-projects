@@ -13,7 +13,9 @@ All commands are synonyms for `json-conv <command>`; e.g., `json2yaml` is dispat
 
 ## Install
 
-
+```shell
+PKG=json-conv; BINS=(json2yaml yaml2json toml2json json2toml json2csv csv2json); { [[ -d ~/.$PKG-venv ]] || python -m venv ~/.$PKG-venv; } && . ~/.$PKG-venv/bin/activate && pip install -U pip wheel && pip install 'git+https://github.com/alexanderankin/side-projects.git@main#egg='"$PKG"'&subdirectory=misc/projects/json-converters' && for b in "${BINS[@]}"; do ln -fvrs $(which $b) ~/.local/bin; done && deactivate
+```
 
 ## Install as library (with Poetry)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from os import linesep
 from csv import reader, writer
 from argparse import ArgumentParser, BooleanOptionalAction, Namespace
+from importlib.metadata import version
 from json import dump, dumps, load
 from pathlib import Path
 from sys import argv, stderr, stdin, stdout
@@ -10,6 +11,9 @@ from tomllib import loads as toml_loads
 from typing import Any, Iterable, TextIO
 
 from yaml import safe_dump as yaml_safe_dump, safe_load as yaml_safe_load
+
+__import_lib_version__ = version("json-conv")
+__version__ = f"json-conv {__import_lib_version__}"
 
 
 # ---------- Helpers (stream-friendly) ----------
@@ -160,20 +164,25 @@ def _add_io_flags(sp_: ArgumentParser):
     sp_.add_argument("-o", "--output", dest="output", metavar="OUTPUT_FILE")
 
 
+def _add_ver(sp_: ArgumentParser):
+    sp_.add_argument("-v", "--version", action="version", version=__version__)
+
+
 def _build_parser() -> ArgumentParser:
     p = ArgumentParser(
         prog="json-conv",
         description="json/yaml/toml/csv converters via stdin/stdout",
     )
+    p.add_argument("-v", "--version", action="version", version=__import_lib_version__)
     sub = p.add_subparsers(dest="command", required=False)
 
     for name, fn, flag_fns in [
-        ("json2yaml", cmd_json2yaml, [_add_io_flags]),
-        ("yaml2json", cmd_yaml2json, [_add_io_flags]),
-        ("toml2json", cmd_toml2json, [_add_io_flags]),
-        ("json2toml", cmd_json2toml, [_add_io_flags]),
-        ("json2csv", cmd_json2csv, [_add_io_flags, _add_csv_flags]),
-        ("csv2json", cmd_csv2json, [_add_io_flags, _add_csv_flags]),
+        ("json2yaml", cmd_json2yaml, [_add_ver, _add_io_flags]),
+        ("yaml2json", cmd_yaml2json, [_add_ver, _add_io_flags]),
+        ("toml2json", cmd_toml2json, [_add_ver, _add_io_flags]),
+        ("json2toml", cmd_json2toml, [_add_ver, _add_io_flags]),
+        ("json2csv", cmd_json2csv, [_add_ver, _add_io_flags, _add_csv_flags]),
+        ("csv2json", cmd_csv2json, [_add_ver, _add_io_flags, _add_csv_flags]),
     ]:
         sp = sub.add_parser(name, help=f"{name} converter")
         for each_fn in flag_fns:
