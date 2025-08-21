@@ -1,0 +1,35 @@
+server:
+  port: 5000
+
+logging:
+  level:
+    # web: debug
+    # org.springframework.security: debug
+    side.as: debug
+
+spring:
+  application:
+    name: DiscordOAuthClientApplication
+
+app:
+  base-uri: http://localhost:${server.port}
+  oauth:
+    clients:
+      discord:
+        client-id: 983004589718634616
+        client-secret: ll5pz0y8MNiQXbtYCt8AtlAguDmHJ8gL
+        redirect-uri: https://discord.com/oauth2/authorize
+        token-endpoint: https://discord.com/api/oauth2/token
+        callback: ${app.base-uri}/oauth/callback
+        scopes:
+          - openid
+          - identify
+          - email
+
+        name-claim: email
+
+        opaque:
+          enabled: true
+          # https://discord.com/.well-known/openid-configuration
+          introspection-endpoint: https://discord.com/api/oauth2/userinfo
+          # introspection-endpoint: https://discord.com/api/oauth2/@me
