@@ -85,7 +85,7 @@ public class DiscordOAuthClientApplication {
     @Component
     @ConfigurationProperties(prefix = "app.oauth")
     @Validated
-    static class OauthProps {
+    static class OAuthProps {
 
         @NotNull
         Map<String, @Valid OauthClient> clients;
@@ -215,7 +215,7 @@ public class DiscordOAuthClientApplication {
     @Controller
     @RequestMapping(path = "")
     static class HomeController {
-        final OauthProps oauthProps;
+        final OAuthProps oauthProps;
         final RestClient.Builder restClientBuilder;
         // final SecurityContextRepository securityContextRepository;
         final AuthFetcherFromToken authFetcherFromToken;
@@ -229,7 +229,7 @@ public class DiscordOAuthClientApplication {
             return false;
         }
 
-        @GetMapping
+        @GetMapping(path = "")
         public ResponseEntity<String> index(UriComponentsBuilder uri) {
             var auth = SecurityContextHolder.getContext().getAuthentication();
             if (!isAuthed(auth)) {
@@ -247,15 +247,29 @@ public class DiscordOAuthClientApplication {
                                 <script>
                                     document.addEventListener("DOMContentLoaded", () => {
                                         fetch("/api/whoami").then(r => r.text()).then(t => window.welcome.innerText = `Welcome, ${t}!`);
+
+                                        window.logout.addEventListener("click", () => {
+                                            fetch("/logout").then(() => window.location.reload());
+                                        });
                                     });
                                 </script>
                             </head>
                             <body style="margin: 30px; background: #eee; color: #333;">
                                 <h1>Hello World!</h1>
                                 <h2 id="welcome">Welcome!</h2>
+                                <br />
+                                <hr />
+                                <br />
+                                <h3 id="logout">Logout</h3>
                             </body>
                             </html>
                             """);
+        }
+
+        @GetMapping("/logout")
+        @ResponseStatus(HttpStatus.NO_CONTENT)
+        public void logout() {
+            SecurityContextHolder.clearContext();
         }
 
         @GetMapping("/login")
@@ -304,7 +318,7 @@ public class DiscordOAuthClientApplication {
             //     return ResponseEntity.status(302).location(uri.replacePath("/login").build().toUri()).build();
             // }
 
-            OauthProps.OauthClient client = oauthProps.getClients().get(oauth);
+            OAuthProps.OauthClient client = oauthProps.getClients().get(oauth);
 
             var redirectUriBuilder = UriComponentsBuilder.fromUri(client.getRedirectUri());
 
@@ -350,7 +364,7 @@ public class DiscordOAuthClientApplication {
             if (!(oauthValue instanceof String oauth)) return ResponseEntity.badRequest().body("not part of a grant");
             log.debug("oauth/callback - calling back, the client name from the session was: {}", oauthValue);
 
-            OauthProps.OauthClient client = oauthProps.getClients().get(oauth);
+            OAuthProps.OauthClient client = oauthProps.getClients().get(oauth);
             log.debug("oauth/callback - calling back, the client was {} from name from the session", client.getRedirectUri());
 
             ResponseEntity<AccessToken> response;
@@ -387,7 +401,6 @@ public class DiscordOAuthClientApplication {
             SecurityContext context = SecurityContextHolder.getContext();
             context.setAuthentication(auth);
             // securityContextRepository.saveContext(context, httpServletRequestRequest, httpServletResponseResponse);
-            httpSession.setAttribute("auth", auth);
 
             URI redirectTarget;
             var redirectValue = httpSession.getAttribute(getClass().getName() + ".redirect");
@@ -399,6 +412,11 @@ public class DiscordOAuthClientApplication {
 
             log.debug("oauth/callback - got back an auth we trust: {}, redirecting to {}", auth, redirectTarget);
 
+            // clean up oauth2 auth params
+            httpSession.removeAttribute(getClass().getName() + ".oauth.state");
+            httpSession.removeAttribute(getClass().getName() + ".oauth.oauth");
+            httpSession.removeAttribute(getClass().getName() + ".redirect");
+
             return ResponseEntity.status(302).location(redirectTarget).build();
         }
 
@@ -409,7 +427,7 @@ public class DiscordOAuthClientApplication {
             final RestClient.Builder restClientBuilder;
             final Map<String, JwtDecoder> cache = new HashMap<>();
 
-            public Authentication fetchFromToken(String clientKey, OauthProps.OauthClient client, AccessToken accessToken) {
+            public Authentication fetchFromToken(String clientKey, OAuthProps.OauthClient client, AccessToken accessToken) {
                 return switch (client.serverInfoType()) {
                     case OIDC -> {
                         JwtDecoder decoder = jwtDecoder(client.getOidc());
@@ -446,7 +464,7 @@ public class DiscordOAuthClientApplication {
                 };
             }
 
-            private JwtDecoder jwtDecoder(OauthProps.OauthClient.OidcServerInfo client) {
+            private JwtDecoder jwtDecoder(OAuthProps.OauthClient.OidcServerInfo client) {
                 return cache.computeIfAbsent(String.valueOf(client.getIssuer()), i -> NimbusJwtDecoder.withIssuerLocation(i).build());
             }
         }

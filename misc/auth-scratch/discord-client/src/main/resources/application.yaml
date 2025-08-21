@@ -11,13 +11,17 @@ spring:
   application:
     name: DiscordOAuthClientApplication
 
+  datasource:
+    url: jdbc:postgresql://localhost:5600/auth_scratch_discord_client
+    username: postgres
+
 app:
   base-uri: http://localhost:${server.port}
   oauth:
     clients:
       discord:
-        client-id: 983004589718634616
-        client-secret: ll5pz0y8MNiQXbtYCt8AtlAguDmHJ8gL
+        # client-id:
+        # client-secret:
         redirect-uri: https://discord.com/oauth2/authorize
         token-endpoint: https://discord.com/api/oauth2/token
         callback: ${app.base-uri}/oauth/callback
