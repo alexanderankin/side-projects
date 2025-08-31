@@ -355,7 +355,7 @@ public class DiscordOAuthClientApplication {
             if (!(stateValue instanceof String state)) return ResponseEntity.badRequest().body("no state");
             log.debug("oauth/callback - calling back, read state from session: {}", state);
 
-            if (!MessageDigest.isEqual(stateFromRedirect.getBytes(StandardCharsets.UTF_8), state.getBytes(StandardCharsets.UTF_8))) {
+            if (!MessageDigest.isEqual(state.getBytes(StandardCharsets.UTF_8), stateFromRedirect.getBytes(StandardCharsets.UTF_8))) {
                 return ResponseEntity.badRequest().body("bad state");
             }
             log.debug("oauth/callback - calling back, state matched successfully");
