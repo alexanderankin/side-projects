@@ -4,7 +4,7 @@ build/noble-server-cloudimg-amd64.img_: build/.check_wget
 
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_amd64.img
-build/vm_amd64.img: build/noble-server-cloudimg-amd64.img
+build/vm_amd64.img: build/noble-server-cloudimg-amd64.img_
 	qemu-img create -f qcow2 -b noble-server-cloudimg-amd64.img -F qcow2 build/vm_amd64.img
 
 .PHONY: clean_vm_amd64
