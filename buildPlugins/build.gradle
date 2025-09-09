@@ -4,9 +4,40 @@ plugins {
 
 repositories {
     gradlePluginPortal()
+
+    // android :(((((
+    google()
+
+    // maven {
+    //     url = 'https://maven.google.com/'
+    //     it.metadataSources {
+    //         it.gradleMetadata()
+    //         it.mavenPom()
+    //     }
+    // }
+    // google() {
+    //     content {
+    //         includeGroupByRegex("com\\.android.*")
+    //         includeGroupByRegex("com\\.google.*")
+    //         includeGroupByRegex("androidx.*")
+    //     }
+    // }
+    // maven {
+    //     // https://dl.google.com/android/maven2/com/android/library/com.android.library.gradle.plugin/8.11.0/com.android.library.gradle.plugin-8.11.0.pom
+    //     url = 'https://dl.google.com/android/maven2/'
+    //     // metadataSources {
+    //     //     it.gradleMetadata()
+    //     //     it.mavenPom()
+    //     //     it.artifact()
+    //     // }
+    // }
 }
 
 dependencies {
     implementation 'com.google.cloud.tools.jib:com.google.cloud.tools.jib.gradle.plugin:3.4.5'
-    implementation 'com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:8.3.6'
+    implementation 'com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.1.0'
+
+    // "google", but appears to be root's pluginManagement rather than repositories here
+    // https://mvnrepository.com/artifact/com.android.tools.build/gradle
+    implementation 'com.android.tools.build:gradle:8.11.1'
 }
