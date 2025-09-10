@@ -6,3 +6,4 @@ build/
 !.terraform.lock.hcl
 *.tfstate*
 __pycache__/
+local.properties
