@@ -11,8 +11,8 @@ user:
   groups: sudo, users, admin
   shell: /bin/bash
   lock_passwd: false
-  passwd: "$(mkpasswd ubuntu)"
-  hashed_passwd: "$(mkpasswd ubuntu)"
+  passwd: "$(openssl passwd -6 ubuntu)"
+  hashed_passwd: "$(openssl passwd -6 ubuntu)"
   ssh_authorized_keys: $(cat \
     <(cat ~/.ssh/id_rsa.pub) \
     <(curl -fSsL https://github.com/alexanderankin.keys) \
@@ -27,8 +27,8 @@ users:
     groups: users
     shell: /bin/bash
     lock_passwd: false
-    passwd: "$(mkpasswd testuser)"
-    hashed_passwd: "$(mkpasswd testuser)"
+    passwd: "$(openssl passwd -6 testuser)"
+    hashed_passwd: "$(openssl passwd -6 testuser)"
     ssh_authorized_keys: $(cat \
       <(cat ~/.ssh/id_rsa.pub) \
       | sed -e '/^$/d' -e 's/^/"/' -e 's/$/"/' \

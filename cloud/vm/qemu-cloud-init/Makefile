@@ -16,7 +16,7 @@ build/.check-package_%:
 	@echo "$* found"
 	@touch $@
 
-build/user-data: build/.check_mkpasswd build/.check_cloud-localds
+build/user-data: build/.check_openssl build/.check_cloud-localds
 	./create-user-data.sh > $@
 
 build/seed.iso: build/user-data

@@ -24,3 +24,15 @@ start_vm_amd64: build/vm_amd64.img build/seed.iso build/.check-package_qemu-syst
 	  -device virtio-net-pci,netdev=net0 \
 	  -display none \
 	  -serial mon:stdio
+
+start_vm_amd64_virtual: build/vm_amd64.img build/seed.iso build/.check_qemu-system-x86_64
+	qemu-system-x86_64 \
+	  -cpu qemu64 \
+	  -m 4096 \
+	  -smp 2 \
+	  -drive file=build/vm_amd64.img,format=qcow2,if=virtio \
+	  -cdrom build/seed.iso \
+	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -device virtio-net-pci,netdev=net0 \
+	  -display none \
+	  -serial mon:stdio
