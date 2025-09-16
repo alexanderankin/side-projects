@@ -12,6 +12,7 @@ clean_vm_riscv64:
 	rm -f build/vm_riscv64.img
 
 # "Ctrl+a, x" exits the vm
+# todo homebrew version of this
 start_vm_riscv64: build/vm_riscv64.img build/seed.iso build/.check_qemu-system-riscv64 build/.check-package_qemu-system-misc build/.check-package_u-boot-qemu build/.check-package_opensbi
 	qemu-system-riscv64 \
 	  -machine virt \

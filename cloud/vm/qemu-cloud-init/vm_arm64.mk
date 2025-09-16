@@ -27,10 +27,13 @@ start_vm_arm64: build/vm_arm64.img build/seed.iso build/.check_qemu-system-aarch
 	  -display none \
 	  -serial mon:stdio
 
+# cpu max is slow because exposes difficult to emulate features
+# options: cortex-a57, cortex-a72, cortex-a76, neoverse-n1
+
 start_vm_arm64_virtual: build/vm_arm64.img build/seed.iso build/.check-package_qemu-system-arm build/.check-package_qemu-efi-aarch64
 	qemu-system-aarch64 \
 	  -machine virt,highmem=on \
-	  -cpu max \
+	  -cpu neoverse-n1 \
 	  -m 4096 \
 	  -smp 2 \
 	  -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \

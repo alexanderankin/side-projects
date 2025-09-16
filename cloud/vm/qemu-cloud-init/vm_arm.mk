@@ -12,6 +12,7 @@ clean_vm_arm:
 	rm -f build/vm_arm.img
 
 # "Ctrl+a, x" exits the vm
+# todo homebrew path version of this
 start_vm_arm: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm build/.check-package_qemu-efi-arm
 	qemu-system-arm \
 	  -machine virt \
