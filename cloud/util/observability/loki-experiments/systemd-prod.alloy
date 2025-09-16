@@ -1,0 +1,25 @@
+loki.source.journal "systemd_nginx" {
+  forward_to = [
+    //loki.write.loki_write_endpoint.receiver,
+    loki.relabel.systemd_logs_add_host.receiver,
+  ]
+  matches    = "_SYSTEMD_UNIT=nginx.service"
+}
+
+loki.relabel "systemd_logs_add_host" {
+  forward_to = [loki.write.loki_write_endpoint.receiver]
+  rule {
+    source_labels = ["__journal__hostname"]
+    target_label  = "host"
+  }
+}
+
+loki.write "loki_write_endpoint" {
+  endpoint {
+    url = sys.env("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT")
+    basic_auth {
+        username = sys.env("OTEL_EXPORTER_OTLP_LOGS_USERNAME")
+        password = sys.env("OTEL_EXPORTER_OTLP_LOGS_PASSWORD")
+    }
+  }
+}

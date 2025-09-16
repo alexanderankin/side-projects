@@ -1,0 +1,27 @@
+loki.source.journal "systemd_nginx" {
+  forward_to = [
+    // loki.write.loki_write_endpoint.receiver,
+    loki.relabel.systemd_logs_add_host.receiver,
+  ]
+  matches    = "_SYSTEMD_UNIT=flog.service"
+  // labels     = { service = "nginx" }
+}
+
+loki.relabel "systemd_logs_add_host" {
+  forward_to = [loki.write.loki_write_endpoint.receiver]
+  // rule {
+  //   source_labels = ["__journal__hostname"]
+  //   target_label  = "host"
+  // }
+}
+
+loki.write "loki_write_endpoint" {
+  endpoint {
+    url = "http://192.168.0.168:3100/loki/api/v1/push"
+    tenant_id = "tenant1"
+  }
+}
+
+livedebugging {
+  enabled = true
+}

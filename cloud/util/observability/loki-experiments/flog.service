@@ -1,0 +1,14 @@
+[Unit]
+Description=fake log service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=docker run --name fake-log-service --rm mingrammer/flog -f json -d 1 -l
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+# /usr/lib/systemd/system/flog.service
