@@ -52,7 +52,7 @@ services:
       - |
         mkdir -p /data/loki-data && \
         mkdir -p /data/loki-ruler && \
-        minio server /data
+        exec minio server /data
     environment:
       - MINIO_ROOT_USER=loki
       - MINIO_ROOT_PASSWORD=supersecret
@@ -60,8 +60,8 @@ services:
       - MINIO_UPDATE=off
     ports:
       - "9000"
-    volumes:
-      - ./.data/minio:/data
+    # volumes:
+    #   - ./.data/minio:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 15s
@@ -95,7 +95,7 @@ services:
             secureJsonData:
               basicAuthPassword: pass
         EOF
-        /run.sh
+        exec /run.sh
 
       #    - name: Prometheus
       #      type: prometheus
@@ -191,11 +191,11 @@ services:
           }
         }
         EOF
-        /docker-entrypoint.sh nginx -g "daemon off;"
+        exec /docker-entrypoint.sh nginx -g "daemon off;"
     ports:
       - "3100:3100"
     healthcheck:
-      test: [ "CMD", "service", "nginx", "status" ]
+      test: [ "CMD", "nc", "-vz", "127.0.0.1", "3100" ]
       interval: 10s
       timeout: 5s
       retries: 5
