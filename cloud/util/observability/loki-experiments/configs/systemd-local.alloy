@@ -1,13 +1,13 @@
-loki.source.journal "systemd_nginx" {
+loki.source.journal "systemd_service" {
   forward_to = [
     // loki.write.loki_write_endpoint.receiver,
-    loki.relabel.systemd_logs_add_host.receiver,
+    loki.relabel.systemd_logs_relabel.receiver,
   ]
   matches    = "_SYSTEMD_UNIT=flog.service"
   // labels     = { service = "nginx" }
 }
 
-loki.relabel "systemd_logs_add_host" {
+loki.relabel "systemd_logs_relabel" {
   forward_to = [loki.write.loki_write_endpoint.receiver]
   // rule {
   //   source_labels = ["__journal__hostname"]

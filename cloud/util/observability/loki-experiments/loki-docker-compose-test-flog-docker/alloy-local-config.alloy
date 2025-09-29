@@ -1,6 +1,11 @@
 discovery.docker "flog_scrape" {
 	host             = "unix:///var/run/docker.sock"
 	refresh_interval = "5s"
+
+  filter {
+    name = "label"
+    values = ["service=loki-docker-compose-test-flog-docker-flog"]
+  }
 }
 
 discovery.relabel "flog_scrape" {
@@ -23,7 +28,7 @@ loki.source.docker "flog_scrape" {
 
 loki.write "default" {
 	endpoint {
-		url       = "http://gateway:3100/loki/api/v1/push"
+		url       = "http://host.docker.internal:3100/loki/api/v1/push"
 		tenant_id = "tenant1"
 	}
 	external_labels = {}

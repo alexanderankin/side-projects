@@ -1,0 +1,17 @@
+services:
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./alloy-local-config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  flog:
+    image: mingrammer/flog
+    command: -f json -d 2000ms -l
+    labels:
+      service: loki-docker-compose-test-flog-docker-flog

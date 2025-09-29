@@ -1,0 +1,70 @@
+local.file_match "files" {
+  path_targets = [ { __path__ = sys.env("LOCAL_FILE_MATCH_FILES_PATH") } ]
+}
+
+loki.source.file "files" {
+  targets = local.file_match.files.targets
+  forward_to = [loki.process.loki_label.receiver]
+}
+
+loki.process "loki_label" {
+  // forward_to = [loki.relabel.loki_relabel_for_debugging.receiver]
+  forward_to = [loki.process.simple_go_log_level_detection.receiver]
+
+  // stage.json {
+  //   expressions = {
+  //     "hostname" = "hostname",
+  //     "service" = "service",
+  //   }
+  // }
+  // stage.json {
+  // }
+
+  stage.static_labels {
+    values = {
+      "service" = "local_file_match_files",
+      "hostname" = constants.hostname,
+    }
+  }
+}
+
+loki.process "simple_go_log_level_detection" {
+  forward_to = [loki.relabel.loki_relabel_for_debugging.receiver]
+
+  // https://github.com/grafana/loki/pull/12651/files
+  stage.regex {
+    // Capture everything up to the first colon
+    expression = "^(?P<level>[^:]+):"
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  // Only keep log_level if it's DEBUG or INFO
+  stage.template {
+    source = "level"
+    template = "{{ if or (eq .Value \"TRACE\") (eq .Value \"DEBUG\") (eq .Value \"INFO\") (eq .Value \"WARN\") (eq .Value \"ERROR\") }}{{ .Value }}{{ else }}INFO{{ end }}"
+  }
+}
+
+loki.relabel "loki_relabel_for_debugging" {
+  forward_to = [loki.write.loki_write_endpoint.receiver]
+}
+
+loki.write "loki_write_endpoint" {
+  endpoint {
+    url = sys.env("GRAFANA_LOKI_WRITE_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_PASSWORD")
+    }
+  }
+}
+
+livedebugging {
+  enabled = true
+}

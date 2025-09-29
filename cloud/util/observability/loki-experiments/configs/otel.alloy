@@ -1,0 +1,94 @@
+otelcol.receiver.otlp "open_telemetry_input_endpoint" {
+  // grpc {
+  //   auth = otelcol.auth.basic.open_telemetry_input_endpoint_credentials.handler
+  // }
+
+  http {
+    auth = otelcol.auth.basic.open_telemetry_input_endpoint_credentials.handler
+    endpoint = "0.0.0.0:4318"
+
+    // tls {
+    //   cert_pem = sys.env("OPEN_TELEMETRY_INPUT_ENDPOINT_CERT_PEM") // also supports cert_file, key_file
+    //   key_pem = sys.env("OPEN_TELEMETRY_INPUT_ENDPOINT_KEY_PEM")
+    //   min_version = "TLS 1.3"
+    //   max_version = "TLS 1.3"
+    //   cipher_suites = ["TLS_AES_256_GCM_SHA384"] // https://go.dev/src/crypto/tls/cipher_suites.go
+    // }
+  }
+
+  output {
+    metrics = [otelcol.exporter.prometheus.grafana_exporter_metrics.input]
+    logs    = [otelcol.exporter.loki.grafana_exporter_logs.input]
+    traces  = [otelcol.exporter.otlphttp.grafana_exporter_traces.input]
+  }
+}
+
+otelcol.auth.basic "open_telemetry_input_endpoint_credentials" {
+  username = sys.env("OPEN_TELEMETRY_INPUT_ENDPOINT_USERNAME")
+  password = sys.env("OPEN_TELEMETRY_INPUT_ENDPOINT_PASSWORD")
+}
+
+// otelcol.exporter.prometheus accepts OTLP-formatted metrics from other otelcol components,
+// converts metrics to Prometheus-formatted metrics,
+// and forwards the resulting metrics to prometheus components.
+otelcol.exporter.prometheus "grafana_exporter_metrics" {
+  forward_to = [prometheus.remote_write.grafana_exporter_metrics_write.input]
+}
+
+// otelcol.exporter.loki accepts OTLP-formatted logs from other otelcol components,
+// converts them to Loki-formatted log entries,
+// and forwards them to loki components.
+otelcol.exporter.loki "grafana_exporter_logs" {
+  forward_to = [loki.process.loki_label.receiver]
+}
+
+// otelcol.exporter.otlp accepts telemetry data from other otelcol components
+// and writes them over the network using the OTLP gRPC protocol.
+// otelcol.exporter.otlphttp accepts telemetry data from other otelcol components
+// and writes them over the network using the OTLP HTTP protocol.
+otelcol.exporter.otlphttp "grafana_exporter_traces" {
+  client {
+    endpoint = sys.env("GRAFANA_OTLP_ENDPOINT_URL") // ${host}:${port}
+    auth = otelcol.auth.basic.grafana_cloud_credentials.handler
+  }
+}
+
+otelcol.auth.basic "grafana_cloud_credentials" {
+  username = sys.env("GRAFANA_CLOUD_USERNAME")
+  password = sys.env("GRAFANA_CLOUD_PASSWORD")
+}
+
+loki.process "loki_label" {
+  forward_to = [loki.write.grafana_exporter_logs_write.receiver]
+
+  stage.json {
+    expressions = {
+      "hostname" = "hostname",
+      "service" = "service",
+    }
+  }
+
+  stage.labels {
+    values = { "service" = "" }
+  }
+}
+
+loki.write "grafana_exporter_logs_write" {
+  endpoint {
+    url = sys.env("GRAFANA_LOKI_WRITE_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_PASSWORD")
+    }
+  }
+}
+
+prometheus.remote_write "grafana_exporter_metrics_write" {
+  endpoint {
+    url = sys.env("GRAFANA_PROMETHEUS_WRITE_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_PASSWORD")
+    }
+  }
+}

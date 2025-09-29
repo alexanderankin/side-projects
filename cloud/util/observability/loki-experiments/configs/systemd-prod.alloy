@@ -1,0 +1,19 @@
+loki.source.journal "systemd_service" {
+  forward_to = [loki.relabel.systemd_logs_relabel.receiver]
+  matches    = "_SYSTEMD_UNIT=nginx.service"
+}
+
+loki.relabel "systemd_logs_relabel" {
+  forward_to = [loki.write.loki_write_endpoint.receiver]
+}
+
+loki.write "loki_write_endpoint" {
+  endpoint {
+    url = sys.env("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT")
+    # OTel would use OTEL_EXPORTER_OTLP_HEADERS
+    basic_auth {
+      username = sys.env("LOKI_WRITE_ENDPOINT_USERNAME")
+      password = sys.env("LOKI_WRITE_ENDPOINT_PASSWORD")
+    }
+  }
+}

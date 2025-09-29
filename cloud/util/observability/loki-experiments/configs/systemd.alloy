@@ -1,0 +1,51 @@
+loki.source.journal "systemd_service" {
+  forward_to = [
+    //loki.write.loki_write_endpoint.receiver,
+    loki.relabel.systemd_logs_add_host.receiver,
+  ]
+  matches    = "_SYSTEMD_UNIT=flog.service"
+  labels     = { service = "flog" }
+}
+
+loki.relabel "systemd_logs_add_host" {
+  forward_to = [loki.process.local.receiver]
+  // rule {
+  //   source_labels = ["__journal__hostname"]
+  //   target_label  = "host"
+  // }
+}
+
+loki.process "local" {
+  forward_to = [loki.write.loki_write_endpoint.receiver]
+
+  stage.json {
+    expressions = {
+      "hostname" = "hostname",
+      "service" = "service",
+    }
+  }
+
+  stage.labels {
+    values = { "service" = "" }
+  }
+}
+
+loki.write "loki_write_endpoint" {
+  endpoint {
+    url = "http://192.168.0.168:3100/loki/api/v1/push"
+    tenant_id = "tenant1"
+  }
+}
+
+local.file_match "files" {
+  path_targets = [{ __path__ = "/var/log/file_match.log*" }]
+}
+
+loki.source.file "files" {
+  targets = local.file_match.files.targets
+  forward_to = [loki.relabel.systemd_logs_add_host.receiver]
+}
+
+livedebugging {
+  enabled = true
+}

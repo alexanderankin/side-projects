@@ -51,3 +51,5 @@ compactor:
 # https://grafana.com/docs/loki/latest/reference/loki-http-api/#query-log-volume
 limits_config:
   volume_enabled: true
+
+auth_enabled: false
