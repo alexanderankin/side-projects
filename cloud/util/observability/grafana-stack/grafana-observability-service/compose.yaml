@@ -159,15 +159,11 @@ services:
           compaction:
             block_retention: 1h
 
-        querier:
-          frontend_worker:
-            frontend_address: 127.0.0.1:9095
-
         usage_report:
           reporting_enabled: false
         EOF
 
-        exec /tempo -config.file=/etc/tempo.yaml
+        exec /tempo -config.file=/etc/tempo.yaml -target=all
     depends_on:
       - minio
     # volumes:
@@ -189,6 +185,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
     depends_on:
       - gateway
+      - tempo
     entrypoint:
       - sh
       - -euc
@@ -216,24 +213,23 @@ services:
             type: tempo
             access: proxy
             url: http://tempo:3200
-            basicAuth: true
-            basicAuthUser: tempo
-            secureJsonData:
-              basicAuthPassword: supersecret
+            editable: true
+            version: 1
             jsonData:
               httpMethod: GET
-              nodeGraph:
-                enabled: true
-              serviceMap:
-                datasourceUid: prometheus
-              tracesToLogsV2:
-                datasourceUid: loki
-                spanStartTimeShift: "-1h"
-                spanEndTimeShift: "1h"
-                filterByTraceID: true
-                filterBySpanID: false
         EOF
         exec /run.sh
+
+#              nodeGraph:
+#                enabled: true
+#              serviceMap:
+#                datasourceUid: prometheus
+#              tracesToLogsV2:
+#                datasourceUid: loki
+#                spanStartTimeShift: "-1h"
+#                spanEndTimeShift: "1h"
+#                filterByTraceID: true
+#                filterBySpanID: false
 
     ports:
       - "3001:3000"
