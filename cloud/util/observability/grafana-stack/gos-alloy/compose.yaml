@@ -1,0 +1,13 @@
+services:
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    ports:
+      - "127.0.0.1:12345:12345/tcp"
+      - "127.0.0.1:4318:4318/tcp"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - template.env

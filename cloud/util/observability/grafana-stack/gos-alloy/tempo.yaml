@@ -1,0 +1,23 @@
+server:
+  log_level: warn
+  http_listen_port: 3200
+  # http_tls_config:
+  #   cert_file: /etc/tempo/certs/tls.crt
+  #   key_file: /etc/tempo/certs/tls.key
+
+storage:
+  trace:
+    backend: local # backend configuration to use
+    wal:
+      path: /var/tempo/wal # where to store the wal locally
+    local:
+      path: /var/tempo/blocks
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        # grpc:
+        #   endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
