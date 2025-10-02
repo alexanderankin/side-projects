@@ -107,17 +107,17 @@ type Kv struct {
 }
 
 type DefaultLoggerBuilder struct {
-	logger  Logger
 	level   Level
 	message string
 	kvPairs []Kv
 	args    []any
+	logger  Logger
 	err     error
 }
 
 func (l *DefaultLoggerBuilder) AddKeyValue(key string, value string) LoggerBuilder {
 	if l.kvPairs == nil {
-		l.kvPairs = make([]Kv, 5)
+		l.kvPairs = make([]Kv, 0, 5)
 	}
 	l.kvPairs = append(l.kvPairs, Kv{key, value})
 	return l

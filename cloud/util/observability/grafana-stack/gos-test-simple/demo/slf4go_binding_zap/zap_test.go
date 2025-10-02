@@ -20,6 +20,7 @@ func TestName(t *testing.T) {
 	logger := slf4go.GetLoggerFactory().GetLogger("TestName")
 	logger.
 		AtInfo().
+		AddKeyValue("key", "value").
 		Message("hello").
 		Log()
 }

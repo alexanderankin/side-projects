@@ -258,7 +258,7 @@ func (l *ZapLogger) LevelErrorFKv(level slf4go.Level, message string, err error,
 }
 
 func kvListToZapFieldList(kvList []slf4go.Kv) []interface{} {
-	fields := make([]interface{}, len(kvList))
+	fields := make([]interface{}, 0, len(kvList))
 	for _, kv := range kvList {
 		fields = append(fields, zap.String(kv.Key, kv.Value))
 	}

@@ -1,0 +1,1 @@
+package slf4go_appender
