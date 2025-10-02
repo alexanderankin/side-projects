@@ -2,17 +2,30 @@ package slf4go
 
 import "errors"
 
-type Level string
+type level string
+type Level = level
 
 const (
-	TRACE Level = "TRACE"
-	DEBUG Level = "DEBUG"
-	INFO  Level = "INFO"
-	WARN  Level = "WARN"
-	ERROR Level = "ERROR"
+	UNSET level = ""
+	TRACE level = "TRACE"
+	DEBUG level = "DEBUG"
+	INFO  level = "INFO"
+	WARN  level = "WARN"
+	ERROR level = "ERROR"
 )
 
+const RootLoggerName = "ROOT"
+
+type EffectiveLevel struct {
+	Logger          Logger
+	ConfiguredLevel Level
+	EffectiveLevel  Level
+}
+
 type Logger interface {
+	Name() string
+	Level() Level
+	SetLevel(level Level) Logger
 	AtTrace() LoggerBuilder
 	AtDebug() LoggerBuilder
 	AtInfo() LoggerBuilder
@@ -89,8 +102,8 @@ func LoggerBuilderForLoggerAndLevelUnsafe(logger Logger, level Level) LoggerBuil
 }
 
 type Kv struct {
-	key   string
-	value string
+	Key   string
+	Value string
 }
 
 type DefaultLoggerBuilder struct {
