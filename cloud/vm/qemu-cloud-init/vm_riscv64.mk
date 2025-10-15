@@ -5,7 +5,7 @@ build/noble-server-cloudimg-riscv64.img_: build/.check_wget
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_riscv64.img
 build/vm_riscv64.img: build/noble-server-cloudimg-riscv64.img_
-	qemu-img create -f qcow2 -b noble-server-cloudimg-riscv64.img -F qcow2 build/vm_riscv64.img
+	qemu-img create -f qcow2 -b noble-server-cloudimg-riscv64.img -F qcow2 build/vm_riscv64.img 20G
 
 .PHONY: clean_vm_riscv64
 clean_vm_riscv64:

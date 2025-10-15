@@ -5,7 +5,7 @@ build/noble-server-cloudimg-armhf.img_: build/.check_wget
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_arm.img
 build/vm_arm.img: build/noble-server-cloudimg-armhf.img_
-	qemu-img create -f qcow2 -b noble-server-cloudimg-armhf.img -F qcow2 build/vm_arm.img
+	qemu-img create -f qcow2 -b noble-server-cloudimg-armhf.img -F qcow2 build/vm_arm.img 20G
 
 .PHONY: clean_vm_arm
 clean_vm_arm:
