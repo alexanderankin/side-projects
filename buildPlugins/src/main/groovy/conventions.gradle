@@ -110,3 +110,6 @@ check.dependsOn integrationTest
 
 // use junit for all tests
 tasks.withType(Test).configureEach { t -> t.useJUnitPlatform() }
+
+// patch for java changes
+tasks.withType(JavaCompile).configureEach { options.compilerArgs.add '-parameters' }

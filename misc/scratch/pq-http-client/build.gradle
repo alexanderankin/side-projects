@@ -25,15 +25,13 @@ dependencies {
     // // https://mvnrepository.com/artifact/io.netty/netty-tcnative-boringssl-static
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.72.Final'
     // implementation 'io.netty:netty-tcnative-boringssl-static:2.0.70.Final'
-    if (Os.isFamily(Os.FAMILY_MAC)) {
-        // noinspection DependencyNotationArgument
-        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'osx-aarch_64'
-    } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        // noinspection DependencyNotationArgument
-        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'windows-x86_64'
-    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-        // noinspection DependencyNotationArgument
-        implementation group: 'io.netty', name: 'netty-tcnative-boringssl-static', classifier: 'linux-x86_64'
+    switch (family()) {
+        case Os.FAMILY_MAC ->
+            implementation 'io.netty:netty-tcnative-boringssl-static::osx-aarch_64'
+        case Os.FAMILY_WINDOWS ->
+            implementation 'io.netty:netty-tcnative-boringssl-static::windows-x86_64'
+        case Os.FAMILY_UNIX ->
+            implementation 'io.netty:netty-tcnative-boringssl-static::linux-x86_64'
     }
 
     // conventions
@@ -44,4 +42,15 @@ dependencies {
     // waiting for spring boot 3.6.x?
     // https://github.com/spring-projects/spring-boot/commit/8077a0dfc3b0fc7a3470df05b7f3373903d7acad
     // implementation 'io.netty:netty-pkitesting'
+}
+
+static String family() {
+    if (Os.isFamily(Os.FAMILY_MAC)) {
+        return Os.FAMILY_MAC
+    } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        return Os.FAMILY_WINDOWS
+    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+        return Os.FAMILY_UNIX
+    }
+    throw new UnsupportedOperationException();
 }
