@@ -39,5 +39,5 @@ dependencies {
 
     // "google", but appears to be root's pluginManagement rather than repositories here
     // https://mvnrepository.com/artifact/com.android.tools.build/gradle
-    implementation 'com.android.tools.build:gradle:8.11.1'
+    implementation 'com.android.tools.build:gradle:8.12.0'
 }

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -17,12 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 
 @Slf4j
 @CommandLine.Command(name = "SendEmailWithMailgun", mixinStandardHelpOptions = true, scope = CommandLine.ScopeType.INHERIT, sortOptions = false)
 class SendEmailWithMailgun {
     public static void main(String[] args) {
-        System.out.println(Arrays.toString(args));
         System.exit(new CommandLine(new SendEmailWithMailgun()).execute(args));
     }
 
@@ -31,7 +33,7 @@ class SendEmailWithMailgun {
             @CommandLine.Option(names = {"-p", "--proto"}, defaultValue = "HTTP") MgEmailProtocol protocol,
             @CommandLine.Option(names = {"-f", "--from"}, required = true) String from,
             @CommandLine.Option(names = {"-t", "--to"}, required = true) String to,
-            @CommandLine.Option(names = {"-cc", "--cc"}, required = true) String cc,
+            @CommandLine.Option(names = {"-cc", "--cc"}) List<String> cc,
             @CommandLine.Option(names = {"-s", "--subject"}, required = true) String subject,
             @CommandLine.ArgGroup(multiplicity = "1") Auth auth,
             @CommandLine.ArgGroup(multiplicity = "1") Content content,
@@ -44,8 +46,13 @@ class SendEmailWithMailgun {
     }
 
     @SneakyThrows
-    void sendWithSmtp(String from, String to, String cc, String subject, Auth.SmtpAuth auth, Content content, boolean html) {
+    void sendWithSmtp(String from, String to, List<String> cc, String subject, Auth.SmtpAuth auth, Content content, boolean html) {
         log.info("Sending email with parameters: subject: {}, to: {}, cc: {}, html: {}, content: {}", subject, to, cc, html, content);
+
+        log.info("Replacing JUL handlers...");
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+
         var j = new JavaMailSenderImpl();
         j.setDefaultEncoding(StandardCharsets.UTF_8.name());
         j.setHost(auth.getHost());
@@ -58,19 +65,20 @@ class SendEmailWithMailgun {
         p.setProperty("mail.transport.protocol", "smtps");
         p.setProperty("mail.smtp.auth", "true");
         p.setProperty("mail.smtp.starttls.enable", "true");
-        p.setProperty("mail.debug", "true");
+        // p.setProperty("mail.debug", "true");
+        LogManager.getLogManager().getLogger("").setLevel(Level.CONFIG);
 
         MimeMessage mimeMessage = j.createMimeMessage();
         var message = new MimeMessageHelper(mimeMessage, "utf-8");
         message.setFrom(from);
         message.setTo(to);
-        message.setCc(cc);
+        Optional.ofNullable(cc).orElseGet(List::of).forEach(message::addCc);
         message.setSubject(subject);
         message.setText(content.actualContent(), html);
         j.send(mimeMessage);
     }
 
-    void sendWithHttp(String from, String to, String cc, String subject, Auth.HttpAuth auth, Content content, boolean html) {
+    void sendWithHttp(String from, String to, List<String> cc, String subject, Auth.HttpAuth auth, Content content, boolean html) {
         if (cc != null) {
             throw new UnsupportedOperationException("cc is not null but cc is not implemented");
         }
