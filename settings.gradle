@@ -78,6 +78,7 @@ include 'misc:scratch:pq-http-client'
 include 'misc:scratch:rxjava3-scratch'
 include 'misc:scratch:scratch-ffi'
 include 'misc:scratch:send-email-mailgun'
+include 'misc:scratch:sentry-demo:sentry-demo-logback-appender'
 
 // android :(((((
 if (file('local.properties').exists())

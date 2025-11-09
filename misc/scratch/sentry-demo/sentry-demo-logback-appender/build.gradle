@@ -1,0 +1,12 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // https://search.maven.org/artifact/io.sentry/sentry-logback
+    implementation 'io.sentry:sentry-logback:8.25.0'
+}
