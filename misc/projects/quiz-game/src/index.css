@@ -1,0 +1,33 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar {
+  position: fixed;
+  top: 56px; /* height of navbar */
+  left: 0;
+  width: 220px;
+  height: calc(100vh - 56px);
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.main-content {
+  margin-top: 56px;
+  margin-left: 220px;
+  padding: 1.5rem;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+}

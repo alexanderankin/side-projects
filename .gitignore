@@ -7,3 +7,4 @@ build/
 *.tfstate*
 __pycache__/
 local.properties
+node_modules/
