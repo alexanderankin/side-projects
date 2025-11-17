@@ -1,11 +1,10 @@
 package org.example;
 
 import ch.qos.logback.classic.LoggerContext;
-import io.sentry.Sentry;
-import io.sentry.SentryLevel;
 import io.sentry.SentryOptions;
 import io.sentry.logback.SentryAppender;
-import io.sentry.logger.LoggerApi;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validation;
 import jakarta.validation.constraints.AssertTrue;
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -26,13 +25,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 @Slf4j
 @SpringBootApplication
 class SentryDemoLogbackAppender {
     public static void main(String[] args) {
         System.setProperty("sentry.enabled", "true");
-        System.setProperty("spring.config.import", "optional:" + Path.of(System.getProperty("user.home"), ".sentry-token.yaml").toString());
+        System.setProperty("spring.config.import", "optional:" + Path.of(System.getProperty("user.home"), ".sentry-token.yaml"));
         System.setProperty("logging.level.org.example", "DEBUG");
 
         SpringApplication.withHook(
@@ -55,6 +57,11 @@ class SentryDemoLogbackAppender {
         }
 
         var sentryProps = Binder.get(environment).bindOrCreate(SentryProps.PREFIX, SentryProps.class);
+        try (var f = Validation.buildDefaultValidatorFactory()) {
+            Optional.of(f.getValidator().validate(sentryProps)).filter(Predicate.not(Set::isEmpty)).map(ConstraintViolationException::new).ifPresent(e -> {
+                throw e;
+            });
+        }
 
         if (!sentryProps.isEnabled()) {
             log.warn("sentry is not enabled");
@@ -103,8 +110,8 @@ class SentryDemoLogbackAppender {
         String projectName;
         String dsn;
 
-        @AssertTrue
-        boolean dsnPresentIfEnabled() {
+        @AssertTrue(message = "must either be disabled or have dsn")
+        boolean isDsnPresentIfEnabled() {
             return !enabled || StringUtils.hasText(dsn);
         }
     }
