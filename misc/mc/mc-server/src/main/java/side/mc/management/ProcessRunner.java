@@ -22,6 +22,7 @@ public class ProcessRunner {
         var dataError = new String(p.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
         RunResult runResult = new RunResult(dataInput, dataError, exit);
         log.trace("running command {} resulted in {}", command, runResult);
+        log.info("running command {} resulted in {}", command, runResult.code());
         if (exit != 0) {
             throw new RunResultError().setRunResult(runResult);
         }

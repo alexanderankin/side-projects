@@ -14,9 +14,15 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -37,8 +43,11 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Predicate;
 
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
+
 @SuppressWarnings("CommentedOutCode")
 @SpringBootApplication
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 class MinecraftManagementApplication {
     public static void main(String[] args) {
         SpringApplication.run(MinecraftManagementApplication.class, args);
@@ -50,6 +59,7 @@ class MinecraftManagementApplication {
         return properties;
     }
 
+    @Slf4j
     @RequiredArgsConstructor
     @RestController
     @RequestMapping(path = "/api/worlds")
@@ -115,29 +125,30 @@ class MinecraftManagementApplication {
 
         @PutMapping(path = "/{id}/status/{status}")
         ActiveState updateStatus(@PathVariable String id, @PathVariable ActiveState status) {
+            var world = get(id);
             switch (status) {
-                case active -> start(id);
-                case inactive -> stop(id);
+                case active -> start(world);
+                case inactive -> stop(world);
                 default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid status - support active/inactive");
             }
 
-            return minecraftSystemdStatusService.state(id).active;
+            return minecraftSystemdStatusService.state(serviceName(world)).active;
         }
 
-        void start(String id) {
-            if (minecraftSystemdStatusService.state(id).active == ActiveState.active) {
+        void start(MinecraftWorld world) {
+            if (minecraftSystemdStatusService.state(serviceName(world)).active == ActiveState.active) {
                 return;
             }
 
-            processRunner.run("systemctl --user start " + id);
+            processRunner.run("systemctl --user start " + serviceName(world));
         }
 
-        void stop(String id) {
-            if (minecraftSystemdStatusService.state(id).active != ActiveState.active) {
+        void stop(MinecraftWorld world) {
+            if (minecraftSystemdStatusService.state(serviceName(world)).active != ActiveState.active) {
                 return;
             }
 
-            processRunner.run("systemctl --user stop " + id);
+            processRunner.run("systemctl --user stop " + serviceName(world));
         }
 
         String serviceName(MinecraftWorld world) {
@@ -150,7 +161,7 @@ class MinecraftManagementApplication {
 
             return new MinecraftWorldDetails()
                     .setWorld(world)
-                    .setServiceState(minecraftSystemdStatusService.state(props.getSystemdServicePrefix() + id));
+                    .setServiceState(minecraftSystemdStatusService.state(serviceName(world)));
         }
 
         @SneakyThrows
@@ -191,9 +202,10 @@ class MinecraftManagementApplication {
     @RequestMapping(path = "/api/versions")
     @Validated
     static class VersionController {
-        McManagementProperties props;
-        ProcessRunner processRunner;
-        MinecraftSystemdServiceTemplateService templateService;
+        final McManagementProperties props;
+        final ProcessRunner processRunner;
+        final MinecraftSystemdServiceTemplateService templateService;
+        final RestTemplateBuilder builder;
 
         @SneakyThrows
         @PostMapping
@@ -201,6 +213,15 @@ class MinecraftManagementApplication {
             if (get(version.getName()) != null) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Version already exists");
             }
+
+            var jarPath = props.getJarsDir().resolve(version.getName());
+            if (!Files.exists(jarPath)) {
+                builder.build().execute(version.getServerJarDownloadUrl(), HttpMethod.GET, null, response -> {
+                    Files.copy(response.getBody(), jarPath);
+                    return null;
+                });
+            }
+
             Files.writeString(toServicePath(version.getName()), templateService.render(version), StandardCharsets.UTF_8);
             processRunner.run("systemctl --user daemon-reload");
             return version;
@@ -282,6 +303,7 @@ class MinecraftManagementApplication {
     @Data
     @Accessors(chain = true)
     static class MinecraftWorld {
+        @Pattern(regexp = "[\\w-_]{1,50}")
         @NotBlank
         String name;
         @NotBlank
@@ -296,76 +318,76 @@ class MinecraftManagementApplication {
         public Properties toServerProperties() {
             var properties = new Properties();
 
-            properties.put("accepts-transfers", false);
-            properties.put("allow-flight", false);
-            properties.put("allow-nether", true);
-            properties.put("broadcast-console-to-ops", true);
-            properties.put("broadcast-rcon-to-ops", true);
+            properties.put("accepts-transfers", "false");
+            properties.put("allow-flight", "false");
+            properties.put("allow-nether", "true");
+            properties.put("broadcast-console-to-ops", "true");
+            properties.put("broadcast-rcon-to-ops", "true");
             properties.put("bug-report-link", "");
             properties.put("difficulty", "normal");
-            properties.put("enable-code-of-conduct", false);
-            properties.put("enable-command-block", false);
-            properties.put("enable-jmx-monitoring", false);
-            properties.put("enable-query", false);
-            properties.put("enable-rcon", false);
-            properties.put("enable-status", true);
-            properties.put("enforce-secure-profile", true);
-            properties.put("enforce-whitelist", false);
-            properties.put("entity-broadcast-range-percentage", 100);
-            properties.put("force-gamemode", false);
-            properties.put("function-permission-level", 2);
+            properties.put("enable-code-of-conduct", "false");
+            properties.put("enable-command-block", "false");
+            properties.put("enable-jmx-monitoring", "false");
+            properties.put("enable-query", "false");
+            properties.put("enable-rcon", "false");
+            properties.put("enable-status", "true");
+            properties.put("enforce-secure-profile", "true");
+            properties.put("enforce-whitelist", "false");
+            properties.put("entity-broadcast-range-percentage", "100");
+            properties.put("force-gamemode", "false");
+            properties.put("function-permission-level", "2");
             properties.put("gamemode", "survival");
-            properties.put("generate-structures", true);
+            properties.put("generate-structures", "true");
             properties.put("generator-settings", "{}");
-            properties.put("hardcore", false);
-            properties.put("hide-online-players", false);
+            properties.put("hardcore", "false");
+            properties.put("hide-online-players", "false");
             properties.put("initial-disabled-packs", "");
             properties.put("initial-enabled-packs", "vanilla");
             properties.put("level-name", "world");
             properties.put("level-seed", Objects.requireNonNullElse(seed, ""));
             properties.put("level-type", "minecraft:normal");
-            properties.put("log-ips", true);
-            properties.put("management-server-enabled", false);
+            properties.put("log-ips", "true");
+            properties.put("management-server-enabled", "false");
             properties.put("management-server-host", "localhost");
-            properties.put("management-server-port", 0);
+            properties.put("management-server-port", "0");
             properties.put("management-server-secret", "");
-            properties.put("management-server-tls-enabled", true);
+            properties.put("management-server-tls-enabled", "true");
             properties.put("management-server-tls-keystore", "");
             properties.put("management-server-tls-keystore-password", "");
-            properties.put("max-chained-neighbor-updates", 1000000);
-            properties.put("max-players", 20);
-            properties.put("max-tick-time", 60000);
-            properties.put("max-world-size", 29999984);
-            properties.put("motd", motd);
-            properties.put("network-compression-threshold", 256);
-            properties.put("online-mode", true);
-            properties.put("op-permission-level", 4);
-            properties.put("pause-when-empty-seconds", 60);
-            properties.put("player-idle-timeout", 0);
-            properties.put("prevent-proxy-connections", false);
-            properties.put("pvp", true);
-            properties.put("query.port", 25565);
-            properties.put("rate-limit", 0);
+            properties.put("max-chained-neighbor-updates", "1000000");
+            properties.put("max-players", "20");
+            properties.put("max-tick-time", "60000");
+            properties.put("max-world-size", "29999984");
+            properties.put("motd", Optional.ofNullable(motd).orElse(name));
+            properties.put("network-compression-threshold", "256");
+            properties.put("online-mode", "true");
+            properties.put("op-permission-level", "4");
+            properties.put("pause-when-empty-seconds", "60");
+            properties.put("player-idle-timeout", "0");
+            properties.put("prevent-proxy-connections", "false");
+            properties.put("pvp", "true");
+            properties.put("query.port", "25565");
+            properties.put("rate-limit", "0");
             properties.put("rcon.password", "");
-            properties.put("rcon.port", 25575);
+            properties.put("rcon.port", "25575");
             properties.put("region-file-compression", "deflate");
-            properties.put("require-resource-pack", false);
+            properties.put("require-resource-pack", "false");
             properties.put("resource-pack", "");
             properties.put("resource-pack-id", "");
             properties.put("resource-pack-prompt", "");
             properties.put("resource-pack-sha1", "");
             properties.put("server-ip", "");
-            properties.put("server-port", port);
-            properties.put("simulation-distance", 10);
-            properties.put("spawn-monsters", true);
-            properties.put("spawn-protection", 16);
-            properties.put("status-heartbeat-interval", 0);
-            properties.put("sync-chunk-writes", true);
+            properties.put("server-port", String.valueOf(port));
+            properties.put("simulation-distance", "10");
+            properties.put("spawn-monsters", "true");
+            properties.put("spawn-protection", "16");
+            properties.put("status-heartbeat-interval", "0");
+            properties.put("sync-chunk-writes", "true");
             properties.put("text-filtering-config", "");
-            properties.put("text-filtering-version", 0);
-            properties.put("use-native-transport", true);
-            properties.put("view-distance", 10);
-            properties.put("white-list", false);
+            properties.put("text-filtering-version", "0");
+            properties.put("use-native-transport", "true");
+            properties.put("view-distance", "10");
+            properties.put("white-list", "false");
 
             return properties;
         }

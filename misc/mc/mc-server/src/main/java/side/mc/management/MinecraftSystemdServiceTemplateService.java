@@ -10,6 +10,7 @@ import side.mc.management.MinecraftManagementApplication.McManagementProperties;
 import side.mc.management.MinecraftManagementApplication.MinecraftVersion;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @SuppressWarnings("CommentedOutCode")
 @RequiredArgsConstructor
@@ -46,7 +47,7 @@ class MinecraftSystemdServiceTemplateService {
     @SneakyThrows
     String render(MinecraftVersion version) {
         return "# " + objectMapper.writeValueAsString(version) + "\n" + serviceTemplate
-                .replace("{{DISPLAY_NAME}}", version.getDisplayName())
+                .replace("{{DISPLAY_NAME}}", Objects.requireNonNullElse(version.getDisplayName(), version.getName()))
                 .replace("{{MAX_G}}", version.getMaxG().toString())
                 .replace("{{MIN_G}}", version.getMinG().toString())
                 .replace("{{JAR_PATH}}", props.getJarsDir().resolve(version.getName()).toString())

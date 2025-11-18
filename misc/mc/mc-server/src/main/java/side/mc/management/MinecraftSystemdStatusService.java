@@ -65,6 +65,11 @@ class MinecraftSystemdStatusService {
                 .map(e -> Map.entry(e.substring(0, e.indexOf('=')), e.substring(e.indexOf('=') + 1)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+        for (var s : new ArrayList<>(parsed.keySet())) {
+            if (parsed.get(s).equals("[not set]")) {
+                parsed.remove(s);
+            }
+        }
         return objectMapper.convertValue(parsed, MinecraftWorldServiceState.class);
     }
 }
