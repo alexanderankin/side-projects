@@ -1,0 +1,18 @@
+services:
+  distribution:
+    image: "registry:3"
+    ports:
+      - "127.0.0.1:5000:5000/tcp"
+    volumes:
+      - './.htpasswd:/htpasswd'
+      - './cert.pem:/cert.pem'
+      - './key.pem:/key.pem'
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: realm
+      REGISTRY_AUTH_HTPASSWD_PATH: /htpasswd
+      REGISTRY_HTTP_TLS_CERTIFICATE: /cert.pem
+      REGISTRY_HTTP_TLS_KEY: /key.pem
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      REGISTRY_LOG_LEVEL: info
