@@ -1,8 +1,71 @@
+import com.github.gradle.node.npm.task.NpmTask
+
 plugins {
     id 'spring-conventions'
     id 'jib-conventions'
+    id 'com.github.node-gradle.node' version '7.1.0'
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.data:spring-data-commons'
+}
+
+node {
+    download = false // set to true for reproducible node version
+    npmInstallCommand = 'ci'
+    nodeProjectDir = projectDir.toPath().resolve('src').resolve('main').resolve('web').toFile()
+}
+
+clean.delete 'dist'
+
+// noinspection GroovyAssignabilityCheck
+def buildDist = tasks.register('buildDist', NpmTask) {
+    group = 'build'
+    description = 'npm run build'
+
+    inputs.dir('src/main/web/public')
+    inputs.dir('src/main/web/src')
+    inputs.file('src/main/web/package.json')
+    outputs.dir('src/main/web/dist')
+
+    args = ['run', 'build']
+}
+
+// rearrange for embedding into jar
+def buildDistCopy = tasks.register('buildDistCopy', Copy) {
+    from(buildDist) {
+        into 'public'
+    }
+    into layout.buildDirectory.dir('dist')
+}
+
+// package it for consumption in backend project
+configurations {
+    dist {
+        canBeConsumed = true
+        canBeResolved = false
+    }
+}
+
+artifacts {
+    add('dist', buildDistCopy)
+}
+
+
+configurations {
+    frontend {
+        canBeConsumed = false
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    frontend project(path: project.path, configuration: 'dist')
+}
+
+processResources {
+    from(configurations.frontend)
 }

@@ -1,0 +1,10 @@
+[Unit]
+Description=Minecraft Server {{DISPLAY_NAME}}: %i
+After=network.target
+
+[Service]
+ExecStart=java -Xmx{{MAX_G}}g -Xms{{MIN_G}}g -jar {{JAR_PATH}} --nogui
+WorkingDirectory={{WORLDS_DIR}}/%i
+
+[Install]
+WantedBy=default.target

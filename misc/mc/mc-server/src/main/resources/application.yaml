@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: mc-management
+
+server:
+  error:
+    include-message: always
