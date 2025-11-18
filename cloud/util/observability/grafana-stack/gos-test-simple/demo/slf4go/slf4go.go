@@ -22,50 +22,8 @@ type EffectiveLevel struct {
 	EffectiveLevel  Level
 }
 
-type Logger interface {
-	Name() string
-	Level() Level
-	SetLevel(level Level) Logger
-	AtTrace() LoggerBuilder
-	AtDebug() LoggerBuilder
-	AtInfo() LoggerBuilder
-	AtWarn() LoggerBuilder
-	AtError() LoggerBuilder
-	AtLevel(level Level) LoggerBuilder
-
-	Trace(message string)
-	Debug(message string)
-	Info(message string)
-	Warn(message string)
-	Error(message string)
-
-	IsTraceEnabled() bool
-	IsDebugEnabled() bool
-	IsInfoEnabled() bool
-	IsWarnEnabled() bool
-	IsErrorEnabled() bool
-	IsEnabled(level Level) bool
-
-	TraceF(message string, args ...any)
-	DebugF(message string, args ...any)
-	InfoF(message string, args ...any)
-	WarnF(message string, args ...any)
-	ErrorF(message string, args ...any)
-
-	TraceError(message string, err error)
-	DebugError(message string, err error)
-	InfoError(message string, err error)
-	WarnError(message string, err error)
-	ErrorError(message string, err error)
-
-	TraceErrorF(message string, err error, args ...any)
-	DebugErrorF(message string, err error, args ...any)
-	InfoErrorF(message string, err error, args ...any)
-	WarnErrorF(message string, err error, args ...any)
-	ErrorErrorF(message string, err error, args ...any)
-
-	// LevelErrorFKv special case just to let logger builder exist
-	LevelErrorFKv(level Level, message string, err error, kv []Kv, args ...any)
+type Appender interface {
+	Log(level Level, message string, err error, kv []Kv, args ...any)
 }
 
 type LoggerBuilder interface {
