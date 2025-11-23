@@ -15,6 +15,6 @@ if [[ -s .htpasswd ]]; then
   sed -e "/^${username}:/d" -i .htpasswd
 fi
 
-docker run --entrypoint htpasswd httpd:2 -Bbn "${username}" "${password}" > .htpasswd
+docker run --entrypoint htpasswd httpd:2 -Bbn "${username}" "${password}" >> .htpasswd
 
 echo "${password}" > "${username}.cred"
