@@ -17,13 +17,13 @@ fi
 
 
 if ! [[ -f build/output-starts.txt ]]; then
-  ffmpeg -i build/input.wav -af silencedetect=noise=-40dB:d=0.5 -f null - 2>&1 \
+  ffmpeg -i build/input.wav -af silencedetect=noise=-50dB:d=0.5 -f null - 2>&1 \
     | grep '^\[silencedetect ' \
     | sed -e 'N;s/\n/ /' \
     | grep -oE 'silence_(start|end): [0-9.]+' \
     | sed -e 1d \
     | sed -e 'N;s/\n/ /' \
-    | awk ' { print $2 "-" $4 } ' \
+    | awk ' NR == 1 { print "0-" $2 } { print $2 "-" $4 } ' \
     > build/output-starts.txt
 fi
 
@@ -93,6 +93,7 @@ wait
 echo -e "Transcript:\n\n\n" > ${output_file}
 for each_start in $(cat build/output-starts.txt); do
   if [[ -s build/parts/part-${each_start}.txt ]]; then
+    echo "section ${each_start}" >> ${output_file}
     cat build/parts/part-${each_start}.txt >> ${output_file}
     echo >> ${output_file}
   fi
