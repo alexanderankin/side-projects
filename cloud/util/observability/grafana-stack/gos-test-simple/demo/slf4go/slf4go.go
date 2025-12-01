@@ -1,6 +1,9 @@
 package slf4go
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type level string
 type Level = level
@@ -23,7 +26,7 @@ type EffectiveLevel struct {
 }
 
 type Appender interface {
-	Log(level Level, message string, err error, kv []Kv, args ...any)
+	Log(context context.Context, level Level, message string, err error, kv []Kv, args ...any)
 }
 
 type LoggerBuilder interface {
@@ -35,7 +38,7 @@ type LoggerBuilder interface {
 
 	Error(err error) LoggerBuilder
 
-	Log()
+	Log(ctx context.Context)
 }
 
 // LoggerBuilderForLoggerAndLevel is a helper for implementers of Logger
@@ -97,6 +100,6 @@ func (l *DefaultLoggerBuilder) Error(err error) LoggerBuilder {
 	return l
 }
 
-func (l *DefaultLoggerBuilder) Log() {
-	l.logger.appender.Log(l.level, l.message, l.err, l.kvPairs, l.args...)
+func (l *DefaultLoggerBuilder) Log(ctx context.Context) {
+	l.logger.appender.Log(ctx, l.level, l.message, l.err, l.kvPairs, l.args...)
 }

@@ -1,6 +1,7 @@
 package slf4go_binding_logrus
 
 import (
+	"context"
 	"gos-test-simple/demo/slf4go"
 
 	"github.com/sirupsen/logrus"
@@ -12,7 +13,7 @@ type LogrusAppender struct {
 
 var _ slf4go.Appender = (*LogrusAppender)(nil)
 
-func (l *LogrusAppender) Log(level slf4go.Level, message string, err error, kv []slf4go.Kv, args ...any) {
+func (l *LogrusAppender) Log(ctx context.Context, level slf4go.Level, message string, err error, kv []slf4go.Kv, args ...any) {
 	logger := l.logrusLogger
 	if kv != nil {
 		for _, eachKv := range kv {

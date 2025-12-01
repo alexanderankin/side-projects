@@ -1,6 +1,7 @@
 package slf4go_binding_zap_test
 
 import (
+	"context"
 	"gos-test-simple/demo/slf4go"
 	_ "gos-test-simple/demo/slf4go_binding_zap"
 	"testing"
@@ -22,5 +23,5 @@ func TestName(t *testing.T) {
 		AtInfo().
 		AddKeyValue("key", "value").
 		Message("hello").
-		Log()
+		Log(context.Background())
 }

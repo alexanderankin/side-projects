@@ -1,5 +1,7 @@
 package slf4go
 
+import "context"
+
 type Logger struct {
 	appender Appender
 	name     string
@@ -35,132 +37,132 @@ func (l *Logger) SetLevel(level Level) *Logger {
 	return l
 }
 
-func (l *Logger) Trace(message string) {
-	l.appender.Log(TRACE, message, nil, nil)
+func (l *Logger) Trace(ctx context.Context, message string) {
+	l.appender.Log(ctx, TRACE, message, nil, nil)
 }
-func (l *Logger) Debug(message string) {
-	l.appender.Log(DEBUG, message, nil, nil)
+func (l *Logger) Debug(ctx context.Context, message string) {
+	l.appender.Log(ctx, DEBUG, message, nil, nil)
 }
-func (l *Logger) Info(message string) {
-	l.appender.Log(INFO, message, nil, nil)
+func (l *Logger) Info(ctx context.Context, message string) {
+	l.appender.Log(ctx, INFO, message, nil, nil)
 }
-func (l *Logger) Warn(message string) {
-	l.appender.Log(WARN, message, nil, nil)
+func (l *Logger) Warn(ctx context.Context, message string) {
+	l.appender.Log(ctx, WARN, message, nil, nil)
 }
-func (l *Logger) Error(message string) {
-	l.appender.Log(ERROR, message, nil, nil)
-}
-
-func (l *Logger) TraceF(message string, args ...any) {
-	l.appender.Log(TRACE, message, nil, nil, args...)
-}
-func (l *Logger) DebugF(message string, args ...any) {
-	l.appender.Log(DEBUG, message, nil, nil, args...)
-}
-func (l *Logger) InfoF(message string, args ...any) {
-	l.appender.Log(INFO, message, nil, nil, args...)
-}
-func (l *Logger) WarnF(message string, args ...any) {
-	l.appender.Log(WARN, message, nil, nil, args...)
-}
-func (l *Logger) ErrorF(message string, args ...any) {
-	l.appender.Log(ERROR, message, nil, nil, args...)
+func (l *Logger) Error(ctx context.Context, message string) {
+	l.appender.Log(ctx, ERROR, message, nil, nil)
 }
 
-func (l *Logger) TraceKv(message string, kv []Kv) {
-	l.appender.Log(TRACE, message, nil, kv)
+func (l *Logger) TraceF(ctx context.Context, message string, args ...any) {
+	l.appender.Log(ctx, TRACE, message, nil, nil, args...)
 }
-func (l *Logger) DebugKv(message string, kv []Kv) {
-	l.appender.Log(DEBUG, message, nil, kv)
+func (l *Logger) DebugF(ctx context.Context, message string, args ...any) {
+	l.appender.Log(ctx, DEBUG, message, nil, nil, args...)
 }
-func (l *Logger) InfoKv(message string, kv []Kv) {
-	l.appender.Log(INFO, message, nil, kv)
+func (l *Logger) InfoF(ctx context.Context, message string, args ...any) {
+	l.appender.Log(ctx, INFO, message, nil, nil, args...)
 }
-func (l *Logger) WarnKv(message string, kv []Kv) {
-	l.appender.Log(WARN, message, nil, kv)
+func (l *Logger) WarnF(ctx context.Context, message string, args ...any) {
+	l.appender.Log(ctx, WARN, message, nil, nil, args...)
 }
-func (l *Logger) ErrorKv(message string, kv []Kv) {
-	l.appender.Log(ERROR, message, nil, kv)
-}
-
-func (l *Logger) TraceFKv(message string, kv []Kv, args ...any) {
-	l.appender.Log(TRACE, message, nil, kv, args...)
-}
-func (l *Logger) DebugFKv(message string, kv []Kv, args ...any) {
-	l.appender.Log(DEBUG, message, nil, kv, args...)
-}
-func (l *Logger) InfoFKv(message string, kv []Kv, args ...any) {
-	l.appender.Log(INFO, message, nil, kv, args...)
-}
-func (l *Logger) WarnFKv(message string, kv []Kv, args ...any) {
-	l.appender.Log(WARN, message, nil, kv, args...)
-}
-func (l *Logger) ErrorFKv(message string, kv []Kv, args ...any) {
-	l.appender.Log(ERROR, message, nil, kv, args...)
+func (l *Logger) ErrorF(ctx context.Context, message string, args ...any) {
+	l.appender.Log(ctx, ERROR, message, nil, nil, args...)
 }
 
-func (l *Logger) TraceErr(message string, err error) {
-	l.appender.Log(TRACE, message, err, nil)
+func (l *Logger) TraceKv(ctx context.Context, message string, kv []Kv) {
+	l.appender.Log(ctx, TRACE, message, nil, kv)
 }
-func (l *Logger) DebugErr(message string, err error) {
-	l.appender.Log(DEBUG, message, err, nil)
+func (l *Logger) DebugKv(ctx context.Context, message string, kv []Kv) {
+	l.appender.Log(ctx, DEBUG, message, nil, kv)
 }
-func (l *Logger) InfoErr(message string, err error) {
-	l.appender.Log(INFO, message, err, nil)
+func (l *Logger) InfoKv(ctx context.Context, message string, kv []Kv) {
+	l.appender.Log(ctx, INFO, message, nil, kv)
 }
-func (l *Logger) WarnErr(message string, err error) {
-	l.appender.Log(WARN, message, err, nil)
+func (l *Logger) WarnKv(ctx context.Context, message string, kv []Kv) {
+	l.appender.Log(ctx, WARN, message, nil, kv)
 }
-func (l *Logger) ErrorErr(message string, err error) {
-	l.appender.Log(ERROR, message, err, nil)
-}
-
-func (l *Logger) TraceFErr(message string, err error, args ...any) {
-	l.appender.Log(TRACE, message, err, nil, args...)
-}
-func (l *Logger) DebugFErr(message string, err error, args ...any) {
-	l.appender.Log(DEBUG, message, err, nil, args...)
-}
-func (l *Logger) InfoFErr(message string, err error, args ...any) {
-	l.appender.Log(INFO, message, err, nil, args...)
-}
-func (l *Logger) WarnFErr(message string, err error, args ...any) {
-	l.appender.Log(WARN, message, err, nil, args...)
-}
-func (l *Logger) ErrorFErr(message string, err error, args ...any) {
-	l.appender.Log(ERROR, message, err, nil, args...)
+func (l *Logger) ErrorKv(ctx context.Context, message string, kv []Kv) {
+	l.appender.Log(ctx, ERROR, message, nil, kv)
 }
 
-func (l *Logger) TraceKvErr(message string, kv []Kv, err error) {
-	l.appender.Log(TRACE, message, err, kv)
+func (l *Logger) TraceFKv(ctx context.Context, message string, kv []Kv, args ...any) {
+	l.appender.Log(ctx, TRACE, message, nil, kv, args...)
 }
-func (l *Logger) DebugKvErr(message string, kv []Kv, err error) {
-	l.appender.Log(DEBUG, message, err, kv)
+func (l *Logger) DebugFKv(ctx context.Context, message string, kv []Kv, args ...any) {
+	l.appender.Log(ctx, DEBUG, message, nil, kv, args...)
 }
-func (l *Logger) InfoKvErr(message string, kv []Kv, err error) {
-	l.appender.Log(INFO, message, err, kv)
+func (l *Logger) InfoFKv(ctx context.Context, message string, kv []Kv, args ...any) {
+	l.appender.Log(ctx, INFO, message, nil, kv, args...)
 }
-func (l *Logger) WarnKvErr(message string, kv []Kv, err error) {
-	l.appender.Log(WARN, message, err, kv)
+func (l *Logger) WarnFKv(ctx context.Context, message string, kv []Kv, args ...any) {
+	l.appender.Log(ctx, WARN, message, nil, kv, args...)
 }
-func (l *Logger) ErrorKvErr(message string, kv []Kv, err error) {
-	l.appender.Log(ERROR, message, err, kv)
+func (l *Logger) ErrorFKv(ctx context.Context, message string, kv []Kv, args ...any) {
+	l.appender.Log(ctx, ERROR, message, nil, kv, args...)
 }
 
-func (l *Logger) TraceFKvErr(message string, kv []Kv, err error, args ...any) {
-	l.appender.Log(TRACE, message, err, kv, args...)
+func (l *Logger) TraceErr(ctx context.Context, message string, err error) {
+	l.appender.Log(ctx, TRACE, message, err, nil)
 }
-func (l *Logger) DebugFKvErr(message string, kv []Kv, err error, args ...any) {
-	l.appender.Log(DEBUG, message, err, kv, args...)
+func (l *Logger) DebugErr(ctx context.Context, message string, err error) {
+	l.appender.Log(ctx, DEBUG, message, err, nil)
 }
-func (l *Logger) InfoFKvErr(message string, kv []Kv, err error, args ...any) {
-	l.appender.Log(INFO, message, err, kv, args...)
+func (l *Logger) InfoErr(ctx context.Context, message string, err error) {
+	l.appender.Log(ctx, INFO, message, err, nil)
 }
-func (l *Logger) WarnFKvErr(message string, kv []Kv, err error, args ...any) {
-	l.appender.Log(WARN, message, err, kv, args...)
+func (l *Logger) WarnErr(ctx context.Context, message string, err error) {
+	l.appender.Log(ctx, WARN, message, err, nil)
 }
-func (l *Logger) ErrorFKvErr(message string, kv []Kv, err error, args ...any) {
-	l.appender.Log(ERROR, message, err, kv, args...)
+func (l *Logger) ErrorErr(ctx context.Context, message string, err error) {
+	l.appender.Log(ctx, ERROR, message, err, nil)
+}
+
+func (l *Logger) TraceFErr(ctx context.Context, message string, err error, args ...any) {
+	l.appender.Log(ctx, TRACE, message, err, nil, args...)
+}
+func (l *Logger) DebugFErr(ctx context.Context, message string, err error, args ...any) {
+	l.appender.Log(ctx, DEBUG, message, err, nil, args...)
+}
+func (l *Logger) InfoFErr(ctx context.Context, message string, err error, args ...any) {
+	l.appender.Log(ctx, INFO, message, err, nil, args...)
+}
+func (l *Logger) WarnFErr(ctx context.Context, message string, err error, args ...any) {
+	l.appender.Log(ctx, WARN, message, err, nil, args...)
+}
+func (l *Logger) ErrorFErr(ctx context.Context, message string, err error, args ...any) {
+	l.appender.Log(ctx, ERROR, message, err, nil, args...)
+}
+
+func (l *Logger) TraceKvErr(ctx context.Context, message string, kv []Kv, err error) {
+	l.appender.Log(ctx, TRACE, message, err, kv)
+}
+func (l *Logger) DebugKvErr(ctx context.Context, message string, kv []Kv, err error) {
+	l.appender.Log(ctx, DEBUG, message, err, kv)
+}
+func (l *Logger) InfoKvErr(ctx context.Context, message string, kv []Kv, err error) {
+	l.appender.Log(ctx, INFO, message, err, kv)
+}
+func (l *Logger) WarnKvErr(ctx context.Context, message string, kv []Kv, err error) {
+	l.appender.Log(ctx, WARN, message, err, kv)
+}
+func (l *Logger) ErrorKvErr(ctx context.Context, message string, kv []Kv, err error) {
+	l.appender.Log(ctx, ERROR, message, err, kv)
+}
+
+func (l *Logger) TraceFKvErr(ctx context.Context, message string, kv []Kv, err error, args ...any) {
+	l.appender.Log(ctx, TRACE, message, err, kv, args...)
+}
+func (l *Logger) DebugFKvErr(ctx context.Context, message string, kv []Kv, err error, args ...any) {
+	l.appender.Log(ctx, DEBUG, message, err, kv, args...)
+}
+func (l *Logger) InfoFKvErr(ctx context.Context, message string, kv []Kv, err error, args ...any) {
+	l.appender.Log(ctx, INFO, message, err, kv, args...)
+}
+func (l *Logger) WarnFKvErr(ctx context.Context, message string, kv []Kv, err error, args ...any) {
+	l.appender.Log(ctx, WARN, message, err, kv, args...)
+}
+func (l *Logger) ErrorFKvErr(ctx context.Context, message string, kv []Kv, err error, args ...any) {
+	l.appender.Log(ctx, ERROR, message, err, kv, args...)
 }
 
 func (l *Logger) AtTrace() LoggerBuilder {

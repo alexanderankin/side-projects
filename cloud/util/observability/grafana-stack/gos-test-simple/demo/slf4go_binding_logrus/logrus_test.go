@@ -1,6 +1,7 @@
 package slf4go_binding_logrus_test
 
 import (
+	"context"
 	"gos-test-simple/demo/slf4go"
 	_ "gos-test-simple/demo/slf4go_binding_logrus"
 	"testing"
@@ -21,5 +22,5 @@ func TestLogrusLogger(t *testing.T) {
 
 	slf4go.GetLoggerFactory().
 		GetLogger("test").
-		Info("hello world - 3")
+		Info(context.Background(), "hello world - 3")
 }

@@ -1,6 +1,7 @@
 package slf4go_binding_zap
 
 import (
+	"context"
 	"fmt"
 	"gos-test-simple/demo/slf4go"
 
@@ -64,7 +65,7 @@ func (l *ZapAppender) IsEnabled(level slf4go.Level) bool {
 	return l.logger.Level() <= zapLevelsMap[level]
 }
 
-func (l *ZapAppender) Log(level slf4go.Level, message string, err error, kv []slf4go.Kv, args ...any) {
+func (l *ZapAppender) Log(ctx context.Context, level slf4go.Level, message string, err error, kv []slf4go.Kv, args ...any) {
 	if !l.IsEnabled(level) {
 		return
 	}
