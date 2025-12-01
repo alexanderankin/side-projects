@@ -164,17 +164,17 @@ func (l *Logger) ErrorFKvErr(message string, kv []Kv, err error, args ...any) {
 }
 
 func (l *Logger) AtTrace() LoggerBuilder {
-	return &DefaultLoggerBuilder{level: TRACE}
+	return &DefaultLoggerBuilder{level: TRACE, logger: l}
 }
 func (l *Logger) AtDebug() LoggerBuilder {
-	return &DefaultLoggerBuilder{level: DEBUG}
+	return &DefaultLoggerBuilder{level: DEBUG, logger: l}
 }
 func (l *Logger) AtInfo() LoggerBuilder {
-	return &DefaultLoggerBuilder{level: INFO}
+	return &DefaultLoggerBuilder{level: INFO, logger: l}
 }
 func (l *Logger) AtWarn() LoggerBuilder {
-	return &DefaultLoggerBuilder{level: WARN}
+	return &DefaultLoggerBuilder{level: WARN, logger: l}
 }
 func (l *Logger) AtError() LoggerBuilder {
-	return &DefaultLoggerBuilder{level: ERROR}
+	return &DefaultLoggerBuilder{level: ERROR, logger: l}
 }

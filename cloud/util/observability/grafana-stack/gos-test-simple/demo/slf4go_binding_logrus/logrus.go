@@ -23,18 +23,22 @@ func (l *LogrusLoggerFactory) FieldNames() *slf4go.FieldNames {
 	return l.fieldNames
 }
 
-func (l *LogrusLoggerFactory) GetRootLogger() slf4go.Logger {
+func (l *LogrusLoggerFactory) GetRootLogger() *slf4go.Logger {
 	return l.GetLogger(slf4go.RootLoggerName)
 }
 
-func (l *LogrusLoggerFactory) GetLogger(name string) slf4go.Logger {
-	return l.loggers.Get(name, func() slf4go.Logger {
+func (l *LogrusLoggerFactory) GetLogger(name string) *slf4go.Logger {
+	return l.loggers.Get(name, func() *slf4go.Logger {
 		logger := logrus.New()
-		logger.SetLevel(logrus.InfoLevel)
+		if l.rootLogger != nil {
+			logger.SetLevel((l.rootLogger.(*logrus.Logger)).Level)
+		} else {
+			logger.SetLevel(logrus.InfoLevel)
+		}
 		//l.rootLogger.(logrus.Entry).Level
 		//l.rootLogger.(logrus.Logger).Level
 
-		return slf4go.NewLogger(name)
+		return slf4go.NewLogger(name, slf4go.INFO, &LogrusAppender{logrusLogger: logger})
 	})
 }
 
@@ -49,48 +53,3 @@ func (l *LogrusLoggerFactory) SetLevel(name string, level slf4go.Level) {
 }
 
 var _ slf4go.LoggerFactory = (*LogrusLoggerFactory)(nil)
-
-type LogrusAppender struct {
-	logrusLogger logrus.Ext1FieldLogger
-}
-
-var _ slf4go.Appender = (*LogrusAppender)(nil)
-
-func (l *LogrusAppender) Log(level slf4go.Level, message string, err error, kv []slf4go.Kv, args ...any) {
-	logger := l.logrusLogger
-	if kv != nil {
-		for _, eachKv := range kv {
-			logger = logger.WithField(eachKv.Key, eachKv.Value)
-		}
-	}
-	if err != nil {
-		logger = logger.WithError(err)
-	}
-	if args != nil && len(args) > 0 {
-		switch level {
-		case slf4go.TRACE:
-			logger.Tracef(message, args)
-		case slf4go.DEBUG:
-			logger.Debugf(message, args)
-		case slf4go.INFO:
-			logger.Infof(message, args)
-		case slf4go.WARN:
-			logger.Warnf(message, args)
-		case slf4go.ERROR:
-			logger.Errorf(message, args)
-		}
-	} else {
-		switch level {
-		case slf4go.TRACE:
-			logger.Trace(message)
-		case slf4go.DEBUG:
-			logger.Debug(message)
-		case slf4go.INFO:
-			logger.Info(message)
-		case slf4go.WARN:
-			logger.Warn(message)
-		case slf4go.ERROR:
-			logger.Error(message)
-		}
-	}
-}

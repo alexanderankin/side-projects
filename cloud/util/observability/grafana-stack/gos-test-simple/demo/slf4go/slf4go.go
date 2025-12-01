@@ -39,7 +39,7 @@ type LoggerBuilder interface {
 }
 
 // LoggerBuilderForLoggerAndLevel is a helper for implementers of Logger
-func LoggerBuilderForLoggerAndLevel(logger Logger, level Level) (LoggerBuilder, error) {
+func LoggerBuilderForLoggerAndLevel(logger *Logger, level Level) (LoggerBuilder, error) {
 	if logger == nil {
 		return nil, errors.New("logger is nil")
 	}
@@ -49,7 +49,7 @@ func LoggerBuilderForLoggerAndLevel(logger Logger, level Level) (LoggerBuilder, 
 	return &DefaultLoggerBuilder{logger: logger, level: level}, nil
 }
 
-func LoggerBuilderForLoggerAndLevelUnsafe(logger Logger, level Level) LoggerBuilder {
+func LoggerBuilderForLoggerAndLevelUnsafe(logger *Logger, level Level) LoggerBuilder {
 	if logger == nil {
 		panic(errors.New("logger is nil"))
 	}
@@ -69,7 +69,7 @@ type DefaultLoggerBuilder struct {
 	message string
 	kvPairs []Kv
 	args    []any
-	logger  Logger
+	logger  *Logger
 	err     error
 }
 
@@ -98,5 +98,5 @@ func (l *DefaultLoggerBuilder) Error(err error) LoggerBuilder {
 }
 
 func (l *DefaultLoggerBuilder) Log() {
-	l.logger.LevelErrorFKv(l.level, l.message, l.err, l.kvPairs, l.args...)
+	l.logger.appender.Log(l.level, l.message, l.err, l.kvPairs, l.args...)
 }

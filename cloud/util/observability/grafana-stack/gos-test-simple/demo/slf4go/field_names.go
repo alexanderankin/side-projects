@@ -1,5 +1,7 @@
 package slf4go
 
+// todo do we need this in api package
+
 type FieldNames struct {
 	Logger string
 	Level  string

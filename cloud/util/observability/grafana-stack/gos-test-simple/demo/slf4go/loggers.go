@@ -13,7 +13,7 @@ var defaultEffectiveLevelOnce = sync.Once{}
 type Loggers struct {
 	RootLoggerName      string
 	LoggerPathSeparator string
-	loggers             map[string]Logger
+	loggers             map[string]*Logger
 	lock                sync.RWMutex
 }
 
@@ -21,12 +21,12 @@ func NewLoggers() *Loggers {
 	return &Loggers{
 		RootLoggerName:      RootLoggerName,
 		LoggerPathSeparator: ".",
-		loggers:             make(map[string]Logger),
+		loggers:             make(map[string]*Logger),
 		lock:                sync.RWMutex{},
 	}
 }
 
-func (l *Loggers) Get(name string, f func() Logger) Logger {
+func (l *Loggers) Get(name string, f func() *Logger) *Logger {
 	l.lock.RLock()
 	logger, ok := l.loggers[name]
 	l.lock.RUnlock()
