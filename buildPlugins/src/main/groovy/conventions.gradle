@@ -7,8 +7,8 @@ plugins {
 group = 'info.ankin.side-projects'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 repositories {
@@ -64,10 +64,10 @@ dependencies {
 
     constraints {
         [
-                ['org.projectlombok:lombok', '1.18.30'],
+                ['org.projectlombok:lombok', '1.18.42'],
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
-                add(c, l.getFirst()) { version { prefer l.getLast() } }
+                add(c, l.getFirst()) { version { require l.getLast() } }
             }
         }
     }
