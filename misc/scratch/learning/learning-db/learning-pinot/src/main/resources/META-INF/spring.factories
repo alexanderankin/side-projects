@@ -1,0 +1,2 @@
+org.springframework.data.jdbc.core.dialect.DialectResolver$JdbcDialectProvider=\
+  side.learning.db.pinot.springdialect.PinotAwareDialectProvider
