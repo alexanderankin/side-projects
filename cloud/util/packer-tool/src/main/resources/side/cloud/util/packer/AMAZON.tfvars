@@ -1,0 +1,5 @@
+vpc_name       = ""
+subnet_name    = ""
+sg_name        = ""
+jump_host_name = ""
+variables_file = "variables.hcl"
