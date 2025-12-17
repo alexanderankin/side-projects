@@ -1,0 +1,15 @@
+plugins {
+    id 'conventions'
+    id 'picocli-conventions'
+}
+
+application.mainClass = 'side.casdoor.init.CasdoorInitApplication'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // // https://mvnrepository.com/artifact/org.casbin/casdoor-java-sdk
+    // implementation 'org.casbin:casdoor-java-sdk:1.38.0'
+
+    itestImplementation 'org.testcontainers:mysql'
+    itestImplementation 'com.mysql:mysql-connector-j'
+}

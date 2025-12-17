@@ -1,0 +1,36 @@
+services:
+  casdoor:
+    image: "casbin/casdoor:2.196.1"
+    ports:
+      - "127.0.0.1:8000:8000/tcp"
+    environment:
+      driverName: mysql
+      dataSourceName: "root:casdoor-root-password@tcp(mysql_db:3306)/"
+      dbName: casdoor_db
+    entrypoint:
+      - sh
+      - "-c"
+      - |
+        echo "Waiting for MySQL at mysql_db:3306...";
+        i=1;
+        while [ $$i -le 30 ]; do
+          if nc -w1 -vz mysql_db 3306; then
+            echo "MySQL is available";
+            exec /server;
+          fi;
+          echo "Attempt $$i/30 failed, retrying...";
+          i=$$((i + 1));
+          sleep 1;
+        done;
+        echo "MySQL did not become available after 30 attempts, exiting.";
+        exit 1
+
+  mysql_db:
+    image: mysql:8.4-oracle
+    environment:
+      MYSQL_ROOT_PASSWORD: casdoor-root-password
+      MYSQL_DATABASE: casdoor_db
+    # ports:
+    #   - "127.0.0.1:3306:3306/tcp"
+    # volumes:
+    #   - mysql_data:/var/lib/mysql
