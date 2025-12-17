@@ -1,0 +1,40 @@
+# logging:
+#   level:
+#     web: debug
+#     org.springframework.security: debug
+
+spring:
+  application:
+    name: example-casdoor-client
+
+  security:
+    oauth2:
+      client:
+        provider:
+          casdoor:
+            issuer-uri: http://localhost:8000
+        registration:
+          casdoor:
+            provider: casdoor
+            client-id: sample-client-id
+            client-secret: sample-client-secret
+            authorization-grant-type: authorization_code
+            client-name: Login with Casdoor
+
+server:
+  port: 8080
+
+management:
+  server:
+    port: 9080
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+          - logging
+  endpoint:
+    health:
+      probes:
+        enabled: true
