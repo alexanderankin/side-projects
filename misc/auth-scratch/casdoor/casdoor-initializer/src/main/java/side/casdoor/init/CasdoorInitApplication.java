@@ -19,6 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import java.time.Instant;
 import java.util.*;
@@ -30,6 +31,7 @@ import java.util.*;
         description = "setup casdoor",
         version = "0.0.1",
         mixinStandardHelpOptions = true,
+        showDefaultValues = true,
         sortOptions = false,
         scope = CommandLine.ScopeType.INHERIT,
         subcommands = {
@@ -52,8 +54,14 @@ public class CasdoorInitApplication {
         System.exit(new CommandLine(CasdoorInitApplication.class).execute(args));
     }
 
+    @Data
+    @Accessors(chain = true)
     @Command(name = "init")
     static class Init implements Runnable {
+        final static String CASDOOR_DEFAULT_ORGANIZATION = "built-in";
+        final static String CASDOOR_ADMIN_USER = "admin";
+        final static String CASDOOR_ADMIN_PASSWORD = "123";
+
         // @Option(names = "--base-url", defaultValue = "http://localhost:8000")
         // URI baseUrl;
         // @Option(names = {"-u", "--username"}, description = "default admin username", defaultValue = "admin")
@@ -71,50 +79,126 @@ public class CasdoorInitApplication {
         // @Option(names = {"-no", "--new-org", "--new-org-name"}, description = "new organization name", defaultValue = "New Org")
         // String newOrganization;
 
-        @CommandLine.Option(names = "--casdoor-url")
+        @Option(names = "--casdoor-url")
         String casdoorUrl = "http://localhost:8000";
+
+        @Option(names = "--new-client-name", defaultValue = "sample-client")
+        String newClientName = "sample-client";
+
+        @Option(names = "--new-client-owner", defaultValue = CASDOOR_ADMIN_USER)
+        String newClientOwner = CASDOOR_ADMIN_USER;
+
+        @Option(names = "--new-client-display-name", defaultValue = "Sample Client")
+        String newClientDisplayName = "Sample Client";
+
+        @Option(names = "--new-client-description", defaultValue = "Sample Client")
+        String newClientDescription = "Sample Client";
+
+        @Option(names = "--new-client-homepage-url")
+        String newClientHomepageUrl;
+
+        @Option(names = "--new-client-client-id", defaultValue = "sample-client-id")
+        String newClientClientId = "sample-client-id";
+
+        @Option(names = "--new-client-client-secret", defaultValue = "sample-client-secret")
+        String newClientClientSecret = "sample-client-secret";
+
+        @Option(names = "--new-client-redirect-url", defaultValue = "http://localhost:8080,http://localhost:8081", split = ",")
+        List<String> newClientRedirectUrls = Arrays.asList("http://localhost:8080,http://localhost:8081".split(","));
+
+        @Option(names = "--new-client-cert-name", defaultValue = "cert-built-in")
+        String newClientCertName = "cert-built-in";
+
+        @Option(names = "--new-client-grant-type", defaultValue = "AUTHORIZATION_CODE")
+        List<Application.GrantType> newClientGrantTypes = List.of(Application.GrantType.AUTHORIZATION_CODE);
+
+        @Option(names = "--new-user-email", defaultValue = "admin@localhost.local")
+        String newUserEmail ="admin@localhost.local";
+
+        @Option(names = "--new-user-password", defaultValue = "new-admin-passwrd")
+        String newUserPassword = "new-admin-passwrd";
+
+        @Option(names = "--new-org-owner", defaultValue = CASDOOR_ADMIN_USER)
+        String newOrgOwner = CASDOOR_ADMIN_USER;
+
+        @Option(names = "--new-org-name", defaultValue = "new-organization")
+        String newOrgName = "new-organization";
+
+        @Option(names = "--new-org-website", defaultValue = "https://example.com")
+        String newOrgWebsite = "https://example.com";
+
+        @Option(names = "--new-org-logo")
+        String newOrgLogo;
+
+        @Option(names = "--new-org-favicon", defaultValue = "https://example.com/favicon.ico")
+        String newOrgFavicon = "https://example.com/favicon.ico";
+
+        @Option(names = "--new-org-password-type", defaultValue = "BCRYPT")
+        Organization.PasswordType newOrgPasswordType = Organization.PasswordType.BCRYPT;
+
+        @Option(names = "--new-org-password-salt")
+        String newOrgPasswordSalt = UUID.randomUUID().toString();
+
+        @Option(names = "--new-org-password-option", defaultValue = "HAS_AT_LEAST_8,HAS_UPPER_LOWER_AND_DIGIT,HAS_SPECIAL_CHARACTERS", split = ",")
+        List<Organization.PasswordValidatorOption> newOrgPasswordOptions = List.of(
+                Organization.PasswordValidatorOption.HAS_AT_LEAST_8,
+                Organization.PasswordValidatorOption.HAS_UPPER_LOWER_AND_DIGIT,
+                Organization.PasswordValidatorOption.HAS_SPECIAL_CHARACTERS
+        );
+
+        @Option(names = "--new-org-country-code", defaultValue = "US")
+        List<String> newOrgCountryCodes = List.of("US");
+
+        @Option(names = "--new-org-language", defaultValue = "en")
+        List<String> newOrgLanguages = List.of("en");
+
+        @Option(names = {"-n", "--dry-run"}, defaultValue = "false")
+        boolean dryRun;
 
         @SneakyThrows
         @Override
         public void run() {
-            var CasdoorDefaultOrganization = "built-in";
-            var CasdoorAdminUser = "admin";
-            var CasdoorAdminPassword = "123";
+            log.info("here are our settings: {}", this);
+            if (dryRun) {
+                log.info("Dry run enabled");
+                System.out.println(new ObjectMapper().writeValueAsString(this));
+                return;
+            }
 
             var newClient = new NewClient()
-                    .setName("sample-client")
-                    .setDisplayName("Sample Client")
-                    .setDescription("Sample Client")
-                    .setHomepageUrl(null)
-                    .setClientId("sample-client-id")
-                    .setClientSecret("sample-client-secret")
-                    .setRedirectUrls(Arrays.asList("http://localhost:8080,http://localhost:8081".split(",")))
-                    .setCert("cert-built-in");
-            var newUser = new NewUser()
-                    .setEmail("admin@localhost.local")
-                    .setPassword("new-admin-passwrd");
+                    .setName(newClientName)
+                    .setDisplayName(newClientDisplayName)
+                    .setDescription(newClientDescription)
+                    .setHomepageUrl(newClientHomepageUrl)
+                    .setClientId(newClientClientId)
+                    .setClientSecret(newClientClientSecret)
+                    .setRedirectUrls(newClientRedirectUrls)
+                    .setCert(newClientCertName)
+                    .setGrantTypes(newClientGrantTypes);
 
-            var newOrganization = "new-organization";
+            var newUser = new NewUser()
+                    .setEmail(newUserEmail)
+                    .setPassword(newUserPassword);
 
             var org = new Organization()
-                    .setOwner(CasdoorAdminUser)
-                    .setName(newOrganization.replaceAll("\\s+", "_"))
+                    .setOwner(newOrgOwner)
+                    .setName(newOrgName.replaceAll("\\s+", "_"))
                     .setCreatedTime(Instant.now())
-                    .setDisplayName(newOrganization)
-                    .setWebsiteUrl("https://example.com")
-                    .setLogo(null)
-                    .setFavicon("https://example.com/favicon.ico")
-                    .setPasswordType("bcrypt")
-                    .setPasswordSalt(UUID.randomUUID().toString())
+                    .setDisplayName(newOrgName)
+                    .setWebsiteUrl(newOrgWebsite)
+                    .setLogo(newOrgLogo)
+                    .setFavicon(newOrgFavicon)
+                    .setPasswordType(newOrgPasswordType)
+                    .setPasswordSalt(newOrgPasswordSalt)
                     .setPasswordOptions(List.of(
-                            "AtLeast8",
-                            "Aa123",
-                            "SpecialChar"
+                            Organization.PasswordValidatorOption.HAS_AT_LEAST_8,
+                            Organization.PasswordValidatorOption.HAS_UPPER_LOWER_AND_DIGIT,
+                            Organization.PasswordValidatorOption.HAS_SPECIAL_CHARACTERS
                     ))
-                    .setCountryCodes(List.of("US"))
+                    .setCountryCodes(newOrgCountryCodes)
                     .setDefaultAvatar(null)
                     .setTags(List.of("casdoor"))
-                    .setLanguages(List.of("en"))
+                    .setLanguages(newOrgLanguages)
                     .setInitScore(100)
                     .setProfilePublic(false)
                     .setUseEmailAsUsername(true)
@@ -167,8 +251,8 @@ public class CasdoorInitApplication {
             try {
                 addOrgResponse = restClient.post()
                         .uri(u -> u.path("/api/add-organization")
-                                .queryParam("username", CasdoorDefaultOrganization + "/" + CasdoorAdminUser)
-                                .queryParam("password", CasdoorAdminPassword)
+                                .queryParam("username", CASDOOR_DEFAULT_ORGANIZATION + "/" + CASDOOR_ADMIN_USER)
+                                .queryParam("password", CASDOOR_ADMIN_PASSWORD)
                                 .build())
                         .body(org)
                         .retrieve()
@@ -179,15 +263,15 @@ public class CasdoorInitApplication {
                 throw new RuntimeException("Error (" + e.getStatusCode() + ") in adding organization: " + e.getResponseBodyAsString() + "/" + e.getResponseHeaders());
             }
 
-            if (validateCasdoorResponse(addOrgResponse)) {
+            if (!validateCasdoorResponse(addOrgResponse)) {
                 throw new RuntimeException("Failed to create organization: " + addOrgResponse);
             }
 
             log.info("added org '{}' => {}", org, addOrgResponse.getBody());
 
             Application application = new Application()
-                    .setOwner(CasdoorAdminUser)
-                    .setOrganization(CasdoorDefaultOrganization) // this was hard-coded to "built-in"
+                    .setOwner(newClientOwner)
+                    .setOrganization(CASDOOR_DEFAULT_ORGANIZATION) // this was hard-coded to "built-in"
                     .setName(newClient.getName())
                     .setDisplayName(newClient.getDisplayName())
                     .setDescription(newClient.getDescription())
@@ -209,7 +293,7 @@ public class CasdoorInitApplication {
                     .setSignupItems(List.of(new Application.SignupItem().setName("Username").setVisible(true).setRequired(true).setRule("None")))
                     .setProviders(List.of(new Application.ProviderItem().setName("provider_captcha_default"),
                             new Application.ProviderItem().setName("EmailProvider").setRule("All")))
-                    .setGrantTypes(List.of("authorization_code"))
+                    .setGrantTypes(newClient.getGrantTypes())
                     .setCreatedTime(Instant.now())
                     .setFormOffset(2)
                     .setFooterHtml("<style>#footer {display: none;}<style>");
@@ -218,8 +302,8 @@ public class CasdoorInitApplication {
             try {
                 addApplicationResponse = restClient.post()
                         .uri(u -> u.path("/api/add-application")
-                                .queryParam("username", CasdoorDefaultOrganization + "/" + CasdoorAdminUser)
-                                .queryParam("password", CasdoorAdminPassword)
+                                .queryParam("username", CASDOOR_DEFAULT_ORGANIZATION + "/" + CASDOOR_ADMIN_USER)
+                                .queryParam("password", CASDOOR_ADMIN_PASSWORD)
                                 .build())
                         .body(application)
                         .retrieve()
@@ -238,9 +322,9 @@ public class CasdoorInitApplication {
 
             var certResponse = restClient.get()
                     .uri(u -> u.path("/api/get-cert")
-                            .queryParam("username", CasdoorDefaultOrganization + "/" + CasdoorAdminUser)
-                            .queryParam("password", CasdoorAdminPassword)
-                            .queryParam("id", CasdoorAdminUser + "/" + application.getCert())
+                            .queryParam("username", CASDOOR_DEFAULT_ORGANIZATION + "/" + CASDOOR_ADMIN_USER)
+                            .queryParam("password", CASDOOR_ADMIN_PASSWORD)
+                            .queryParam("id", CASDOOR_ADMIN_USER + "/" + application.getCert())
                             .build())
                     .retrieve()
                     .toEntity(Response.class);
@@ -248,7 +332,7 @@ public class CasdoorInitApplication {
             var certPublicKey = Objects.requireNonNull(certResponse.getBody(), "Failed to get cert: no body").getAdditionalProperties().getOrDefault("data", NullNode.getInstance()).path("certificate").asText();
 
             User user = new User()
-                    .setOwner(newOrganization)
+                    .setOwner(newOrgName)
                     .setName(newUser.getEmail().split("@")[0])
                     .setCreatedTime(Instant.now())
                     .setType("normal-user")
@@ -265,8 +349,8 @@ public class CasdoorInitApplication {
             try {
                 addUserResponse = restClient.post()
                         .uri(u -> u.path("/api/add-user")
-                                .queryParam("username", CasdoorDefaultOrganization + "/" + CasdoorAdminUser)
-                                .queryParam("password", CasdoorAdminPassword)
+                                .queryParam("username", CASDOOR_DEFAULT_ORGANIZATION + "/" + CASDOOR_ADMIN_USER)
+                                .queryParam("password", CASDOOR_ADMIN_PASSWORD)
                                 .build())
                         .body(user)
                         .retrieve()
@@ -293,13 +377,13 @@ public class CasdoorInitApplication {
         }
 
         private boolean validateCasdoorResponse(ResponseEntity<Response> responseEntity) {
-            return !responseEntity.getStatusCode().is2xxSuccessful() || Optional.ofNullable(responseEntity.getBody()).filter(Response::statusOk).isEmpty();
+            return responseEntity.getStatusCode().is2xxSuccessful() && Optional.ofNullable(responseEntity.getBody()).filter(Response::statusOk).isPresent();
         }
     }
 
     @Data
     @Accessors(chain = true)
-    static class NewClient {
+    public static class NewClient {
         String name;
         String displayName;
         String description;
@@ -308,11 +392,12 @@ public class CasdoorInitApplication {
         String clientSecret;
         String cert;
         List<String> redirectUrls;
+        List<Application.GrantType> grantTypes;
     }
 
     @Data
     @Accessors(chain = true)
-    static class NewUser {
+    public static class NewUser {
         String email;
         String password;
         String description;
@@ -324,7 +409,7 @@ public class CasdoorInitApplication {
     @Data
     @Accessors(chain = true)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    static class Organization {
+    public static class Organization {
         String owner;
         String name;
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
@@ -333,9 +418,9 @@ public class CasdoorInitApplication {
         String websiteUrl;
         String logo;
         String favicon;
-        String passwordType;
+        PasswordType passwordType;
         String passwordSalt;
-        List<String> passwordOptions;
+        List<PasswordValidatorOption> passwordOptions;
         List<String> countryCodes;
         String defaultAvatar;
         String defaultApplication;
@@ -350,10 +435,28 @@ public class CasdoorInitApplication {
         List<MfaItem> mfaItems;
         List<AccountItem> accountItems;
 
+        public enum PasswordValidatorOption {
+            @JsonProperty("AtLeast6") HAS_AT_LEAST_6,
+            @JsonProperty("AtLeast8") HAS_AT_LEAST_8,
+            @JsonProperty("Aa123") HAS_UPPER_LOWER_AND_DIGIT,
+            @JsonProperty("SpecialChar") HAS_SPECIAL_CHARACTERS,
+            @JsonProperty("NoRepeat") HAS_NO_REPEAT_CHARACTERS,
+        }
+
+        public enum PasswordType {
+            @JsonProperty("salt") SHA256_SALT,
+            @JsonProperty("sha512-salt") SHA512_SALT,
+            @JsonProperty("md5-salt") MD5_SALT,
+            @JsonProperty("bcrypt") BCRYPT,
+            @JsonProperty("pbkdf2-salt") PBKDF2_SALT,
+            @JsonProperty("argon2id") ARGON2ID,
+            @JsonProperty("pbkdf2-django") PBKDF2_DJANGO,
+        }
+
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class ThemeData {
+        public static class ThemeData {
             String themeType;
             String colorPrimary;
             int borderRadius;
@@ -364,7 +467,7 @@ public class CasdoorInitApplication {
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class MfaItem {
+        public static class MfaItem {
             String name;
             String rule;
         }
@@ -372,7 +475,7 @@ public class CasdoorInitApplication {
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class AccountItem {
+        public static class AccountItem {
             String name;
             boolean visible;
             String viewRule;
@@ -387,7 +490,7 @@ public class CasdoorInitApplication {
     @Data
     @Accessors(chain = true)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    static class Application {
+    public static class Application {
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX", timezone = "UTC")
         Instant createdTime;
         private String owner;
@@ -423,7 +526,7 @@ public class CasdoorInitApplication {
         private List<SigninMethod> signinMethods;
         private List<SignupItem> signupItems;
         private List<SigninItem> signinItems;
-        private List<String> grantTypes;
+        private List<GrantType> grantTypes;
         private Organization organizationObj;
         private String certPublicKey;
         private List<String> tags;
@@ -464,10 +567,20 @@ public class CasdoorInitApplication {
         private Integer failedSigninFrozenTime;
         private Integer codeResendTimeout;
 
+        public enum GrantType {
+            @JsonProperty("authorization_code") AUTHORIZATION_CODE,
+            @JsonProperty("password") PASSWORD,
+            @JsonProperty("client_credentials") CLIENT_CREDENTIALS,
+            @JsonProperty("token") TOKEN,
+            @JsonProperty("id_token") ID_TOKEN,
+            @JsonProperty("urn:ietf:params:oauth:grant-type:device_code") DEVICE_CODE,
+            @JsonProperty("refresh_token") REFRESH_TOKEN,
+        }
+
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class ProviderItem {
+        public static class ProviderItem {
             String name;
             String rule;
         }
@@ -475,7 +588,7 @@ public class CasdoorInitApplication {
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class SigninMethod {
+        public static class SigninMethod {
             String name;
             String displayName;
             String rule;
@@ -484,7 +597,7 @@ public class CasdoorInitApplication {
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class SigninItem {
+        public static class SigninItem {
             String name;
             boolean visible;
             String label;
@@ -496,25 +609,25 @@ public class CasdoorInitApplication {
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class SamlItem {
+        public static class SamlItem {
         }
 
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class JwtItem {
+        public static class JwtItem {
         }
 
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class ThemeData {
+        public static class ThemeData {
         }
 
         @Data
         @Accessors(chain = true)
         @JsonIgnoreProperties(ignoreUnknown = true)
-        static class SignupItem {
+        public static class SignupItem {
             String label;
             String name;
             String placeholder;
@@ -561,7 +674,7 @@ public class CasdoorInitApplication {
         String name;
 
         @JsonIgnore
-        boolean statusOk() {
+        public boolean statusOk() {
             return "ok".equals(status);
         }
     }
@@ -569,7 +682,7 @@ public class CasdoorInitApplication {
 
     @Data
     @Accessors(chain = true)
-    static class OutputData {
+    public static class OutputData {
         @JsonProperty("client_id")
         String clientId;
         @JsonProperty("client_secret")

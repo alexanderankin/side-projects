@@ -13,3 +13,15 @@ dependencies {
     itestImplementation 'org.testcontainers:mysql'
     itestImplementation 'com.mysql:mysql-connector-j'
 }
+
+tasks.register('runDry', JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    mainClass = 'side.casdoor.init.CasdoorInitApplication'
+    args 'init', '-n'
+}
+
+tasks.register('runWithDefaults', JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    mainClass = 'side.casdoor.init.CasdoorInitApplication'
+    args 'init'
+}
