@@ -1,0 +1,55 @@
+logging:
+  level:
+    # web: debug
+    org.springframework.security: trace
+    org.springframework.session: trace
+
+spring:
+  config:
+    import:
+      - 'file:${user.home}/.example-azure-oauth-client.yaml'
+
+  application:
+    name: example-azure-oauth-client
+
+  datasource.url: 'jdbc:h2:./build/${spring.application.name}.h2;AUTO_SERVER=TRUE'
+
+  security:
+    oauth2:
+      client:
+        provider:
+          azure:
+            issuer-uri: https://login.microsoftonline.com/${example-azure-oauth-client.tenant-id}/v2.0
+        registration:
+          azure:
+            provider: azure
+            client-id: ${example-azure-oauth-client.client-id}
+            client-secret: ${example-azure-oauth-client.client-secret}
+            authorization-grant-type: authorization_code
+            client-name: Login with Azure
+            scope:
+              - openid
+              - profile
+              - email
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        name: ${spring.application.name}
+
+management:
+  server:
+    port: 9080
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+          - logging
+  endpoint:
+    health:
+      probes:
+        enabled: true

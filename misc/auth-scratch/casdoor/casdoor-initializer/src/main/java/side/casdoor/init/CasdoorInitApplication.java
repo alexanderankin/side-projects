@@ -35,6 +35,7 @@ import java.util.*;
         sortOptions = false,
         scope = CommandLine.ScopeType.INHERIT,
         subcommands = {
+                CasdoorInitApplication.InitProvider.class,
                 CasdoorInitApplication.Init.class,
                 AutoComplete.GenerateCompletion.class,
         }
@@ -54,10 +55,18 @@ public class CasdoorInitApplication {
         System.exit(new CommandLine(CasdoorInitApplication.class).execute(args));
     }
 
+    @Command(name = "init-provider")
+    public static class InitProvider {
+        @Command(name = "azure")
+        void thing() {
+
+        }
+    }
+
     @Data
     @Accessors(chain = true)
     @Command(name = "init")
-    static class Init implements Runnable {
+    public static class Init implements Runnable {
         final static String CASDOOR_DEFAULT_ORGANIZATION = "built-in";
         final static String CASDOOR_ADMIN_USER = "admin";
         final static String CASDOOR_ADMIN_PASSWORD = "123";

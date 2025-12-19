@@ -7,6 +7,8 @@ spring:
   application:
     name: example-casdoor-client
 
+  datasource.url: 'jdbc:h2:./build/${spring.application.name}.h2;AUTO_SERVER=TRUE'
+
   security:
     oauth2:
       client:
@@ -23,6 +25,10 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    session:
+      cookie:
+        name: ${spring.application.name}
 
 management:
   server:
