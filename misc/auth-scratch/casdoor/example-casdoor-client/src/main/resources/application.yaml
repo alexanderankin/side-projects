@@ -7,6 +7,10 @@ spring:
   application:
     name: example-casdoor-client
 
+  # SPRING_CONFIG_IMPORT=file:$HOME/...
+  # config.import:
+  #   - optional:file:${user.home}/...
+
   datasource.url: 'jdbc:h2:./build/${spring.application.name}.h2;AUTO_SERVER=TRUE'
 
   security:
@@ -14,12 +18,12 @@ spring:
       client:
         provider:
           casdoor:
-            issuer-uri: http://localhost:8000
+            issuer-uri: ${casdoor-client.issuer-uri:http://localhost:8000}
         registration:
           casdoor:
             provider: casdoor
-            client-id: sample-client-id
-            client-secret: sample-client-secret
+            client-id: ${casdoor-client.client-id:sample-client-id}
+            client-secret: ${casdoor-client.client-secret:sample-client-secret}
             authorization-grant-type: authorization_code
             client-name: Login with Casdoor
 
