@@ -54,7 +54,10 @@ dependencies {
     constraints {
         [
                 ['org.slf4j:slf4j-bom', '2.0.17'],
-                ['org.bouncycastle:bcpkix-jdk18on', '1.81'],
+                // https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
+                ['org.bouncycastle:bcprov-jdk18on', '1.83'],
+                // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
+                ['org.bouncycastle:bcpkix-jdk18on', '1.83'],
         ].each { l ->
             ['implementation'].each { String c ->
                 add(c, l.getFirst()) { version { prefer l.getLast() } }
