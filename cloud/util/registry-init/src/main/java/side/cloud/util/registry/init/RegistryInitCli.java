@@ -210,7 +210,7 @@ public class RegistryInitCli {
                 return template
                         .replace("___IMAGE_TAG___", registryProps.getImageTag())
                         .replace("___LOCAL_PORT___", registryProps.getPort().toString())
-                        .replace("___REGISTRY_DIR___", registryProps.getRegistryDir().toString());
+                        .replace("___REGISTRY_DIR___", registryProps.getRegistryDir().toAbsolutePath().toString());
             }
 
             @Data

@@ -14,3 +14,55 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation project(':lib:picocli-lib')
 }
+
+def inheritIo = { Process p -> p.waitForProcessOutput(System.out, System.err) }
+
+tasks.register('githubTag') {
+    def version = project.version
+    doLast {
+        def tagName = "registry-init-v${version}"
+        var tagExists = "git rev-parse ${tagName}".execute().tap { inheritIo(it) }.waitFor() == 0
+        logger.lifecycle("tag exists " + tagExists)
+        if (!tagExists)
+            if ("git tag ${tagName}".execute().tap { inheritIo(it) }.waitFor() != 0)
+                throw new RuntimeException("unable to run git tag ${tagName}")
+
+        if ("git fetch --tags".execute().tap { inheritIo(it) }.waitFor() != 0)
+            throw new RuntimeException("could not fetch tags with 'git fetch --tags'")
+
+        if ("git ls-remote --exit-code --tags origin ${tagName}".execute().tap { inheritIo(it) }.waitFor() != 0)
+            "git push --tags".execute()
+    }
+}
+tasks.register('githubRelease') {
+    def version = project.version
+    def shadowJarOutput = tasks.shadowJar.outputs.files.singleFile
+    doLast {
+        def tagName = "registry-init-v${version}"
+        if ("gh release view ${tagName}".execute().waitFor() == 0) {
+            logger.lifecycle("release already exists")
+            return
+        }
+
+        var tagExists = "git rev-parse ${tagName}".execute().waitFor() == 0
+        if (!tagExists)
+            throw new RuntimeException("must create tag ${tagName}")
+
+        if ("gh release create ${tagName} ${shadowJarOutput}".execute().waitFor() != 0)
+            throw new RuntimeException("tried to create release for tag ${tagName}, but failed")
+    }
+    dependsOn tasks.shadowJar
+}
+
+tasks.register('githubUnrelease') {
+    def version = project.version
+    doLast {
+        def tagName = "registry-init-v${version}"
+        if ("gh release view ${tagName}".execute().tap { inheritIo(it) }.waitFor() != 0) {
+            logger.lifecycle("release already does not exist")
+            return
+        }
+        if ("gh release delete ${tagName} --yes --cleanup-tag".execute().tap { inheritIo(it) }.waitFor() != 0)
+            throw new RuntimeException("tried to delete release for tag ${tagName}, but failed")
+    }
+}
