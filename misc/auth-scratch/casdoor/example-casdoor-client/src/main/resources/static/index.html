@@ -3,10 +3,10 @@
 
 <script>
   window.addEventListener("DOMContentLoaded", async function() {
-    let user = await fetch("/api/whoami").then(res => res.text());
+    let user = await fetch("api/whoami").then(res => res.text());
     document.getElementById("root").innerHTML = `
       <h2>Welcome, ${user}</h2>
-      <a href="/logout">Logout</a>
+      <a href="logout">Logout</a>
     `
   })
 </script>

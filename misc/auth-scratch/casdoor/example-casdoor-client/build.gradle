@@ -1,5 +1,21 @@
 plugins {
     id 'spring-conventions'
+    id 'jib-conventions'
+}
+
+// ./gradlew jibDockerBuild
+jib {
+    from {
+        // docker image inspect eclipse-temurin:25-jre-alpine | jq .[0].RepoDigests[] -r
+        image = 'eclipse-temurin:25-jre-alpine@sha256:b51543f89580c1ba70e441cfbc0cfc1635c3c16d2e2d77fec9d890342a3a8687'
+    }
+    // ./gradlew jibDockerBuild -Djib.from.platforms=linux/arm64
+    // from.platforms = [com.google.cloud.tools.jib.gradle.PlatformParameters.of('linux/arm64')]
+    container.entrypoint = [
+            'sh',
+            '-c',
+            'exec java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file'
+    ]
 }
 
 dependencies {
