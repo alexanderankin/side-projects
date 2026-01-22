@@ -1,0 +1,4 @@
+plugins {
+    id 'spring-conventions'
+    id 'picocli-conventions'
+}

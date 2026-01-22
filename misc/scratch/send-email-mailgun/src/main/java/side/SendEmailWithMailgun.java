@@ -1,5 +1,6 @@
 package side;
 
+import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -72,7 +73,13 @@ class SendEmailWithMailgun {
         var message = new MimeMessageHelper(mimeMessage, "utf-8");
         message.setFrom(from);
         message.setTo(to);
-        Optional.ofNullable(cc).orElseGet(List::of).forEach(message::addCc);
+        Optional.ofNullable(cc).orElseGet(List::of).forEach(cc1 -> {
+            try {
+                message.addCc(cc1);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+        });
         message.setSubject(subject);
         message.setText(content.actualContent(), html);
         j.send(mimeMessage);

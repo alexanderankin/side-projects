@@ -76,7 +76,8 @@ public class FfiScratchWork {
         private final Arena arena;
 
         public MemorySegment allocateFrom(String str) {
-            return arena.allocateUtf8String(str);
+            // return arena.allocateUtf8String(str);
+            throw new UnsupportedOperationException();
         }
     }
 }

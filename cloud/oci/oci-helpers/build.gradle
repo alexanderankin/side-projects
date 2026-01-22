@@ -5,8 +5,8 @@ plugins {
 
 // so it can run everywhere else
 java {
-    sourceCompatibility = JavaVersion.toVersion(17)
-    targetCompatibility = JavaVersion.toVersion(17)
+    // sourceCompatibility = JavaVersion.toVersion(17)
+    // targetCompatibility = JavaVersion.toVersion(17)
     withSourcesJar()
 }
 
