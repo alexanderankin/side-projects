@@ -5,3 +5,14 @@ spring:
 server:
   error:
     include-message: always
+
+management:
+  server:
+    port: 8090
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - metrics
+          - loggers
