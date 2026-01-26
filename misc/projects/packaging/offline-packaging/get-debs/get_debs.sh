@@ -39,7 +39,7 @@ docker exec get-debs bash -c '
   status_base=
   echo "tzdata tzdata/Areas select America"             | debconf-set-selections;
   echo "tzdata tzdata/Zones/America select Los_Angeles" | debconf-set-selections;
-  apt-get -o APT::Keep-Downloaded-Packages=true install -y htop nmap jq fdisk vim nginx-full curl wget net-tools openssh-server openssh-client software-properties-common docker.io docker-compose-v2 openjdk-21-jre-headless >/dev/null 2>&1 && status_base=true || status_base=false;
+  apt-get -o APT::Keep-Downloaded-Packages=true install -y htop nmap apache2-utils tree pv jq fdisk vim nginx-full curl wget net-tools openssh-server openssh-client software-properties-common openjdk-21-jre-headless build-essential >/dev/null 2>&1 && status_base=true || status_base=false;
   echo "[$(date --iso=s)] Installed base packages and utilities: ${status_base}"
   if ! [[ ${status_base} == "true" ]]; then echo "not successful: base"; exit 1; fi;
 
@@ -53,16 +53,28 @@ docker exec get-debs bash -c '
   echo "[$(date --iso=s)] Installed python: ${status_dead_snakes}"
 
   status_k8s_prereq=
-  apt-get install -y apt-transport-https ca-certificates curl gnupg >/dev/null 2>&1 && status_k8s_prereq=true || status_k8s_prereq=false
+  apt-get -o APT::Keep-Downloaded-Packages=true install -y apt-transport-https ca-certificates curl gnupg >/dev/null 2>&1 && status_k8s_prereq=true || status_k8s_prereq=false
   echo "[$(date --iso=s)] Installed Kubernetes pre-reqs: ${status_k8s_prereq}"
   if ! [[ ${status_k8s_prereq} == "true" ]]; then echo "not successful: k8s_prereq"; exit 1; fi;
 
   status_k8s=
-  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
-  chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg /etc/apt/sources.list.d/kubernetes.list
-  { apt update >/dev/null 2>&1 && apt-get install -y cri-tools kubeadm kubectl kubelet kubernetes-cni >/dev/null 2>&1; } && status_k8s=true || status_k8s=false
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key --output /etc/apt/keyrings/kubernetes-apt-keyring.asc
+  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list >/dev/null 2>&1
+  chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.asc /etc/apt/sources.list.d/kubernetes.list
+  { apt update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y cri-tools kubeadm kubectl kubelet kubernetes-cni >/dev/null 2>&1; } && status_k8s=true || status_k8s=false
   if ! [[ ${status_k8s} == "true" ]]; then echo "not successful: k8s_prereq"; exit 1; fi;
+
+  status_helm=
+  curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey --output /usr/share/keyrings/helm.asc
+  echo "deb [signed-by=/usr/share/keyrings/helm.asc] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list >/dev/null 2>&1
+  { apt-get update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y helm  >/dev/null 2>&1; } && status_helm=true || status_helm=false
+  if ! [[ ${status_helm} == "true" ]]; then echo "not successful: helm"; exit 1; fi;
+
+  status_docker=
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  echo "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release; echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list
+  { apt-get update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y docker-ce docker-ce-cli containerd.io=$(apt-cache madison containerd.io | grep " 2\\.1\\.[0-9]\\+" -m1 | cut -d"|" -f 2 | tr -d " ") docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1; } && status_docker=true || status_docker=false
+  if ! [[ ${status_docker} == "true" ]]; then echo "not successful: docker"; exit 1; fi;
 
   echo "[$(date --iso=s)] Copying to output"
   cp -v /etc/apt/sources.list /output/sources/;
