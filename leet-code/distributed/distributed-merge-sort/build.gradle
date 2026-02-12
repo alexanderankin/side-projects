@@ -1,0 +1,79 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'org.liquibase:liquibase-core'
+    implementation 'com.fasterxml.uuid:java-uuid-generator:4.3.0'
+    compileOnly 'org.hibernate.orm:hibernate-core'
+
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+}
+
+import java.nio.charset.StandardCharsets
+import java.time.Duration
+
+def randomFileGigs = Long.parseLong(project.findProperty('randomInputFileSize') as String ?: '10')
+
+tasks.register('generateRandomInputFile') {
+    def outputFile = layout.buildDirectory.get().file('randomInputFile.txt').asFile
+    outputs.file outputFile
+
+    doLast {
+        long t0 = System.nanoTime()
+        long targetBytes = randomFileGigs * 1_000_000_000L
+        println "Writing ${randomFileGigs} GB of random integers to ${outputFile.absolutePath}"
+
+        long writtenBytes = 0L
+        long progressStep = 500_000_000L // 500 MB (decimal)
+        long nextProgress = progressStep
+
+        // def random = java.util.concurrent.ThreadLocalRandom.current()
+        // def random = new SplittableRandom()
+        // noinspection UnnecessaryQualifiedReference
+        def random = java.util.random.RandomGeneratorFactory.of("L64X128MixRandom").create()
+        outputFile.withOutputStream { os ->
+            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8)
+            try (BufferedWriter writer = new BufferedWriter(osw, 64 * 1024)) {
+                while (writtenBytes < targetBytes) {
+                    int value = random.nextInt()
+                    String line = Integer.toString(value)
+                    writer.write(line)
+                    writer.newLine()
+
+                    // estimate bytes written (UTF-8, ASCII-safe for digits + minus + newline)
+                    writtenBytes += line.length() + 1
+
+                    if (writtenBytes >= nextProgress) {
+                        double percent = (writtenBytes * 100d) / targetBytes
+                        println String.format("Progress: %.2f%% (%d / %d bytes)", percent, writtenBytes, targetBytes)
+                        nextProgress += progressStep
+                    }
+                }
+
+                println "Generated in ${Duration.ofNanos(System.nanoTime() - t0)}"
+            }
+        }
+
+        def finalSize = outputFile.length()
+        println "Done in ${Duration.ofNanos(System.nanoTime() - t0)}. Final size: " +
+                "${finalSize} B | " +
+                String.format("%.3f kB", finalSize / 1_000d) + " | " +
+                String.format("%.3f KiB", finalSize / 1024d) + " | " +
+                String.format("%.6f GB", finalSize / 1_000_000_000d) + " | " +
+                String.format("%.6f GiB", finalSize / (1024d * 1024d * 1024d)) + " | " +
+                String.format("%.6f TB", finalSize / 1_000_000_000_000d)
+    }
+}

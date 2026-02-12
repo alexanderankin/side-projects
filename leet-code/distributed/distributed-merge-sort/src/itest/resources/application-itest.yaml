@@ -1,0 +1,7 @@
+logging:
+  level:
+    sql: debug
+    side.dist.mergesort: debug
+
+app:
+  db-batch-size: 50
