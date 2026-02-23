@@ -25,7 +25,6 @@ class QueueServiceITest extends DistributedMergeSortITest {
     @BeforeEach
     void setup() {
         jdbcClient.sql("delete from job_queue").update();
-        jdbcClient.sql("delete from job_in_progress").update();
     }
 
     @Test
@@ -43,7 +42,7 @@ class QueueServiceITest extends DistributedMergeSortITest {
 
         queueService.finish(polled);
 
-        var remaining = jdbcClient.sql("select count(*) from job_in_progress").query(Integer.class).single();
+        var remaining = jdbcClient.sql("select count(*) from job_queue where finished_at is null").query(Integer.class).single();
         assertThat(remaining, is(0));
     }
 
@@ -58,7 +57,7 @@ class QueueServiceITest extends DistributedMergeSortITest {
         queueService.fail(polled, "boom");
 
         Map<String, Object> row = jdbcClient
-                .sql("select failure_reason from job_in_progress where id = ?")
+                .sql("select failure_reason from job_queue where id = ?")
                 .param(polled.getId())
                 .query()
                 .singleRow();
@@ -68,29 +67,32 @@ class QueueServiceITest extends DistributedMergeSortITest {
 
     @Test
     void test_queryFailures() {
-        IntStream.range(0, 20)
+        var items = IntStream.range(0, 20)
                 .mapToObj(i -> Map.entry(i, queueService.send(Map.of("id", i))))
                 .map(e -> Map.entry(e.getKey(), queueService.poll()))
-                .forEach(e -> queueService.fail(e.getValue(), "failure: " + e.getKey()));
+                .peek(e -> queueService.fail(e.getValue(), "failure: " + e.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+        var baseId = items.getFirst().getId() - 1;
 
         assertThat(queueService.listFailed(Pageable.unpaged(), null).getSize(), is(20));
 
         {
             var slice = queueService.listFailed(Pageable.ofSize(5), null);
             assertThat(slice.getSize(), is(5));
-            assertThat(slice.getContent().getFirst().failureReason(), is("failure: 0"));
-            assertThat(slice.getContent().getLast().failureReason(), is("failure: 4"));
+            assertThat(slice.getContent().getFirst().getFailureReason(), is("failure: 0"));
+            assertThat(slice.getContent().getLast().getFailureReason(), is("failure: 4"));
         }
 
         {
-            var slice = queueService.listFailed(Pageable.ofSize(5), 5);
-            assertThat(slice.getContent().getFirst().failureReason(), is("failure: 5"));
-            assertThat(slice.getContent().getLast().failureReason(), is("failure: 9"));
+            var slice = queueService.listFailed(Pageable.ofSize(5), baseId + 5);
+            assertThat(slice.getContent().getFirst().getFailureReason(), is("failure: 5"));
+            assertThat(slice.getContent().getLast().getFailureReason(), is("failure: 9"));
         }
 
-        assertThat(queueService.listFailed(Pageable.ofSize(10), 10).getContent().getFirst().failureReason(),
+        assertThat(queueService.listFailed(Pageable.ofSize(10), baseId + 10).getContent().getFirst().getFailureReason(),
                 is("failure: 10"));
-        assertThat(queueService.listFailed(Pageable.ofSize(10), 5).getContent().getLast().failureReason(),
+        assertThat(queueService.listFailed(Pageable.ofSize(10), baseId + 5).getContent().getLast().getFailureReason(),
                 is("failure: 14"));
     }
 
@@ -121,10 +123,10 @@ class QueueServiceITest extends DistributedMergeSortITest {
 
         assertThat(claimed.size(), is(jobs));
 
-        var remainingQueue = jdbcClient.sql("select count(*) from job_queue").query(Integer.class).single();
+        var remainingQueue = jdbcClient.sql("select count(*) from job_queue where started_at is null").query(Integer.class).single();
         assertThat(remainingQueue, is(0));
 
-        var remainingProgress = jdbcClient.sql("select count(*) from job_in_progress").query(Integer.class).single();
+        var remainingProgress = jdbcClient.sql("select count(*) from job_queue where finished_at is null").query(Integer.class).single();
         assertThat(remainingProgress, is(0));
     }
 }

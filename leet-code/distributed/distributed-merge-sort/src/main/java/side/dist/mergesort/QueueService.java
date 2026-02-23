@@ -34,7 +34,7 @@ class QueueService {
         QueueItem queueItem = jdbcClient.sql(
                         "insert into job_queue(payload) " +
                                 "values (?) " +
-                                "returning id, payload, created_at")
+                                "returning *")
                 .param(payloadJsonb)
                 .query(QueueItemEntity.class)
                 .optional()
@@ -44,23 +44,9 @@ class QueueService {
         return queueItem;
     }
 
-    ProgressItem poll() {
-        ProgressItemEntity item = jdbcClient.sql("""
-                        WITH moved AS (
-                            DELETE FROM job_queue
-                                WHERE id = (SELECT id
-                                            FROM job_queue
-                                            ORDER BY id desc
-                                                FOR UPDATE SKIP LOCKED
-                                            LIMIT 1)
-                                RETURNING id, payload, created_at)
-                        INSERT
-                        INTO job_in_progress (id, payload, job_created_at)
-                        SELECT id, payload, created_at
-                        FROM moved
-                        RETURNING id, payload, created_at;
-                        """)
-                .query(ProgressItemEntity.class)
+    QueueItem poll() {
+        QueueItemEntity item = jdbcClient.sql("select * from queue_latest_job()")
+                .query(QueueItemEntity.class)
                 .optional()
                 .orElse(null);
         if (item == null) {
@@ -72,8 +58,8 @@ class QueueService {
         return toDto(item);
     }
 
-    void finish(ProgressItem progressItem) {
-        int rows = jdbcClient.sql("delete from job_in_progress where id = ?")
+    void finish(QueueItem progressItem) {
+        int rows = jdbcClient.sql("update job_queue set finished_at = now() where id = ?")
                 .param(progressItem.getId())
                 .update();
         if (1 != rows) {
@@ -83,9 +69,9 @@ class QueueService {
         log.debug("marked queue item {} as finished", progressItem.getId());
     }
 
-    void fail(ProgressItem progressItem, String failure) {
+    void fail(QueueItem progressItem, String failure) {
         int rows = jdbcClient.sql(
-                        "UPDATE job_in_progress " +
+                        "UPDATE job_queue " +
                                 "SET failure_reason = ?, finished_at = now() " +
                                 "WHERE id = ?")
                 .params(failure, progressItem.getId())
@@ -98,102 +84,103 @@ class QueueService {
 
     }
 
-    Slice<FailureListItem> listFailed(Pageable pageable, Integer last) {
+    Slice<QueueItem> listFailed(Pageable pageable, Integer last) {
         if (pageable.isUnpaged()) {
             log.debug("listing failures without pagination");
             return new SliceImpl<>(
-                    jdbcClient.sql("select id, job_created_at, finished_at, failure_reason " +
-                                    "from job_in_progress " +
+                    jdbcClient.sql("select * from job_queue " +
                                     "where failure_reason is not null " +
                                     "order by id")
-                            .query(FailureListItem.class)
-                            .list());
+                            .query(QueueItemEntity.class)
+                            .list())
+                    .map(this::toDto);
         }
 
         int pageSize = pageable.getPageSize();
-        List<FailureListItem> results;
+        List<QueueItem> results;
         if (last != null) {
             log.debug("listing failures with page size {} after {}", pageSize, last);
-            results = jdbcClient.sql("select id, job_created_at, finished_at, failure_reason " +
-                            "from job_in_progress " +
+            results = jdbcClient.sql("select * from job_queue " +
                             "where failure_reason is not null and id > ? " +
                             "order by id " +
                             "limit ?")
                     .params(last, pageSize + 1)
-                    .query(FailureListItem.class)
-                    .list();
+                    .query(QueueItemEntity.class)
+                    .stream().map(this::toDto)
+                    .toList();
 
         } else {
             log.debug("listing failures with page size {} from the beginning", pageSize);
-            results = jdbcClient.sql("select id, job_created_at, finished_at, failure_reason " +
-                            "from job_in_progress " +
+            results = jdbcClient.sql("select * from job_queue " +
                             "where failure_reason is not null " +
                             "order by id " +
                             "limit ?")
                     .param(pageSize + 1)
-                    .query(FailureListItem.class)
-                    .list();
+                    .query(QueueItemEntity.class)
+                    .stream().map(this::toDto)
+                    .toList();
         }
         return new SliceImpl<>(results.subList(0, pageSize), pageable, results.size() > pageSize);
+    }
+
+    QueueItem retryFailed(int id) {
+        QueueItem queueItem = jdbcClient.sql("select * from retry_failed_job(?)")
+                .param(id).query(QueueItemEntity.class).optional().map(this::toDto).orElse(null);
+        log.debug("retrying failed id {}, results in {}", id, queueItem);
+        return queueItem;
+    }
+
+    QueueItem retryLatest() {
+        QueueItem queueItem = jdbcClient.sql("select * from retry_latest_job()")
+                .query(QueueItemEntity.class).optional().map(this::toDto).orElse(null);
+        log.debug("retrying latest job results in {}", queueItem);
+        return queueItem;
+    }
+
+    int retryAllFailed() {
+        return jdbcClient.sql("select count(*) from retry_all_failed_jobs()").query(Integer.class).single();
     }
 
     @SneakyThrows
     private QueueItem toDto(QueueItemEntity queueItemEntity) {
         return new QueueItem()
                 .setId(queueItemEntity.getId())
+                .setCreatedAt(queueItemEntity.getCreatedAt())
                 .setPayload(objectMapper.readValue(queueItemEntity.getPayload().getValue(), MAP_OF_STRING_TO_OBJECT))
-                .setCreatedAt(queueItemEntity.getCreatedAt());
-    }
-
-    @SneakyThrows
-    private ProgressItem toDto(ProgressItemEntity queueItemEntity) {
-        var parent = toDto(new QueueItemEntity()
-                .setId(queueItemEntity.getId())
-                .setPayload(queueItemEntity.getPayload())
-                .setCreatedAt(queueItemEntity.getCreatedAt()));
-        ProgressItem progressItem = new ProgressItem()
+                .setAttempt(queueItemEntity.getAttempt())
+                .setOriginalId(queueItemEntity.getOriginalId())
+                .setStartedAt(queueItemEntity.getStartedAt())
                 .setFinishedAt(queueItemEntity.getFinishedAt())
-                .setFailureReason(queueItemEntity.getFailureReason());
-        progressItem.setId(parent.getId())
-                .setPayload(parent.getPayload())
-                .setCreatedAt(parent.getCreatedAt());
-        return progressItem;
-    }
-
-    record FailureListItem(Integer id, OffsetDateTime jobCreatedAt, OffsetDateTime finishedAt, String failureReason) {
+                .setFailureReason(queueItemEntity.getFailureReason())
+                .setRetriedAt(queueItemEntity.getRetriedAt())
+                ;
     }
 
     @Data
     @Accessors(chain = true)
     static class QueueItem {
         Integer id;
-        Map<String, Object> payload;
         OffsetDateTime createdAt;
-    }
-
-    @Data
-    @Accessors(chain = true)
-    @ToString(callSuper = true)
-    @EqualsAndHashCode(callSuper = true)
-    static class ProgressItem extends QueueItem {
+        Map<String, Object> payload;
+        int attempt;
+        Integer originalId;
+        OffsetDateTime startedAt;
         OffsetDateTime finishedAt;
         String failureReason;
+        OffsetDateTime retriedAt;
     }
 
     @Data
     @Accessors(chain = true)
     static class QueueItemEntity {
         Integer id;
-        PGobject payload;
         OffsetDateTime createdAt;
-    }
-
-    @Data
-    @Accessors(chain = true)
-    @ToString(callSuper = true)
-    @EqualsAndHashCode(callSuper = true)
-    static class ProgressItemEntity extends QueueItemEntity {
+        PGobject payload;
+        int attempt;
+        Integer originalId;
+        OffsetDateTime startedAt;
         OffsetDateTime finishedAt;
         String failureReason;
+        OffsetDateTime retriedAt;
     }
 }
