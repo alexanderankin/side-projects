@@ -1,0 +1,36 @@
+services:
+  kafka:
+    image: apache/kafka:4.2.0
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,DOCKER://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,DOCKER://kafka:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_HEAP_OPTS: "-Xms2G -Xmx2G"
+      KAFKA_CLUSTER_ID: benchmark
+
+      # adjustment for single node kraft/internal topics
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  kafka_setup:
+    image: apache/kafka:4.2.0
+    entrypoint:
+      - sh
+      - -c
+      - |
+        if [ -f ~/done ] ; then echo already done; exit 0; fi
+        while ! /opt/kafka/bin/kafka-topics.sh \
+        --create \
+        --topic benchmark \
+        --bootstrap-server kafka:9094 \
+        --partitions 1 \
+        --replication-factor 1 ; do sleep 1; done
+        echo created
+        touch ~/done

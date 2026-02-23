@@ -1,0 +1,26 @@
+plugins {
+    id 'spring-conventions'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.kafka:kafka-clients:4.2.0'
+    implementation 'ch.qos.logback:logback-classic'
+}
+
+tasks.register('benchmarkProducer', JavaExec) {
+    it.group = 'benchmark'
+    it.description = 'producer'
+    it.classpath = sourceSets.main.runtimeClasspath
+    it.mainClass = 'BenchmarkProducer'
+}
+
+tasks.register('benchmarkConsumer', JavaExec) {
+    it.group = 'benchmark'
+    it.description = 'producer'
+    it.classpath = sourceSets.main.runtimeClasspath
+    it.mainClass = 'BenchmarkConsumer'
+}
