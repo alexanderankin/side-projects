@@ -1,5 +1,8 @@
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -9,6 +12,12 @@ public class BenchmarkProducer {
     private static final int MESSAGE_COUNT = 1_000_000;
 
     public static void main(String[] args) throws Exception {
+        ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
+                .getLogger(Logger.ROOT_LOGGER_NAME)
+                .setLevel(Level.INFO);
+        ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
+                .getLogger("org.apache.kafka")
+                .setLevel(Level.WARN);
 
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -16,10 +25,18 @@ public class BenchmarkProducer {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
         // Benchmark tuning
+        /*
         props.put(ProducerConfig.ACKS_CONFIG, "1");
         props.put(ProducerConfig.LINGER_MS_CONFIG, 5);
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, 64_000);
         props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4");
+        */
+
+        // more realistic benchmark
+        props.put(ProducerConfig.ACKS_CONFIG, "0");
+        props.put(ProducerConfig.LINGER_MS_CONFIG, 0);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, 1);
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "none");
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(props);
 
