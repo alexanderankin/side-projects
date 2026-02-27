@@ -26,3 +26,20 @@ start_vm_arm: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm build
 	  -device virtio-net-pci,netdev=net0 \
 	  -display none \
 	  -serial mon:stdio
+
+start_vm_arm_brew: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm
+	rm -f build/edk2-arm-vars.fd
+	cp /opt/homebrew/share/qemu/edk2-arm-vars.fd build/edk2-arm-vars.fd
+	qemu-system-arm \
+	  -machine virt \
+	  -cpu cortex-a15 \
+	  -drive if=pflash,format=raw,readonly=on,file=/opt/homebrew/share/qemu/edk2-arm-code.fd \
+	  -drive if=pflash,format=raw,file=build/edk2-arm-vars.fd \
+	  -m 3072 \
+	  -smp 2 \
+	  -drive file=build/vm_arm.img,format=qcow2,if=virtio \
+	  -cdrom build/seed.iso \
+	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -device virtio-net-pci,netdev=net0 \
+	  -display none \
+	  -serial mon:stdio
