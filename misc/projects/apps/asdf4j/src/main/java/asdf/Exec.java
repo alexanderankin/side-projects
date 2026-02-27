@@ -4,11 +4,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class Exec {
     public static final Exec INSTANCE = new Exec();
 
