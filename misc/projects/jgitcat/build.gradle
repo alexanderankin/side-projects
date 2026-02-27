@@ -1,0 +1,80 @@
+import org.graalvm.buildtools.gradle.tasks.BuildNativeImageTask
+
+plugins {
+    id 'info.ankin.projects.app-conventions'
+}
+
+version = '0.0.1'
+
+dependencies {
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r'
+    implementation 'info.picocli:picocli:4.6.3'
+    implementation 'ch.qos.logback:logback-classic:1.2.11'
+    annotationProcessor 'info.picocli:picocli-codegen:4.6.3'
+}
+
+application {
+    mainClass.set 'info.ankin.projects.cli.jgit.jgitcat.JGitCat'
+}
+
+jar {
+    from(configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    }
+    manifest {
+        attributes('Main-Class': 'info.ankin.projects.cli.jgit.jgitcat.JGitCat')
+    }
+}
+
+java.sourceSets { shadow {} }
+
+shadowJar {
+    archiveBaseName.set 'shadow'
+    from java.sourceSets.main.output, java.sourceSets.shadow.output
+}
+
+def tracingOutput = project.layout.buildDirectory.asFile.get().toPath().resolve('native/agent-output/traceIt')
+sourceSets.shadow.java.srcDirs = []
+sourceSets.shadow.resources.srcDirs = [tracingOutput]
+
+def traceIt = tasks.register('traceIt', JavaExec) {
+    group 'build'
+    description 'build graalvm config by running with agent'
+
+    classpath sourceSets.main.runtimeClasspath
+    mainClass = 'info.ankin.projects.cli.jgit.jgitcat.JGitCat'
+    def repo = 'https://github.com/msangel/promisified-resource-loader'
+    args '-r', repo, '-b', 'master'
+
+    def outDir = tracingOutput.resolve('META-INF/native-image/info.ankin.projects/jgitcat')
+    it.jvmArgs += ('-agentlib:native-image-agent=config-output-dir=' + outDir)
+
+    it.inputs.files sourceSets.main.java
+    it.outputs.dir outDir
+}
+tasks.named('processShadowResources') { dependsOn traceIt }
+
+// https://graalvm.github.io/native-build-tools/0.9.11/gradle-plugin.html#_configuration_options
+graalvmNative {
+    binaries {
+        main {
+            // Main options
+            imageName.set project.name
+            mainClass.set application.mainClass.get()
+
+            debug.set false
+            verbose.set true
+            fallback.set false
+            buildArgs.add('-Ob') // faster development builds
+            // https://github.com/oracle/graal/blob/master/docs/reference-manual/native-image/URLProtocols.md
+            buildArgs.add('--enable-http')
+            buildArgs.add('--enable-https')
+            // useFatJar.set true
+        }
+    }
+}
+
+tasks.named('nativeCompile', BuildNativeImageTask) {
+    dependsOn tasks.shadowJar
+    classpathJar = tasks.shadowJar.outputs.files.singleFile
+}
