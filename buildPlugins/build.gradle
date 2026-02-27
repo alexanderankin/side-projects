@@ -41,4 +41,6 @@ dependencies {
     // "google", but appears to be root's pluginManagement rather than repositories here
     // https://mvnrepository.com/artifact/com.android.tools.build/gradle
     implementation 'com.android.tools.build:gradle:8.12.0'
+
+    implementation 'com.github.node-gradle.node:com.github.node-gradle.node.gradle.plugin:7.1.0'
 }

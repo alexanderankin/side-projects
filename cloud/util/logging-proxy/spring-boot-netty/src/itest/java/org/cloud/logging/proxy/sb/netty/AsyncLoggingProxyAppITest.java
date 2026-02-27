@@ -34,7 +34,7 @@ class AsyncLoggingProxyAppITest {
 
     @SuppressWarnings("resource")
     static final GenericContainer<?> loggedAppContainer =
-            new GenericContainer<>("eclipse-temurin:21-jre-alpine")
+            new GenericContainer<>("eclipse-temurin:25-jre-alpine")
                     .withExposedPorts(8080)
                     .withEnv("SERVER_PORT", "8080")
                     .withCopyFileToContainer(MountableFile.forHostPath(LOGGED_APP_JAR), "/app.jar")

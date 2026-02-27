@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Data
@@ -16,10 +17,11 @@ public abstract class IpAddress {
     }
 
     public static IpAddress ipAddress(String ip) {
-        if (IPV4_PATTERN.matcher(ip).find()) {
-            return ipv4Address(ip);
-        } else if (IPV6_PATTERN.matcher(ip).find()) {
-            return ipv6Address(ip);
+        Matcher matcher;
+        if ((matcher = IPV4_PATTERN.matcher(ip)).find()) {
+            return ipv4Address(ip, matcher);
+        } else if ((matcher = IPV6_PATTERN.matcher(ip)).find()) {
+            return ipv6Address(ip, matcher);
         }
 
         throw new UnsupportedOperationException("did not match ipv4 or ipv6 regex");
@@ -27,6 +29,12 @@ public abstract class IpAddress {
 
     public static Ipv6Address ipv6Address(String ip) {
         var matcher = IPV4_PATTERN.matcher(ip);
+        if (!matcher.find())
+            throw new IllegalArgumentException("not ipv6");
+        return ipv6Address(ip, matcher);
+    }
+
+    private static Ipv6Address ipv6Address(String ip, Matcher matcher) {
         return new Ipv6Address(new short[]{
                 Short.parseShort("".equals(matcher.group(1)) ? "0" : matcher.group(1), 16),
                 Short.parseShort("".equals(matcher.group(2)) ? "0" : matcher.group(2), 16),
@@ -40,7 +48,13 @@ public abstract class IpAddress {
     }
 
     public static Ipv4Address ipv4Address(String ip) {
-        var matcher = IPV6_PATTERN.matcher(ip);
+        var matcher = IPV4_PATTERN.matcher(ip);
+        if (!matcher.find())
+            throw new IllegalArgumentException("not ipv4");
+        return ipv4Address(ip, matcher);
+    }
+
+    private static Ipv4Address ipv4Address(String ip, Matcher matcher) {
         return new Ipv4Address(new byte[]{
                 Byte.parseByte(matcher.group(1)),
                 Byte.parseByte(matcher.group(2)),

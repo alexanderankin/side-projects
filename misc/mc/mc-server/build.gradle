@@ -3,7 +3,7 @@ import com.github.gradle.node.npm.task.NpmTask
 plugins {
     id 'spring-conventions'
     id 'jib-conventions'
-    id 'com.github.node-gradle.node' version '7.1.0'
+    id 'node-conventions'
 }
 
 dependencies {
@@ -22,6 +22,14 @@ node {
 
 clean.delete 'dist'
 
+def npmCi = tasks.register('npmCi', NpmTask) {
+    group = 'build'
+    description = 'ci'
+    inputs.files 'src/main/web/package.json', 'src/main/web/package-lock.json'
+    outputs.dir 'src/main/web/node_modules'
+    args = ['ci']
+}
+
 // noinspection GroovyAssignabilityCheck
 def buildDist = tasks.register('buildDist', NpmTask) {
     group = 'build'
@@ -33,6 +41,7 @@ def buildDist = tasks.register('buildDist', NpmTask) {
     outputs.dir('src/main/web/dist')
 
     args = ['run', 'build']
+    dependsOn npmCi
 }
 
 // rearrange for embedding into jar

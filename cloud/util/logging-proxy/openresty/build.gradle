@@ -24,3 +24,6 @@ tasks.named('integrationTest', Test) {
     inputs.files(configurations.la)
     systemProperty('loggedAppJar', configurations.la.singleFile.path)
 }
+
+if (System.getProperty('os.arch') != 'amd64')
+    gradle.startParameter.excludedTaskNames += project.path + ':integrationTest'

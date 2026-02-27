@@ -2,6 +2,7 @@ package org.example.side.tracing.app;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +16,10 @@ import java.util.Optional;
 @SpringBootApplication
 public class TracingApp {
     public static void main(String[] args) {
-        System.setProperty("server.port", "8090");
         SpringApplication.run(TracingApp.class, args);
     }
 
+    @Slf4j
     @RestController
     @RequiredArgsConstructor
     static class Ctrl {
@@ -32,6 +33,7 @@ public class TracingApp {
 
         @GetMapping
         Mono<?> hello(@RequestParam(name = "port") Optional<Integer> port) {
+            log.info("hello from hello endpoint");
             return webclient.get().uri("http://localhost:" + port.orElse(8081)).retrieve().toEntity(String.class);
         }
     }
