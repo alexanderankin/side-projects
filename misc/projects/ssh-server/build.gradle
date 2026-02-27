@@ -1,0 +1,21 @@
+plugins {
+    // id 'java'
+    id 'conventions'
+}
+
+// repositories.mavenCentral()
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.apache.sshd/sshd-core
+    implementation 'org.apache.sshd:sshd-core:2.17.1'
+    implementation 'org.apache.sshd:sshd-scp:2.17.1'
+
+    implementation platform('org.slf4j:slf4j-bom:2.0.17')
+    implementation 'org.slf4j:slf4j-simple'
+    implementation 'org.slf4j:log4j-over-slf4j'
+
+    // https://mvnrepository.com/artifact/org.jetbrains.pty4j/pty4j
+    implementation 'org.jetbrains.pty4j:pty4j:0.13.12'
+
+    implementation 'commons-io:commons-io:2.21.0'
+}

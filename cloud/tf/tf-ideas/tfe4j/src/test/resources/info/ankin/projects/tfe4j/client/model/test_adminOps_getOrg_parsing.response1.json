@@ -1,0 +1,44 @@
+{
+  "data": {
+    "id": "my-organization",
+    "type": "organizations",
+    "attributes": {
+      "access-beta-tools": false,
+      "external-id": "org-XBiRp755dav5p3P2",
+      "is-disabled": false,
+      "name": "my-organization",
+      "terraform-build-worker-apply-timeout": null,
+      "terraform-build-worker-plan-timeout": null,
+      "terraform-worker-sudo-enabled": false,
+      "notification-email": "my-organization@example.com",
+      "global-module-sharing": false,
+      "global-provider-sharing": false,
+      "sso-enabled": false,
+      "workspace-limit": null
+    },
+    "relationships": {
+      "owners": {
+        "data": [
+          {
+            "id": "user-hxTQDETqnJsi5VYP",
+            "type": "users"
+          }
+        ]
+      },
+      "subscription": {
+        "data": null
+      },
+      "feature-set": {
+        "data": null
+      },
+      "module-consumers": {
+        "links": {
+          "related": "/api/v2/admin/organizations/my-organization/relationships/module-consumers"
+        }
+      }
+    },
+    "links": {
+      "self": "/api/v2/admin/organizations/my-organization"
+    }
+  }
+}

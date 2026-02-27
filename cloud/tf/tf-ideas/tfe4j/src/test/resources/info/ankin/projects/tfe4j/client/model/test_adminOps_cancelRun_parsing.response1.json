@@ -1,0 +1,25 @@
+{
+  "data": {
+    "id": "run-VCsNJXa59eUza53R",
+    "type": "runs",
+    "attributes": {
+      "status": "errored",
+      "status-timestamps": {
+        "planned-at": "2018-03-02T23:42:06Z"
+      },
+      "has-changes": true,
+      "created-at": "2018-03-02T23:42:06.651Z"
+    },
+    "relationships": {
+      "workspace": {
+        "data": {
+          "id": "ws-mJtb6bXGybq5zbf3",
+          "type": "workspaces"
+        }
+      }
+    },
+    "links": {
+      "self": "/api/v2/runs/run-VCsNJXa59eUza53R"
+    }
+  }
+}

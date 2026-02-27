@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "id": "my-organization",
+      "type": "organizations",
+      "attributes": {
+        "access-beta-tools": false,
+        "external-id": "org-XBiRp755dav5p3P2",
+        "is-disabled": false,
+        "name": "my-organization",
+        "terraform-build-worker-apply-timeout": null,
+        "terraform-build-worker-plan-timeout": null,
+        "terraform-worker-sudo-enabled": false,
+        "notification-email": "my-organization@example.com",
+        "global-module-sharing": false,
+        "global-provider-sharing": false,
+        "sso-enabled": false,
+        "workspace-limit": null
+      },
+      "relationships": {
+        "module-consumers": {
+          "links": {
+            "related": "/api/v2/admin/organizations/my-organization/relationships/module-consumers"
+          }
+        },
+        "owners": {
+          "data": [
+            {
+              "id": "user-hxTQDETqnJsi5VYP",
+              "type": "users"
+            }
+          ]
+        },
+        "subscription": {
+          "data": null
+        },
+        "feature-set": {
+          "data": null
+        }
+      },
+      "links": {
+        "self": "https://tfe.example.com/api/v2/admin/organizations/my-organization/relationships/module-consumers?page%5Bnumber%5D=1&page%5Bsize%5D=20",
+        "first": "https://tfe.example.com/api/v2/admin/organizations/my-organization/relationships/module-consumers?page%5Bnumber%5D=1&page%5Bsize%5D=20",
+        "prev": null,
+        "next": null,
+        "last": "https://tfe.example.com/api/v2/admin/organizations/my-organization/relationships/module-consumers?page%5Bnumber%5D=1&page%5Bsize%5D=20"
+      },
+      "meta": {
+        "pagination": {
+          "current-page": 1,
+          "prev-page": null,
+          "next-page": null,
+          "total-pages": 1,
+          "total-count": 1
+        }
+      }
+    }
+  ]
+}
