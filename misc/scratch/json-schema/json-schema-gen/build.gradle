@@ -1,0 +1,15 @@
+plugins {
+    id 'spring-conventions'
+    id 'java-library'
+}
+
+version = '0.0.1'
+
+// since starting this model, it was discovered that jsonschema2pojo is quite good
+dependencies {
+    implementation 'org.projectlombok:lombok'
+    api 'com.fasterxml.jackson.core:jackson-annotations'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+
+    implementation 'io.projectreactor:reactor-core:3.4.17'
+}
