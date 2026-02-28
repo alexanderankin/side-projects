@@ -4,6 +4,8 @@ plugins {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-json'
+    // https://groovy.apache.org/download.html
+    implementation 'org.apache.groovy:groovy-all:5.0.4'
 }
 
 tasks.withType(JavaCompile).configureEach { options.compilerArgs.add '-g' }
