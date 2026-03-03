@@ -37,8 +37,8 @@ users:
 ssh_pwauth: true
 disable_root: true
 
-#package_update: true
-packages: [ htop, jq, curl, wget, git, net-tools, gpg ]
+package_update: false
+#packages: [ htop, jq, curl, wget, git, net-tools, gpg ]
 
 EOF
 exit 0
