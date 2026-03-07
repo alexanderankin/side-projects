@@ -62,7 +62,8 @@ dependencies {
                 ['org.apache.commons:commons-lang3', '3.20.0'],
         ].each { l ->
             ['implementation'].each { String c ->
-                add(c, l.getFirst()) { version { prefer l.getLast() } }
+                add(c, l.getFirst()) {
+                    version { prefer l.getLast() } }
             }
         }
     }
@@ -72,7 +73,8 @@ dependencies {
                 ['org.projectlombok:lombok', '1.18.42'],
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
-                add(c, l.getFirst()) { version { require l.getLast() } }
+                add(c, l.getFirst()) {
+                    version { require l.getLast() } }
             }
         }
     }
@@ -82,8 +84,8 @@ dependencies {
     constraints {
         [
                 ['org.hamcrest:hamcrest', '2.2'],
-                ['ch.qos.logback:logback-classic', '1.4.11'],
-                ['org.mockito:mockito-core', '5.7.0'],
+                ['ch.qos.logback:logback-classic', '1.5.6'],
+                ['org.mockito:mockito-core', '5.11.0'],
         ].each { l ->
             add('testImplementation', l.getFirst()) {
                 version { prefer l.getLast() } }
