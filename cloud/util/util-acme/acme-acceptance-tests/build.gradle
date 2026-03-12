@@ -1,0 +1,25 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    testImplementation project(':cloud:util:util-acme:acme-lib')
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+}
+
+tasks.withType(Test).configureEach {
+    Process process
+    doFirst {
+        logger.lifecycle('hello from test.doFirst')
+        process = new ProcessBuilder()
+                .command('docker run --rm --name pebble -p 8080:14000 -p 15000:15000 -e PEBBLE_VA_NOSLEEP=1 ghcr.io/letsencrypt/pebble'.split(' '))
+                .start()
+    }
+    doLast {
+        logger.lifecycle('hello from test.doLast')
+        process?.destroy()
+    }
+
+    it.systemProperty 'acmeServerBaseUrl', 'https://localhost:8080/dir'
+}

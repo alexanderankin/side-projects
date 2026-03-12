@@ -1,0 +1,9 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.shredzone.acme4j/acme4j
+    implementation 'org.shredzone.acme4j:acme4j-client:5.0.0'
+    // implementation 'org.shredzone.acme4j:acme4j-smime:5.0.0'
+}
