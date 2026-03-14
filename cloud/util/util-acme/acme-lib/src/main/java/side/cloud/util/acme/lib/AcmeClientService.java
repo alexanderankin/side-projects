@@ -75,53 +75,6 @@ public class AcmeClientService {
         return entity.getHeaders().getFirst("Replay-Nonce");
     }
 
-    @SneakyThrows
-    public Account newAccount(Directory directory,
-                              String newNonce,
-                              NewAccount newAccount) {
-        var body = config.keyPair.signAndSerialize(
-                new AcmeJwsObject()
-                        .setHeaders(Map.of("nonce", newNonce, "url", directory.getNewAccount()))
-                        .setPayload(jsonMapper.convertValue(newAccount, new TypeReference<>() {
-                        }))
-        );
-
-        try {
-            var response = restClient.post()
-                    .uri(directory.getNewAccount())
-                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
-                    .body(body)
-                    .retrieve()
-                    .toEntity(Account.class);
-
-            return response.getBody();
-        } catch (RestClientResponseException e) {
-            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
-            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
-        }
-    }
-
-    public Order newOrder(Directory directory, String newNonce, AcmeResources.NewOrder newOrder) {
-        var body = config.keyPair.signAndSerialize(
-                new AcmeJwsObject()
-                        .setHeaders(Map.of("nonce", newNonce, "url", directory.getNewOrder()))
-                        .setPayload(jsonMapper.convertValue(newOrder, new TypeReference<>() {
-                        }))
-        );
-        try {
-            var response = restClient.post()
-                    .uri(directory.getNewOrder())
-                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
-                    .body(body)
-                    .retrieve()
-                    .toEntity(Order.class);
-            return response.getBody();
-        } catch (RestClientResponseException e) {
-            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
-            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
-        }
-    }
-
     @Data
     @Accessors(chain = true)
     public static class Config {

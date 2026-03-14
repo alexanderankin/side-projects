@@ -1,3 +1,8 @@
 plugins {
     id 'spring-conventions'
 }
+
+dependencies {
+    implementation project(':cloud:util:util-acme:acme-lib-spring-data')
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+}
