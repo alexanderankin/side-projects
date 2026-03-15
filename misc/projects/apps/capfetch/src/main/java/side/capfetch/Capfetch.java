@@ -1,14 +1,17 @@
 package side.capfetch;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 
+import javax.management.*;
+import java.io.File;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -17,12 +20,21 @@ import java.util.concurrent.TimeoutException;
 public class Capfetch {
     @SneakyThrows
     static void main() {
-        var jsonMapper = JsonMapper.builder().build();
-        var writer = jsonMapper.writer().withDefaultPrettyPrinter();
-        var jsonString = writer.writeValueAsString(getStats());
-        System.out.println(jsonString);
+        var stats = getStats();
+        System.out.printf("""
+                        {
+                          "ramGb" : %s,
+                          "diskGb" : %s,
+                          "cpu" : "%s",
+                          "nproc" : %s
+                        }
+                        """, stats.getRamGb(),
+                stats.getDiskGb(),
+                stats.getCpu(),
+                stats.getNproc());
     }
 
+    @SneakyThrows
     public static Stats getStats() {
         var current = SupportedOperatingSystem.current();
         return switch (current) {
@@ -47,11 +59,47 @@ public class Capfetch {
                         .setRamGb(gbRam)
                         .setDiskGb(gbDisk)
                         .setNproc(Runtime.getRuntime().availableProcessors())
-                        .setCpu(run(new ProcessBuilder("grep", "-m1", "^model name", "/proc/cpuinfo")).throwOnError().outAsString().split(":")[1].strip());
+                        .setCpu(getCpu(current));
 
             }
-            case null, default ->
-                    throw new UnsupportedOperationException("operating system '" + current + "' is not supported");
+            case null, default -> new Stats()
+                    .setRamGb(getRam())
+                    .setDiskGb(new BigDecimal(new File("/").getTotalSpace())
+                            .divide(BigDecimal.valueOf(1_000_000_000L), 3, RoundingMode.HALF_UP))
+                    .setCpu(getCpu(current))
+                    .setNproc(Runtime.getRuntime().availableProcessors());
+        };
+    }
+
+    @SneakyThrows
+    private static BigDecimal getRam() {
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        var os = new ObjectName("java.lang", "type", "OperatingSystem");
+        var tPMS = Arrays.stream(mBeanServer.getMBeanInfo(os).getAttributes())
+                .filter(s -> s.getName().equals("TotalPhysicalMemorySize"))
+                .findAny().orElse(null);
+
+        if (tPMS == null)
+            throw new UnsupportedOperationException();
+        if (!tPMS.getType().equals("long"))
+            throw new UnsupportedOperationException();
+
+        long tPMSValue = (long) mBeanServer.getAttribute(os, tPMS.getName());
+        return new BigDecimal(tPMSValue)
+                .divide(BigDecimal.valueOf(1_000_000_000L), 3, RoundingMode.HALF_UP);
+    }
+
+    public static String getCpu(SupportedOperatingSystem current) {
+        return switch (current) {
+            // needs testing
+            case WINDOWS -> run(new ProcessBuilder("wmic", "cpu", "get", "Name"))
+                    .throwOnError().outAsString()
+                    .lines().skip(1).findFirst().orElse("").strip();
+            case MACOS -> run(new ProcessBuilder("sysctl", "-n", "machdep.cpu.brand_string"))
+                    .throwOnError().outAsString().strip();
+            case LINUX -> run(new ProcessBuilder("grep", "-m1", "^model name", "/proc/cpuinfo"))
+                    .throwOnError().outAsString().split(":")[1].strip();
+            case null, default -> null;
         };
     }
 
@@ -83,6 +131,15 @@ public class Capfetch {
         ;
 
         public static SupportedOperatingSystem current() {
+            var override = System.getenv("CAPFETCH_OVERRIDE_OS");
+            switch (override) {
+                case "WINDOWS", "MACOS", "LINUX":
+                    return SupportedOperatingSystem.valueOf(override);
+                case "null":
+                    return null;
+                case null, default:
+            }
+
             var osName = System.getProperty("os.name");
 
             if (osName.toLowerCase().contains("windows"))

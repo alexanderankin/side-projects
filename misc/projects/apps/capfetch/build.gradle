@@ -7,6 +7,13 @@ jar.manifest.attributes 'Implementation-Version': version
 
 application.mainClass = 'side.capfetch.Capfetch'
 
+configurations.configureEach {
+    exclude group: 'ch.qos.logback', module: 'logback-classic'
+    exclude group: 'info.picocli'
+}
+
 dependencies {
+    /*
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    */
 }

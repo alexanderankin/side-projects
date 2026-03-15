@@ -24,10 +24,11 @@ tasks.register('shadowJarExecutable') {
     def inputFile = tasks.named('shadowJar').get().outputs.files.singleFile.toPath()
     inputs.file inputFile
 
-    def outputFile = inputFile.parent.resolve(projectName)
+    def outputFile = inputFile.parent.parent.resolve('executableJars').resolve(projectName)
     outputs.file outputFile
 
     doLast {
+        outputFile.parent.toFile().mkdirs()
         try (var os = Files.newOutputStream(outputFile, StandardOpenOption.CREATE)) {
             os.write('#!/usr/bin/env -S java -jar\n'.getBytes())
             os.write(Files.readAllBytes(inputFile))
