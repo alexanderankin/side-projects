@@ -101,7 +101,11 @@ public class AcmeClient {
         String newNonce = newNonce();
         var body = acmeClientService.getConfig().keyPair.signAndSerialize(
                 new AcmeJwsObject()
-                        .setHeaders(Map.of("nonce", newNonce, "url", directory.getNewOrder()))
+                        .setHeaders(new AcmeClientOperations.JwsHeader.JwkJwsHeader()
+                                .setJwk(acmeClientService.getConfig().keyPair.asJwk().toJSONObject())
+                                .setAlg(acmeClientService.getConfig().keyPair.getAlgorithm().name())
+                                .setUrl(directory.getNewOrder())
+                                .setNonce(newNonce))
                         .setPayload(acmeClientService.getJsonMapper().convertValue(newOrder, new TypeReference<>() {
                         }))
         );
