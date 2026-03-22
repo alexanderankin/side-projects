@@ -1,61 +1,30 @@
 package side.cloud.util.acme.lib;
 
-import jakarta.annotation.Nonnull;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.experimental.Accessors;
 import org.springframework.http.ResponseEntity;
+import side.cloud.util.acme.lib.model.AcmeJwsObject;
 import side.cloud.util.acme.lib.model.AcmeResources.Directory;
+import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import java.net.URI;
-import java.util.AbstractMap;
-import java.util.Map;
-import java.util.Set;
 
 public interface AcmeClientOperations {
+    Directory directory(URI directoryUrl);
+
     String newNonce(Directory directory);
 
-    Directory directory();
+    /**
+     *
+     * @param uri       target endpoint
+     * @param keyPair   used to sign JWS
+     * @param jwsObject header and body
+     * @param tClass    response body class
+     * @param directory for getting nonce
+     * @param <T>       type of the response body
+     * @return responseEntity object containing code, headers, and body
+     */
+    <T> ResponseEntity<T> post(URI uri, SupportedClientKeyPair keyPair, AcmeJwsObject jwsObject, Class<T> tClass, Directory directory);
 
-    ResponseEntity<String> post(URI uri, JwsHeader header, Map<String, Object> payload);
-
-    ResponseEntity<String> postAsGet(URI uri, JwsHeader header);
-
-    @EqualsAndHashCode(callSuper = false)
-    @Data
-    @Accessors(chain = true)
-    sealed abstract class JwsHeader extends AbstractMap<String, Object> {
-        String alg;
-        String nonce;
-        URI url;
-
-        @ToString(callSuper = true)
-        @EqualsAndHashCode(callSuper = true)
-        @Data
-        @Accessors(chain = true)
-        public static final class KidJwsHeader extends JwsHeader {
-            URI kid;
-
-            @Nonnull
-            @Override
-            public Set<Entry<String, Object>> entrySet() {
-                return Map.<String, Object>of("alg", alg, "nonce", nonce, "url", url, "kid", kid).entrySet();
-            }
-        }
-
-        @ToString(callSuper = true)
-        @EqualsAndHashCode(callSuper = true)
-        @Data
-        @Accessors(chain = true)
-        public static final class JwkJwsHeader extends JwsHeader {
-            Map<String, Object> jwk;
-
-            @Nonnull
-            @Override
-            public Set<Entry<String, Object>> entrySet() {
-                return Map.of("alg", alg, "nonce", nonce, "url", url, "jwk", jwk).entrySet();
-            }
-        }
+    default <T> ResponseEntity<T> postGet(URI uri, SupportedClientKeyPair keyPair, AcmeJwsObject.AcmeJwsHeader jwsHeader, Class<T> tClass, Directory directory) {
+        return post(uri, keyPair, new AcmeJwsObject.BlankAcmeJwsObject().setHeaders(jwsHeader), tClass, directory);
     }
 }

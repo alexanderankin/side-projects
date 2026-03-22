@@ -1,146 +1,88 @@
 package side.cloud.util.acme.lib;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.Data;
-import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
-import side.cloud.util.acme.lib.model.AcmeError;
 import side.cloud.util.acme.lib.model.AcmeJwsObject;
+import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.JwkAcmeJwsHeader;
+import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.KidAcmeJwsHeader;
+import side.cloud.util.acme.lib.model.AcmeResources;
 import side.cloud.util.acme.lib.model.AcmeResources.*;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Data
 @Accessors(chain = true)
 public class AcmeClient {
-    private final AcmeClientService acmeClientService;
-    @Getter(AccessLevel.NONE)
-    private volatile Directory acmeDirectory;
+    private final Configuration configuration;
+    private final AcmeClientOperations acmeClientOperations;
+    private final JsonMapper jsonMapper;
+    private final AtomicReference<Directory> directory = new AtomicReference<>();
 
-    AcmeClient(AcmeClientService acmeClientService) {
-        this.acmeClientService = acmeClientService;
-    }
-
-    @SuppressWarnings("unused")
-    public static AcmeClient create(Config config) {
-        try (var acmeFactory = new AcmeFactory()) {
-            return acmeFactory.acmeClient(config);
-        }
-    }
-
-    @SneakyThrows
-    public Directory acmeDirectory() {
-        if (acmeDirectory != null) {
-            return acmeDirectory;
-        }
-        synchronized (this) {
-            if (acmeDirectory != null) {
-                return acmeDirectory;
+    public Directory directory() {
+        if (directory.get() == null) {
+            synchronized (this) {
+                if (directory.get() == null) {
+                    log.debug("directory() from {}", configuration.getDirectoryUrl());
+                    directory.set(acmeClientOperations.directory(configuration.getDirectoryUrl()));
+                }
             }
-            return acmeDirectory = acmeClientService.directory();
         }
+        return directory.get();
     }
 
-    public String newNonce() {
-        return acmeClientService.newNonce(acmeDirectory());
+    public ResourceWithId<Account> newAccount(SupportedClientKeyPair keyPair, NewAccount resource) {
+        var directory = directory();
+        var object = new AcmeJwsObject.JsonAcmeJwsObject()
+                .setPayload(jsonMapper.convertValue(resource, new TypeReference<>() {
+                }))
+                .setHeaders(new JwkAcmeJwsHeader()
+                        .setJwk(keyPair.asJwk().toPublicJWK())
+                        .setAlg(keyPair.getAlgorithm().name())
+                        .setUrl(directory.getNewAccount()));
+        var response = acmeClientOperations.post(directory.getNewAccount(), keyPair, object, Account.class, directory);
+        return new ResourceWithId<>(response.getBody(), response.getHeaders().getLocation());
     }
 
-    public Account newAccount(NewAccount newAccount) {
-        Directory directory = acmeDirectory();
-        String newNonce = newNonce();
-        var body = acmeClientService.getConfig().keyPair.signAndSerialize(
-                new AcmeJwsObject()
-                        .setHeaders(Map.of("nonce", newNonce, "url", directory.getNewAccount()))
-                        .setPayload(acmeClientService.getJsonMapper().convertValue(newAccount, new TypeReference<>() {
-                        }))
-        );
-
-        try {
-            var response = acmeClientService.getRestClient().post()
-                    .uri(directory.getNewAccount())
-                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
-                    .body(body)
-                    .retrieve()
-                    .toEntity(Account.class);
-
-            return response.getBody();
-        } catch (RestClientResponseException e) {
-            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
-            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
-        }
+    public ResourceWithId<Order> newOrder(SupportedClientKeyPair keyPair, URI accountId, NewOrder resource) {
+        var directory = directory();
+        var object = new AcmeJwsObject.JsonAcmeJwsObject()
+                .setPayload(jsonMapper.convertValue(resource, new TypeReference<>() {
+                }))
+                .setHeaders(new KidAcmeJwsHeader()
+                        .setKid(accountId)
+                        .setAlg(keyPair.getAlgorithm().name())
+                        .setUrl(directory.getNewOrder()));
+        var response = acmeClientOperations.post(directory.getNewOrder(), keyPair, object, Order.class, directory);
+        return new ResourceWithId<>(response.getBody(), response.getHeaders().getLocation());
     }
 
-    public Account fetchAccount(NewAccount newAccount) {
-        newAccount.setOnlyReturnExisting(true);
-        return newAccount(newAccount);
+    public <T> T getResource(SupportedClientKeyPair keyPair, URI accountId, URI resourceId, Class<T> resourceClass) {
+        var header = new KidAcmeJwsHeader()
+                .setKid(accountId)
+                .setAlg(keyPair.getAlgorithm().name())
+                .setUrl(resourceId);
+        return acmeClientOperations.postGet(resourceId, keyPair, header, resourceClass, directory()).getBody();
     }
 
-    public void keyChange(Account account) {
-        // but interesting
-        throw new UnsupportedOperationException();
-    }
-
-    public void deactivateAccount(Account account) {
-        throw new UnsupportedOperationException();
-    }
-
-    public Order newOrder(NewOrder newOrder, String accountId) {
-        if (2 > 1)
-            throw new UnsupportedOperationException("under construction");
-        Directory directory = acmeDirectory();
-        String newNonce = newNonce();
-        var body = acmeClientService.getConfig().keyPair.signAndSerialize(
-                new AcmeJwsObject()
-                        .setHeaders(new AcmeClientOperations.JwsHeader.KidJwsHeader()
-                                .setKid(
-                                        UriComponentsBuilder.fromUri(
-                                                        directory.getNewAccount()
-                                                )
-                                                .build().toUri()
-
-                                )
-                                .setAlg(acmeClientService.getConfig().keyPair.getAlgorithm().name())
-                                .setUrl(directory.getNewOrder())
-                                .setNonce(newNonce))
-                        .setPayload(acmeClientService.getJsonMapper().convertValue(newOrder, new TypeReference<>() {
-                        }))
-        );
-        try {
-            var response = acmeClientService.getRestClient().post()
-                    .uri(directory.getNewOrder())
-                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
-                    .body(body)
-                    .retrieve()
-                    .toEntity(Order.class);
-            return response.getBody();
-        } catch (RestClientResponseException e) {
-            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
-            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
-        }
+    public <T> T postResource(SupportedClientKeyPair keyPair, URI accountId, URI resourceId, Map<String, Object> resource, Class<T> resourceClass) {
+        var header = new KidAcmeJwsHeader()
+                .setKid(accountId)
+                .setAlg(keyPair.getAlgorithm().name())
+                .setUrl(resourceId);
+        var body = new AcmeJwsObject.JsonAcmeJwsObject().setPayload(resource).setHeaders(header);
+        return acmeClientOperations.post(resourceId, keyPair, body, resourceClass, directory()).getBody();
     }
 
     @Data
     @Accessors(chain = true)
-    public static class Config {
-        @NotNull
-        @Valid
-        final SupportedClientKeyPair keyPair;
-        @NotNull
-        final URI directoryUrl;
-        @NotBlank
-        String userAgent;
+    public static class Configuration {
+        URI directoryUrl;
     }
 }

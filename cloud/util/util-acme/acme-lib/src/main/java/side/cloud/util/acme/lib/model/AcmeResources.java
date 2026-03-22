@@ -2,11 +2,11 @@ package side.cloud.util.acme.lib.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import side.cloud.util.acme.lib.AcmeServer;
 
 import java.net.URI;
 import java.time.Instant;
@@ -51,6 +51,8 @@ import java.util.Map;
  */
 @SuppressWarnings({"unused", "GrazieInspection"})
 public interface AcmeResources {
+    record ResourceWithId<T>(T resource, URI id) {
+    }
 
     @Dto
     @Data
@@ -66,7 +68,7 @@ public interface AcmeResources {
          * information on supported URL schemes, see Section 7.3.
          * </p>
          *
-         * @see AcmeServer.Config#getContactSupportedSchemes()
+         * // @see AcmeServer.Config#getContactSupportedSchemes() (was set.of("mailto"))
          */
         List<@NotNull @NotHFieldUri URI> contact;
         Boolean termsOfServiceAgreed;
@@ -84,8 +86,7 @@ public interface AcmeResources {
          * include orders that are invalid in the array of URLs.
          * </p>
          */
-        @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-        List<URI> orders;
+        URI orders;
 
         /**
          * <pre>
@@ -125,6 +126,16 @@ public interface AcmeResources {
         }
     }
 
+    @Dto
+    @Data
+    @Accessors(chain = true)
+    class Orders {
+        /**
+         * @see Account#orders
+         */
+        List<URI> orders;
+    }
+
     /**
      * An ACME order object represents a client's request for a certificate
      * and is used to track the progress of that order through to issuance.
@@ -162,7 +173,7 @@ public interface AcmeResources {
          * the authorizations that were completed.  Each entry is a URL from
          * which an authorization can be fetched with a POST-as-GET request.
          */
-        List<String> authorizations;
+        List<URI> authorizations;
         /**
          * A URL that a CSR must be POSTed to once
          * all the order's authorizations are satisfied to finalize the
@@ -227,7 +238,7 @@ public interface AcmeResources {
         AuthorizationStatus status;
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant expires;
-        List<Map<String, Object>> challenges;
+        List<Challenge> challenges;
         @JsonInclude(JsonInclude.Include.NON_DEFAULT)
         boolean wildcard;
 
@@ -276,7 +287,15 @@ public interface AcmeResources {
     @Data
     @Accessors(chain = true)
     class Challenge {
+        String type;
+        URI url;
+        String token;
         ChallengeStatus status;
+        @JsonProperty("issuer-domain-names")
+        List<String> issuerDomainNames;
+        @JsonFormat(shape = JsonFormat.Shape.STRING)
+        Instant validated;
+        ProblemDetail error;
 
         /**
          * <p>

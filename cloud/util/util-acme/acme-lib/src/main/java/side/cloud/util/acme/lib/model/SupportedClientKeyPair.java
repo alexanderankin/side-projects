@@ -3,6 +3,8 @@ package side.cloud.util.acme.lib.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.crypto.Ed25519Verifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.*;
@@ -23,12 +25,16 @@ import org.bouncycastle.crypto.digests.SHA384Digest;
 import org.bouncycastle.crypto.digests.SHA512Digest;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.signers.DSADigestSigner;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
+import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.JwkAcmeJwsHeader;
+import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.KidAcmeJwsHeader;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -213,22 +219,29 @@ public class SupportedClientKeyPair {
     public JWSVerifier nimbusVerifier() {
         return switch (algorithm) {
             case RS256, RS384, RS512 -> new RSASSAVerifier((RSAPublicKey) keyPair.getPublic());
-            case ES256, ES384, ES512 -> new com.nimbusds.jose.crypto.ECDSAVerifier((ECPublicKey) keyPair.getPublic());
+            case ES256, ES384, ES512 -> new ECDSAVerifier((ECPublicKey) keyPair.getPublic());
             case EdDSA -> {
                 OctetKeyPair okp = new OctetKeyPair.Builder(Curve.Ed25519, Base64URL.encode(extractPublicKeyOctets(getKeyPair().getPublic().getEncoded())))
                         .build();
-                yield new com.nimbusds.jose.crypto.Ed25519Verifier(okp);
+                yield new Ed25519Verifier(okp);
             }
         };
     }
 
     @SneakyThrows
     public String signAndSerialize(AcmeJwsObject jwsObject) {
-        JWSObjectJSON jwsObjectJSON = new JWSObjectJSON(new Payload(jwsObject.getPayload()));
-        JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.parse(algorithm.name()))
-                .jwk(asJwk().toPublicJWK())
-                .customParams(jwsObject.getHeaders())
-                .build();
+        JWSObjectJSON jwsObjectJSON = switch (jwsObject) {
+            case AcmeJwsObject.BlankAcmeJwsObject blank -> new JWSObjectJSON(new Payload(blank.getPayload()));
+            case AcmeJwsObject.JsonAcmeJwsObject json -> new JWSObjectJSON(new Payload(json.getPayload()));
+        };
+
+        var jwsHeaderBuilder = new JWSHeader.Builder(JWSAlgorithm.parse(algorithm.name()));
+        switch (jwsObject.getHeaders()) {
+            case JwkAcmeJwsHeader jwkHeader -> jwsHeaderBuilder.jwk(jwkHeader.getJwk().toPublicJWK());
+            case KidAcmeJwsHeader kidHeader -> jwsHeaderBuilder.keyID(kidHeader.getKid().toString());
+        }
+        jwsHeaderBuilder.customParams(jwsObject.getHeaders().customParams());
+        JWSHeader jwsHeader = jwsHeaderBuilder.build();
 
         jwsObjectJSON.sign(jwsHeader, nimbusSigner());
         return jwsObjectJSON.serializeFlattened();
@@ -251,7 +264,7 @@ public class SupportedClientKeyPair {
                         signer.init(true, new Ed25519PrivateKeyParameters(keyPair.getPrivate().getEncoded()));
                     } else {
                         signer.init(false,
-                                new org.bouncycastle.crypto.params.Ed25519PublicKeyParameters(
+                                new Ed25519PublicKeyParameters(
                                         keyPair.getPublic().getEncoded(), 0));
                     }
                     yield signer;
@@ -274,7 +287,7 @@ public class SupportedClientKeyPair {
                                         rsaPrivateKey.getModulus(),
                                         rsaPrivateKey.getPrivateExponent()));
                     } else {
-                        var rsaPublicKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+                        var rsaPublicKey = (RSAPublicKey) keyPair.getPublic();
                         signer.init(false,
                                 new RSAKeyParameters(false,
                                         rsaPublicKey.getModulus(),
@@ -301,7 +314,7 @@ public class SupportedClientKeyPair {
                             signer.init(true, privateKeyParams);
                         } else {
                             var publicKeyParams =
-                                    org.bouncycastle.crypto.util.PublicKeyFactory.createKey(
+                                    PublicKeyFactory.createKey(
                                             keyPair.getPublic().getEncoded());
                             signer.init(false, publicKeyParams);
                         }
