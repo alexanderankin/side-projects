@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 import side.cloud.util.acme.lib.model.AcmeError;
 import side.cloud.util.acme.lib.model.AcmeJwsObject;
 import side.cloud.util.acme.lib.model.AcmeResources.*;
@@ -96,13 +97,21 @@ public class AcmeClient {
         throw new UnsupportedOperationException();
     }
 
-    public Order newOrder(NewOrder newOrder) {
+    public Order newOrder(NewOrder newOrder, String accountId) {
+        if (2 > 1)
+            throw new UnsupportedOperationException("under construction");
         Directory directory = acmeDirectory();
         String newNonce = newNonce();
         var body = acmeClientService.getConfig().keyPair.signAndSerialize(
                 new AcmeJwsObject()
-                        .setHeaders(new AcmeClientOperations.JwsHeader.JwkJwsHeader()
-                                .setJwk(acmeClientService.getConfig().keyPair.asJwk().toJSONObject())
+                        .setHeaders(new AcmeClientOperations.JwsHeader.KidJwsHeader()
+                                .setKid(
+                                        UriComponentsBuilder.fromUri(
+                                                        directory.getNewAccount()
+                                                )
+                                                .build().toUri()
+
+                                )
                                 .setAlg(acmeClientService.getConfig().keyPair.getAlgorithm().name())
                                 .setUrl(directory.getNewOrder())
                                 .setNonce(newNonce))

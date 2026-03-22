@@ -14,9 +14,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import javax.net.ssl.SSLContext;
-import java.security.KeyPair;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,13 +29,13 @@ public abstract class BaseAcmeAcceptanceTest {
             Objects.requireNonNull(System.getProperty("acmeServerBaseUrl"),
                     "acmeServerBaseUrl property is not set");
 
-    protected static KeyPair exampleKey =
+    protected static SupportedClientKeyPair exampleKey = new SupportedClientKeyPair().setAlgorithm(ES256).setKeyPair(
             ES256.parse("v1:ES256:MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWojydURCSl" +
                     "BV8Phle8Tq0GkgGDG70pYY3jhR2u954IEraR_50aiOHhJYVxSd8OIMynDGKJR" +
                     "QZ76TR0a4DDr23g:MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBA" +
                     "QQgZL-cUlMnz7LicgxsIruvIOvX7nqbkhDrOlVljVNzUEWgCgYIKoZIzj0DAQeh" +
                     "RANCAARaiPJ1REJKUFXw-GV7xOrQaSAYMbvSlhjeOFHa73nggStpH_nRqI4eElhX" +
-                    "FJ3w4gzKcMYolFBnvpNHRrgMOvbe");
+                    "FJ3w4gzKcMYolFBnvpNHRrgMOvbe"));
 
     @BeforeAll
     static void setup() {

@@ -26,7 +26,7 @@ public class AcmeClientTest {
     void test() {
         var acmeClient = new AcmeClient(
                 new AcmeClientService(
-                        new AcmeClientService.Config(URI.create("https://localhost:8080/dir"))
+                        new AcmeClientService.Config(URI.create("https://localhost:14000/dir"))
                                 .setUserAgent("agent")
                                 .setKeyPair(SupportedClientKeyPairAlgorithm.RS256.generate())
                 )
@@ -45,7 +45,7 @@ public class AcmeClientTest {
         var order = acmeClient.newOrder(new AcmeResources.NewOrder()
                 .setIdentifiers(List.of(new AcmeIdentifier()))
                 .setNotBefore(now)
-                .setNotAfter(now.plus(Duration.ofDays(10))));
+                .setNotAfter(now.plus(Duration.ofDays(10))), null);
         System.out.println(order);
     }
 

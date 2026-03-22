@@ -9,6 +9,6 @@ import java.util.Map;
 @Data
 @Accessors(chain = true)
 public class AcmeJwsObject {
-    AcmeClientOperations.JwsHeader headers;
+    Map<String, Object> headers;
     Map<String, Object> payload;
 }

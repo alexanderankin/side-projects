@@ -80,7 +80,7 @@ class DirectoryTest extends BaseAcmeAcceptanceTest {
         var order = acmeClient.newOrder(new AcmeResources.NewOrder()
                 .setIdentifiers(List.of(new AcmeIdentifier().setType(dns).setValue("https://example.com")))
                 .setNotBefore(Instant.now())
-                .setNotAfter(Instant.now().plus(Duration.ofDays(8))));
+                .setNotAfter(Instant.now().plus(Duration.ofDays(8))), null);
         // var order = acmeClient
     }
 
