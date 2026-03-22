@@ -1,0 +1,22 @@
+plugins {
+    id 'spring-conventions'
+    id 'java-library'
+}
+
+dependencies {
+    api project(':cloud:util:util-acme:acme-lib')
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+
+    itestImplementation 'org.testcontainers:mariadb'
+    itestImplementation 'org.testcontainers:mysql'
+    itestImplementation 'org.testcontainers:postgresql'
+    itestImplementation testFixtures(project(':cloud:util:util-acme:acme-lib'))
+
+    itestRuntimeOnly 'com.h2database:h2'
+    itestRuntimeOnly 'com.mysql:mysql-connector-j'
+    itestRuntimeOnly 'org.hsqldb:hsqldb'
+    itestRuntimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    itestRuntimeOnly 'org.postgresql:postgresql'
+    // https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+    itestRuntimeOnly 'org.xerial:sqlite-jdbc:3.51.2.0'
+}

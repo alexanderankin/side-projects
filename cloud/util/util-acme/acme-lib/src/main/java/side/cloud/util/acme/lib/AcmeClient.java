@@ -1,5 +1,6 @@
 package side.cloud.util.acme.lib;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,10 +10,16 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.client.RestClientResponseException;
+import side.cloud.util.acme.lib.model.AcmeError;
+import side.cloud.util.acme.lib.model.AcmeJwsObject;
 import side.cloud.util.acme.lib.model.AcmeResources.*;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Data
@@ -51,7 +58,28 @@ public class AcmeClient {
     }
 
     public Account newAccount(NewAccount newAccount) {
-        return acmeClientService.newAccount(acmeDirectory(), newNonce(), newAccount);
+        Directory directory = acmeDirectory();
+        String newNonce = newNonce();
+        var body = acmeClientService.getConfig().keyPair.signAndSerialize(
+                new AcmeJwsObject()
+                        .setHeaders(Map.of("nonce", newNonce, "url", directory.getNewAccount()))
+                        .setPayload(acmeClientService.getJsonMapper().convertValue(newAccount, new TypeReference<>() {
+                        }))
+        );
+
+        try {
+            var response = acmeClientService.getRestClient().post()
+                    .uri(directory.getNewAccount())
+                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
+                    .body(body)
+                    .retrieve()
+                    .toEntity(Account.class);
+
+            return response.getBody();
+        } catch (RestClientResponseException e) {
+            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
+            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
+        }
     }
 
     public Account fetchAccount(NewAccount newAccount) {
@@ -69,7 +97,30 @@ public class AcmeClient {
     }
 
     public Order newOrder(NewOrder newOrder) {
-        return acmeClientService.newOrder(acmeDirectory(), newNonce(), newOrder);
+        Directory directory = acmeDirectory();
+        String newNonce = newNonce();
+        var body = acmeClientService.getConfig().keyPair.signAndSerialize(
+                new AcmeJwsObject()
+                        .setHeaders(new AcmeClientOperations.JwsHeader.JwkJwsHeader()
+                                .setJwk(acmeClientService.getConfig().keyPair.asJwk().toJSONObject())
+                                .setAlg(acmeClientService.getConfig().keyPair.getAlgorithm().name())
+                                .setUrl(directory.getNewOrder())
+                                .setNonce(newNonce))
+                        .setPayload(acmeClientService.getJsonMapper().convertValue(newOrder, new TypeReference<>() {
+                        }))
+        );
+        try {
+            var response = acmeClientService.getRestClient().post()
+                    .uri(directory.getNewOrder())
+                    .header(HttpHeaders.CONTENT_TYPE, "application/jose+json")
+                    .body(body)
+                    .retrieve()
+                    .toEntity(Order.class);
+            return response.getBody();
+        } catch (RestClientResponseException e) {
+            Optional.ofNullable(AcmeError.from(e)).ifPresent(AcmeError::doThrow);
+            throw new RuntimeException(e.getResponseBodyAsString() + ": " + e.getStatusCode() + "/" + e.getResponseHeaders());
+        }
     }
 
     @Data
