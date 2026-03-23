@@ -39,7 +39,8 @@ public class AcmeError extends RuntimeException {
                         problemDetail.getDetail(),
                         new UnknownAcmeError.UnknownAcmeErrorDto()
                                 .setType(problemDetail.getType())
-                                .setDetail(problemDetail.getDetail()));
+                                .setDetail(problemDetail.getDetail()),
+                        exception);
             }
         } catch (Exception ignored) {
             return null;
@@ -67,32 +68,48 @@ public class AcmeError extends RuntimeException {
         @Getter
         @ToString
         public enum KnownAcmeErrorType {
-            accountDoesNotExist("T"),
-            alreadyRevoked("he request specified an account that does not exist"),
-            badCSR("The request specified a certificate to be revoked that has already been revoked"),
-            badNonce("The CSR is unacceptable (e.g., due to a short key)"),
-            badPublicKey("The client sent an unacceptable anti-replay nonce"),
-            badRevocationReason("The JWS was signed by a public key the server does not support"),
-            badSignatureAlgorithm("The revocation reason provided is not allowed by the server"),
-            caa("The JWS was signed with an algorithm the server does not support"),
-            compound("Certification Authority Authorization (CAA) records forbid the CA from issuing a certificate"),
-            connection("Specific error conditions are indicated in the \"subproblems\" array"),
-            dns("The server could not connect to validation target"),
-            externalAccountRequired("There was a problem with a DNS query during identifier validation"),
-            incorrectResponse("The request must include a value for the \"externalAccountBinding\" field"),
-            invalidContact("Response received didn't match the challenge's requirements"),
-            malformed("A contact URL for an account was invalid"),
-            orderNotReady("The request message was malformed"),
-            rateLimited("The request attempted to finalize an order that is not ready to be finalized"),
-            rejectedIdentifier("The request exceeds a rate limit"),
-            serverInternal("The server will not issue certificates for the identifier"),
-            tls("The server experienced an internal error"),
-            unauthorized("The server received a TLS error during validation"),
-            unsupportedContact("The client lacks sufficient authorization"),
-            unsupportedIdentifier("A contact URL for an account used an unsupported protocol scheme"),
-            userActionRequired("An identifier is of an unsupported type"),
+            accountDoesNotExist("The request specified an account that does not exist"),
+            alreadyRevoked("The request specified a certificate to be revoked that has already been revoked"),
+            badCSR("The CSR is unacceptable (e.g., due to a short key)"),
+            badNonce("The client sent an unacceptable anti-replay nonce"),
+            badPublicKey("The JWS was signed by a public key the server does not support"),
+            badRevocationReason("The revocation reason provided is not allowed by the server"),
+            badSignatureAlgorithm("The JWS was signed with an algorithm the server does not support"),
+            caa("Certification Authority Authorization (CAA) records forbid the CA from issuing a certificate"),
+            compound("Specific error conditions are indicated in the \"subproblems\" array"),
+            connection("The server could not connect to validation target"),
+            dns("There was a problem with a DNS query during identifier validation"),
+            externalAccountRequired("The request must include a value for the \"externalAccountBinding\" field"),
+            incorrectResponse("Response received didn't match the challenge's requirements"),
+            invalidContact("A contact URL for an account was invalid"),
+            malformed("The request message was malformed"),
+            orderNotReady("The request attempted to finalize an order that is not ready to be finalized"),
+            rateLimited("The request exceeds a rate limit"),
+            rejectedIdentifier("The server will not issue certificates for the identifier"),
+            serverInternal("The server experienced an internal error"),
+            tls("The server received a TLS error during validation"),
+            unauthorized("The client lacks sufficient authorization"),
+            unsupportedContact("A contact URL for an account used an unsupported protocol scheme"),
+            unsupportedIdentifier("An identifier is of an unsupported type"),
+            userActionRequired("Visit the \"instance\" URL and take actions specified there"),
             ;
 
+            public static final Set<KnownAcmeErrorType> NON_TRANSIENT = Set.of(
+                    accountDoesNotExist,
+                    alreadyRevoked,
+                    badCSR,
+                    badPublicKey,
+                    badRevocationReason,
+                    badSignatureAlgorithm,
+                    caa,
+                    externalAccountRequired,
+                    invalidContact,
+                    malformed,
+                    rejectedIdentifier,
+                    unauthorized,
+                    unsupportedContact,
+                    unsupportedIdentifier
+            );
             private static final Map<String, KnownAcmeErrorType> TYPE_TO_ERROR_TYPE = Arrays.stream(KnownAcmeErrorType.values())
                     .collect(Collectors.toMap(KnownAcmeErrorType::getType, Function.identity()));
             private final String detail;

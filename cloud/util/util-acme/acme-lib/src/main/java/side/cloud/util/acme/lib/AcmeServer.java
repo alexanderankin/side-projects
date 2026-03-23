@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -29,7 +30,18 @@ public class AcmeServer {
         this.config = jsonMapper.convertValue(config, Config.class); // clone because it is mutable
         this.jsonMapper = jsonMapper;
         routerFunction = RouterFunctions.route()
-                .GET("/hello", req -> ServerResponse.ok().body("hello"))
+                .GET("/directory", ignored -> ServerResponse.ok().body(config.getDirectory()))
+                .GET(config.getDirectory().getNewNonce().getPath(),
+                        ignored -> ServerResponse.ok().header("Replay-Nonce", acmeService.newNonce()).build())
+                .HEAD(config.getDirectory().getNewNonce().getPath(),
+                        ignored -> ServerResponse.ok().header("Replay-Nonce", acmeService.newNonce()).build())
+                .POST(config.getDirectory().getNewAccount().getPath(),
+                        req -> {
+                            var account = acmeService.newAccount();
+                            return ServerResponse.ok()
+                                    .header(HttpHeaders.LOCATION, String.valueOf(account.id()))
+                                    .body(account.resource());
+                        })
                 .build();
     }
 
