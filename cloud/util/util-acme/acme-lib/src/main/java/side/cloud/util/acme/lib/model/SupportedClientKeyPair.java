@@ -7,18 +7,21 @@ import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.crypto.Ed25519Verifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
+import com.nimbusds.jose.jca.JCAContext;
 import com.nimbusds.jose.jwk.*;
 import com.nimbusds.jose.util.Base64URL;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.Signer;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.digests.SHA384Digest;
@@ -38,6 +41,7 @@ import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.KidAcmeJwsHead
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
+import java.security.Signature;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
@@ -46,6 +50,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Set;
 
 @Data
 @Accessors(chain = true)
@@ -200,6 +205,7 @@ public class SupportedClientKeyPair {
                         .algorithm(jwsAlgorithm)
                         .build();
             }
+            case MLDSA, SLHDSA -> throw new UnsupportedOperationException();
         };
     }
 
@@ -212,6 +218,7 @@ public class SupportedClientKeyPair {
                 var okp = (OctetKeyPair) asJwk();
                 yield new com.nimbusds.jose.crypto.Ed25519Signer(okp);
             }
+            case MLDSA, SLHDSA -> new PqcJWSSigner(this, new JCAContext(SupportedClientKeyPairAlgorithm.BC, null));
         };
     }
 
@@ -225,6 +232,7 @@ public class SupportedClientKeyPair {
                         .build();
                 yield new Ed25519Verifier(okp);
             }
+            case MLDSA, SLHDSA -> new PqcJWSVerifier(this, new JCAContext(SupportedClientKeyPairAlgorithm.BC, null));
         };
     }
 
@@ -249,6 +257,68 @@ public class SupportedClientKeyPair {
 
     public enum Mode {
         SIGN, VERIFY
+    }
+
+    @RequiredArgsConstructor
+    static class PqcJWSSigner implements JWSSigner {
+
+        private final SupportedClientKeyPair keyPair;
+        private final JCAContext jcaContext;
+
+        @Override
+        public Base64URL sign(JWSHeader header, byte[] signingInput)
+                throws JOSEException {
+
+            try {
+                byte[] sig = keyPair.sign(signingInput);
+                return Base64URL.encode(sig);
+            } catch (Exception e) {
+                throw new JOSEException(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public Set<JWSAlgorithm> supportedJWSAlgorithms() {
+            return Set.of(JWSAlgorithm.parse(keyPair.getAlgorithm().name()));
+        }
+
+        @Override
+        public JCAContext getJCAContext() {
+            return jcaContext;
+        }
+    }
+
+    @RequiredArgsConstructor
+    static class PqcJWSVerifier implements JWSVerifier {
+        private final SupportedClientKeyPair keyPair;
+        private final JCAContext jcaContext;
+
+        @Override
+        public boolean verify(JWSHeader header,
+                              byte[] signingInput,
+                              Base64URL signature)
+                throws JOSEException {
+
+            if (!header.getAlgorithm().getName().equals(keyPair.getAlgorithm().name())) {
+                throw new JOSEException("Algorithm mismatch");
+            }
+
+            try {
+                return keyPair.verify(signingInput, signature.decode());
+            } catch (Exception e) {
+                throw new JOSEException(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public Set<JWSAlgorithm> supportedJWSAlgorithms() {
+            return Set.of(JWSAlgorithm.parse(keyPair.getAlgorithm().name()));
+        }
+
+        @Override
+        public JCAContext getJCAContext() {
+            return jcaContext;
+        }
     }
 
     static class BcSignerFactory {
@@ -325,8 +395,63 @@ public class SupportedClientKeyPair {
                     }
                 }
 
+                case MLDSA, SLHDSA -> {
+                    var signer = new MlSlhDsaSigner(keyPair, algorithm);
+                    signer.init(mode == Mode.SIGN, null);
+                    yield signer;
+                }
+
                 case null -> throw new UnsupportedOperationException();
             };
+        }
+
+        @RequiredArgsConstructor
+        private static class MlSlhDsaSigner implements Signer {
+            final KeyPair keyPair;
+            final SupportedClientKeyPairAlgorithm algorithm;
+            Signature sig;
+            boolean forSigning;
+
+            @SneakyThrows
+            @Override
+            public void init(boolean forSigning, CipherParameters param) {
+                this.forSigning = forSigning;
+                reset();
+            }
+
+            @SneakyThrows
+            @Override
+            public void update(byte b) {
+                sig.update(b);
+            }
+
+            @SneakyThrows
+            @Override
+            public void update(byte[] in, int off, int len) {
+                sig.update(in, off, len);
+            }
+
+            @SneakyThrows
+            @Override
+            public byte[] generateSignature() {
+                return sig.sign();
+            }
+
+            @SneakyThrows
+            @Override
+            public boolean verifySignature(byte[] signature) {
+                return sig.verify(signature);
+            }
+
+            @SneakyThrows
+            @Override
+            public void reset() {
+                sig = Signature.getInstance(algorithm.name(), SupportedClientKeyPairAlgorithm.BC);
+                if (forSigning)
+                    sig.initSign(keyPair.getPrivate());
+                else
+                    sig.initVerify(keyPair.getPublic());
+            }
         }
     }
 }

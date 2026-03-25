@@ -1,6 +1,9 @@
 package side.cloud.util.acme.lib.model;
 
 import lombok.SneakyThrows;
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
+import org.bouncycastle.jcajce.spec.MLDSAParameterSpec;
+import org.bouncycastle.jcajce.spec.SLHDSAParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.*;
@@ -13,9 +16,14 @@ public enum SupportedClientKeyPairAlgorithm {
      * Ed25519
      */
     EdDSA,
+
+    // NEW
+    MLDSA,        // or MLDSA44 / MLDSA65 / MLDSA87 depending on granularity
+    SLHDSA,       // or SLHDSA_SHA2_128S etc
+    // HS256, HS384, HS512; // HMAC
     ;
 
-    private static final Provider BC = new BouncyCastleProvider();
+    static final Provider BC = new BouncyCastleProvider();
 
     @SneakyThrows
     private static KeyPair generateRsa(int bits) {
@@ -37,6 +45,18 @@ public enum SupportedClientKeyPairAlgorithm {
         return kpg.generateKeyPair();
     }
 
+    private KeyPair generateMlDsa() throws GeneralSecurityException {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("MLDSA", BC);
+        kpg.initialize(MLDSAParameterSpec.ml_dsa_65); // there are options
+        return kpg.generateKeyPair();
+    }
+
+    private KeyPair generateSlhDsa() throws GeneralSecurityException {
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance(NISTObjectIdentifiers.id_slh_dsa_sha2_128s.getId(), BC);
+        kpg.initialize(SLHDSAParameterSpec.slh_dsa_sha2_128s); // there are options
+        return kpg.generateKeyPair();
+    }
+
     @SneakyThrows
     public SupportedClientKeyPair generate() {
         var kp = switch (this) {
@@ -47,6 +67,8 @@ public enum SupportedClientKeyPairAlgorithm {
             case ES384 -> generateEc("secp384r1");
             case ES512 -> generateEc("secp521r1");
             case EdDSA -> generateEd25519();
+            case MLDSA -> generateMlDsa();
+            case SLHDSA -> generateSlhDsa();
         };
 
         return new SupportedClientKeyPair()
@@ -68,6 +90,8 @@ public enum SupportedClientKeyPairAlgorithm {
             case RS256, RS384, RS512 -> KeyFactory.getInstance("RSA", BC);
             case ES256, ES384, ES512 -> KeyFactory.getInstance("EC", BC);
             case EdDSA -> KeyFactory.getInstance("Ed25519", BC);
+            case MLDSA -> KeyFactory.getInstance("MLDSA", BC);
+            case SLHDSA -> KeyFactory.getInstance("SLHDSA", BC);
         };
     }
 
