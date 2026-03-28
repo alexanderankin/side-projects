@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -25,7 +27,7 @@ public class FfmpegExample {
                 stopper.countDown();
             }
         });
-        new FfmpegDeviceCapture().capture(1, null, stopper);
+        new FfmpegDeviceCapture().capture(0, null, stopper);
     }
 
     public static class FfmpegDeviceCapture {
@@ -36,6 +38,8 @@ public class FfmpegExample {
                     .command("ffmpeg")
                     .command("-f")
                     .command("avfoundation")
+                    .command("-framerate")
+                    .command("30")
                     .command("-i")
                     .command(input)
                     .command("-f").command("matroska") // ensures streamable output
@@ -46,11 +50,14 @@ public class FfmpegExample {
             var byteCounter = new long[1];
 
             Thread.ofVirtual().start(() -> {
-                try (var in = result.result().getOut()) {
+                try (var in = result.result().getOut();
+                     var fileOut = new BufferedOutputStream(new FileOutputStream("capture.mkv"))) {
+
                     byte[] buf = new byte[8192];
                     int r;
                     while ((r = in.read(buf)) != -1) {
                         byteCounter[0] += r;
+                        fileOut.write(buf, 0, r);
                     }
                 } catch (Exception e) {
                     if (e instanceof RuntimeException r) throw r;
@@ -72,8 +79,9 @@ public class FfmpegExample {
                     try {
                         stopper.await();
                     } catch (InterruptedException e) {
-                        System.out.println("countdown timed out waiting to quit");
+                        System.out.println("quit before countdown resolved");
                         Thread.currentThread().interrupt();
+                        return;
                     }
                     System.out.println("countdown told us to quit");
 
@@ -88,8 +96,6 @@ public class FfmpegExample {
                         Thread.currentThread().interrupt();
                     }
                 }
-
-                ;
             });
 
             var code = result.result().getCode();

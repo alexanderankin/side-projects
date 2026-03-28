@@ -1,6 +1,9 @@
 plugins {
     id 'spring-conventions'
+    id 'picocli-conventions'
 }
+
+application.mainClass = 'org.example.webcam.FfmpegExample'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-logging'
