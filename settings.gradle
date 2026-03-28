@@ -109,4 +109,5 @@ include 'misc:scratch:terraform-statefile-scripts'
 if (file('local.properties').exists())
     include 'misc:scratch:timber-scratch'
 
+include 'misc:scratch:webcam'
 include 'misc:socat-logging'
