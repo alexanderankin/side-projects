@@ -66,7 +66,8 @@ dependencies {
         ].each { l ->
             ['implementation'].each { String c ->
                 add(c, l.getFirst()) {
-                    version { prefer l.getLast() } }
+                    version { prefer l.getLast() }
+                }
             }
         }
     }
@@ -77,7 +78,8 @@ dependencies {
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
                 add(c, l.getFirst()) {
-                    version { require l.getLast() } }
+                    version { require l.getLast() }
+                }
             }
         }
     }
@@ -91,7 +93,8 @@ dependencies {
                 ['org.mockito:mockito-core', '5.11.0'],
         ].each { l ->
             add('testImplementation', l.getFirst()) {
-                version { prefer l.getLast() } }
+                version { prefer l.getLast() }
+            }
         }
     }
     testImplementation 'org.hamcrest:hamcrest'
@@ -123,3 +126,5 @@ tasks.withType(Test).configureEach { t -> t.useJUnitPlatform() }
 
 // patch for java changes
 tasks.withType(JavaCompile).configureEach { options.compilerArgs.add '-parameters' }
+
+tasks.withType(JavaExec).configureEach { jvmArgs = jvmArgs.collect().tap { add '--enable-native-access=ALL-UNNAMED' } }

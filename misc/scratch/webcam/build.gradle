@@ -12,4 +12,15 @@ dependencies {
     // implementation 'com.github.sarxos:webcam-capture-driver-opencv:0.3.12'
     // implementation 'com.github.sarxos:webcam-capture-driver-jmf:0.3.12'
     // implementation 'com.github.sarxos:webcam-capture-driver-ffmpeg-cli:0.3.12'
+    // Source: https://mvnrepository.com/artifact/com.google.zxing/core
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'com.google.zxing:javase:3.5.4'
+    // Source: https://mvnrepository.com/artifact/org.bytedeco/javacv
+    implementation 'org.bytedeco:javacv:1.5.13'
+
+    // implementation 'org.bytedeco.javacpp-presets:ffmpeg:2.8.1-1.1:linux-x86_64'
+    // arm64/x86_64-android/linux/macosx/windows
+    def arch =  System.getProperty('os.arch').toLowerCase().with { ['aarch64': 'arm64', 'amd64': 'x86_64'].getOrDefault(it, it) }
+    def os =  System.getProperty('os.name').substring(0, 3).toLowerCase().with { ['mac': 'macosx', 'win': 'windows', 'lin': 'linux'][it] }
+    implementation "org.bytedeco:ffmpeg:8.0.1-1.5.13:${os}-${arch}"
 }
