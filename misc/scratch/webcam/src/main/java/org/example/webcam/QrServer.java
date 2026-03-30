@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
@@ -28,14 +30,33 @@ import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
-public class QrServer {
-    static JsonMapper jsonMapper = JsonMapper.builder().build();
+@RequiredArgsConstructor
+public class QrServer implements Runnable {
+    private final Config config;
+    private final JsonMapper jsonMapper;
+    private final QrService qrService;
+    private final Scheduler uiScheduler = Schedulers.newSingle("qr-ui");
+    private final Sinks.Many<String> input = Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<UiCommand> uiCommands = Sinks.many().unicast().onBackpressureBuffer();
+    private volatile JFrame frame;
+    private volatile ImageIcon image;
 
-    public static void main(String[] args) {
+    static void main() {
         log.info("starting QrServer");
-        var thing = new Thing(new QrService(new QrService.Config().setSize(new Dimension(400, 400))));
-        log.info("starting thing");
-        thing.start();
+        new QrServer(
+                new Config()
+                        .setQueueTimeout(Duration.ofSeconds(1))
+                        .setMinOutputTime(Duration.ofSeconds(1))
+                        .setFps(10),
+                JsonMapper.builder().build(),
+                new QrService(new QrService.Config()
+                        .setSize(new Dimension(400, 400)))
+        ).run();
+    }
+
+    @Override
+    public void run() {
+        start();
 
         HttpServer.create()
                 .accessLog(true)
@@ -43,13 +64,13 @@ public class QrServer {
                 .route(routes -> {
                     routes.get("/messages", (req, res) -> {
                         log.info("starting /messages sse stream");
-                        return res.sse().send(thing.inputFlux().map(QrServer::toData), Objects::nonNull);
+                        return res.sse().send(inputFlux().map(this::toData), Objects::nonNull);
                     });
 
                     routes.post("/messages", (req, res) -> {
                         log.info("new /messages message");
                         return req.receive().aggregate().asString(StandardCharsets.UTF_8)
-                                .flatMap(thing::show)
+                                .flatMap(this::output)
                                 .then(res.status(HttpResponseStatus.ACCEPTED).send());
                     });
                 })
@@ -58,7 +79,7 @@ public class QrServer {
                 .block();
     }
 
-    private static ByteBuf toData(String message) {
+    private ByteBuf toData(String message) {
         try {
             var data = "data: " + jsonMapper.writeValueAsString(Map.of("message", message)) + "\n\n";
             return ByteBufAllocator.DEFAULT.buffer().writeBytes(data.getBytes(StandardCharsets.UTF_8));
@@ -67,214 +88,208 @@ public class QrServer {
         }
     }
 
-    @RequiredArgsConstructor
-    static final class Thing {
-        private final QrService qrService;
+    void start() {
+        log.info("starting things");
+        startUiPipeline();
+        log.info("started ui pipeline");
+        startCapturePipeline();
+        log.info("started capture pipeline");
+    }
 
-        private final Scheduler uiScheduler = Schedulers.newSingle("qr-ui");
-        private final Sinks.Many<String> input =
-                Sinks.many().multicast().onBackpressureBuffer();
+    Flux<String> inputFlux() {
+        return input.asFlux();
+    }
 
-        private final Sinks.Many<UiCommand> uiCommands =
-                Sinks.many().unicast().onBackpressureBuffer();
+    Mono<Void> output(String message) {
+        return Mono.create(sink -> {
+            uiCommands.emitNext(new UiCommand(message, sink), Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout()));
+        });
+    }
 
-        private volatile JFrame frame;
-        private volatile ImageIcon image;
+    private void startUiPipeline() {
+        uiCommands.asFlux()
+                .publishOn(uiScheduler)
+                .concatMap(cmd ->
+                        runOnEdt(() -> showMessage(cmd.message))
+                                .then(Mono.delay(config.getMinOutputTime()))
+                                .doOnSuccess(ignored -> cmd.completion.success())
+                                .doOnError(cmd.completion::error)
+                )
+                .doOnError(e -> log.error("error startUiPipeline", e))
+                .retry()
+                .subscribe();
+    }
 
-        void start() {
-            startUiPipeline();
-            log.info("started ui pipeline");
-            startCapturePipeline();
-            log.info("started capture pipeline");
+    private void startCapturePipeline() {
+        Flux.using(
+                        this::openCameraStream,
+                        this::decodeQrFlux,
+                        this::closeCameraStream
+                )
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnEach(s -> log.trace("startCapturePipeline signal: {}", s))
+                .distinctUntilChanged()
+                .doOnNext(System.out::println)
+                .doOnNext(this::emitInput)
+                .doOnError(e -> log.error("startCapturePipeline error", e))
+                .retry()
+                .subscribe();
+    }
+
+    private CameraSession openCameraStream() {
+        var config = Exec.Config.builder()
+                .command("ffmpeg")
+                .command("-f").command("avfoundation")
+                .command("-framerate").command("30")
+                .command("-i").command("0:none")
+                // .command("-f").command("matroska")
+                // .command("-f").command("mjpeg")
+
+                .command("-vf").command("fps=" + this.config.getFps() + ",scale=640:480")
+                .command("-pix_fmt").command("bgr24")
+                .command("-f").command("rawvideo")
+
+                .command("-")
+                .build();
+
+        log.info("running ffmpeg with: {}", String.join(" ", config.getCommands()));
+
+        var launched = Exec.INSTANCE.launch(config);
+        InputStream inputStream = launched.result().getOut();
+
+        try {
+            var grabber = new FFmpegFrameGrabber(inputStream);
+            grabber.setFormat("rawvideo");
+            grabber.setPixelFormat(avutil.AV_PIX_FMT_BGR24);
+            // grabber.setPixelFormat(avutil.AV_PIX_FMT_UYVY422);
+            grabber.setImageWidth(640);
+            grabber.setImageHeight(480);
+            // grabber.setFrameRate(this.config.getFps());
+            log.info("grabber starting");
+            grabber.start(false);
+            log.info("grabber started");
+            var cameraSession = new CameraSession(inputStream, grabber, new Java2DFrameConverter());
+            log.info("created cameraSession");
+            return cameraSession;
+        } catch (Exception e) {
+            try {
+                inputStream.close();
+            } catch (Exception ee) {
+                log.error("openCameraStream", ee);
+            }
+            throw new RuntimeException("Failed to start FFmpegFrameGrabber", e);
         }
+    }
 
-        Flux<String> inputFlux() {
-            return input.asFlux();
+    private Flux<String> decodeQrFlux(CameraSession session) {
+        return Flux.create(sink -> {
+            try {
+                while (!sink.isCancelled()) {
+                    Frame frame = session.grabber.grabImage();
+                    log.trace("decodeQrFlux frame: '{}'", frame);
+                    if (frame == null) {
+                        continue;
+                    }
+
+                    BufferedImage image = session.converter.convert(frame);
+                    log.trace("decodeQrFlux image: '{}'", image);
+                    if (image == null) {
+                        continue;
+                    }
+
+                    String decoded = qrService.decodeQR(image);
+                    log.debug("decodeQrFlux decoded: '{}'", decoded);
+                    if (decoded != null) {
+                        sink.next(decoded);
+                    }
+                }
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
+    }
+
+    private void closeCameraStream(CameraSession session) {
+        try {
+            session.close();
+        } catch (Exception e) {
+            log.error("closeCameraStream", e);
         }
+    }
 
-        Mono<Void> show(String message) {
-            return Mono.create(sink -> {
-                uiCommands.emitNext(new UiCommand(message, sink), Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+    private void emitInput(String message) {
+        input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout()));
+    }
+
+    private Mono<Void> runOnEdt(Runnable action) {
+        return Mono.create(sink -> {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    action.run();
+                    sink.success();
+                } catch (Throwable t) {
+                    sink.error(t);
+                }
             });
+        });
+    }
+
+    private void showMessage(String message) {
+        var qrImage = qrService.toQrImage(message);
+
+        if (frame == null) {
+            frame = new JFrame("QR");
+            frame.getContentPane().setLayout(new FlowLayout());
+
+            image = new ImageIcon(qrImage);
+            frame.getContentPane().add(new JLabel(image));
+            frame.pack();
+            frame.setVisible(true);
+        } else {
+            image.setImage(qrImage);
+            frame.repaint();
         }
+    }
 
-        private void startUiPipeline() {
-            uiCommands.asFlux()
-                    .publishOn(uiScheduler)
-                    .concatMap(cmd ->
-                            runOnEdt(() -> showMessage(cmd.message))
-                                    .then(Mono.delay(Duration.ofSeconds(1)))
-                                    .doOnSuccess(ignored -> cmd.completion.success())
-                                    .doOnError(cmd.completion::error)
-                    )
-                    .doOnError(e -> log.error("error startUiPipeline", e))
-                    .retry()
-                    .subscribe();
-        }
+    private record UiCommand(String message, MonoSink<Void> completion) {
+    }
 
-        private void startCapturePipeline() {
-            Flux.using(
-                            this::openCameraStream,
-                            this::decodeQrFlux,
-                            this::closeCameraStream
-                    )
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .doOnEach(s -> log.trace("startCapturePipeline signal: {}", s))
-                    .distinctUntilChanged()
-                    .doOnNext(System.out::println)
-                    .doOnNext(this::emitInput)
-                    .doOnError(e -> log.error("startCapturePipeline error", e))
-                    .retry()
-                    .subscribe();
-        }
-
-        private CameraSession openCameraStream() {
-            var config = Exec.Config.builder()
-                    .command("ffmpeg")
-                    .command("-f").command("avfoundation")
-                    .command("-framerate").command("30")
-                    .command("-i").command("0:none")
-                    // .command("-f").command("matroska")
-                    // .command("-f").command("mjpeg")
-
-                    .command("-vf").command("fps=10,scale=640:480")
-                    .command("-pix_fmt").command("bgr24")
-                    .command("-f").command("rawvideo")
-
-                    .command("-")
-                    .build();
-
-            log.info("running ffmpeg with: {}", String.join(" ", config.getCommands()));
-
-            var launched = Exec.INSTANCE.launch(config);
-            InputStream inputStream = launched.result().getOut();
+    private record CameraSession(
+            InputStream inputStream,
+            FFmpegFrameGrabber grabber,
+            Java2DFrameConverter converter
+    ) implements AutoCloseable {
+        @Override
+        public void close() throws Exception {
+            Exception first = null;
 
             try {
-                var grabber = new FFmpegFrameGrabber(inputStream);
-                grabber.setFormat("rawvideo");
-                grabber.setPixelFormat(avutil.AV_PIX_FMT_BGR24);
-                // grabber.setPixelFormat(avutil.AV_PIX_FMT_UYVY422);
-                grabber.setImageWidth(640);
-                grabber.setImageHeight(480);
-                // grabber.setFrameRate(2);
-                log.info("grabber starting");
-                grabber.start(false);
-                log.info("grabber started");
-                var cameraSession = new CameraSession(inputStream, grabber, new Java2DFrameConverter());
-                log.info("created cameraSession");
-                return cameraSession;
+                converter.close();
             } catch (Exception e) {
-                try {
-                    inputStream.close();
-                } catch (Exception ee) {
-                    log.error("openCameraStream", ee);
-                }
-                throw new RuntimeException("Failed to start FFmpegFrameGrabber", e);
+                first = e;
             }
-        }
 
-        private Flux<String> decodeQrFlux(CameraSession session) {
-            return Flux.create(sink -> {
-                try {
-                    while (!sink.isCancelled()) {
-                        Frame frame = session.grabber.grabImage();
-                        log.trace("decodeQrFlux frame: '{}'", frame);
-                        if (frame == null) {
-                            continue;
-                        }
-
-                        BufferedImage image = session.converter.convert(frame);
-                        log.trace("decodeQrFlux image: '{}'", image);
-                        if (image == null) {
-                            continue;
-                        }
-
-                        String decoded = qrService.decodeQR(image);
-                        log.debug("decodeQrFlux decoded: '{}'", decoded);
-                        if (decoded != null) {
-                            sink.next(decoded);
-                        }
-                    }
-                } catch (Exception e) {
-                    sink.error(e);
-                }
-            });
-        }
-
-        private void closeCameraStream(CameraSession session) {
             try {
-                session.close();
+                grabber.close();
             } catch (Exception e) {
-                log.error("closeCameraStream", e);
+                if (first == null) first = e;
             }
-        }
 
-        private void emitInput(String message) {
-            input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
-        }
-
-        private Mono<Void> runOnEdt(Runnable action) {
-            return Mono.create(sink -> {
-                SwingUtilities.invokeLater(() -> {
-                    try {
-                        action.run();
-                        sink.success();
-                    } catch (Throwable t) {
-                        sink.error(t);
-                    }
-                });
-            });
-        }
-
-        private void showMessage(String message) {
-            var qrImage = qrService.toQrImage(message);
-
-            if (frame == null) {
-                frame = new JFrame("QR");
-                frame.getContentPane().setLayout(new FlowLayout());
-
-                image = new ImageIcon(qrImage);
-                frame.getContentPane().add(new JLabel(image));
-                frame.pack();
-                frame.setVisible(true);
-            } else {
-                image.setImage(qrImage);
-                frame.repaint();
+            try {
+                inputStream.close();
+            } catch (Exception e) {
+                if (first == null) first = e;
             }
+
+            if (first != null) throw first;
         }
+    }
 
-        private record UiCommand(String message, MonoSink<Void> completion) {
-        }
-
-        private record CameraSession(
-                InputStream inputStream,
-                FFmpegFrameGrabber grabber,
-                Java2DFrameConverter converter
-        ) implements AutoCloseable {
-            @Override
-            public void close() throws Exception {
-                Exception first = null;
-
-                try {
-                    converter.close();
-                } catch (Exception e) {
-                    first = e;
-                }
-
-                try {
-                    grabber.close();
-                } catch (Exception e) {
-                    if (first == null) first = e;
-                }
-
-                try {
-                    inputStream.close();
-                } catch (Exception e) {
-                    if (first == null) first = e;
-                }
-
-                if (first != null) throw first;
-            }
-        }
+    @Data
+    @Accessors(chain = true)
+    public static class Config {
+        Duration queueTimeout;
+        Duration minOutputTime;
+        int fps;
     }
 }
