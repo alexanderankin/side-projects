@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.ffmpeg.global.avutil;
@@ -36,7 +37,7 @@ public class QrServer implements Runnable {
     private final JsonMapper jsonMapper;
     private final QrService qrService;
     private final Scheduler uiScheduler = Schedulers.newSingle("qr-ui");
-    private final Sinks.Many<String> input = Sinks.many().multicast().onBackpressureBuffer();
+    private final Sinks.Many<String> input = Sinks.many().multicast().directBestEffort();
     private final Sinks.Many<UiCommand> uiCommands = Sinks.many().unicast().onBackpressureBuffer();
     private volatile JFrame frame;
     private volatile ImageIcon image;
@@ -56,7 +57,33 @@ public class QrServer implements Runnable {
 
     @Override
     public void run() {
-        start();
+        log.info("starting things");
+        uiCommands.asFlux()
+                .publishOn(uiScheduler)
+                .concatMap(cmd ->
+                        runOnEdt(() -> showMessage(cmd.message))
+                                .then(Mono.delay(config.getMinOutputTime()))
+                                .doOnSuccess(ignored -> cmd.completion.success())
+                                .doOnError(cmd.completion::error)
+                )
+                .doOnError(e -> log.error("error startUiPipeline", e))
+                .retry()
+                .subscribe();
+        log.info("started ui pipeline");
+        Flux.using(
+                        this::openCameraStream,
+                        this::decodeQrFlux,
+                        CameraSession::close
+                )
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnEach(s -> log.trace("startCapturePipeline signal: {}", s))
+                .distinctUntilChanged()
+                .doOnNext(System.out::println)
+                .doOnNext(message -> input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout())))
+                .doOnError(e -> log.error("startCapturePipeline error", e))
+                .retry()
+                .subscribe();
+        log.info("started capture pipeline");
 
         HttpServer.create()
                 .accessLog(true)
@@ -74,7 +101,9 @@ public class QrServer implements Runnable {
                                 .then(res.status(HttpResponseStatus.ACCEPTED).send());
                     });
                 })
-                .bindNow()
+                .bind()
+                .doOnSuccess(d -> log.info("started server on {}", d == null ? null : d.address()))
+                .blockOptional().orElseThrow()
                 .onDispose()
                 .block();
     }
@@ -88,14 +117,6 @@ public class QrServer implements Runnable {
         }
     }
 
-    void start() {
-        log.info("starting things");
-        startUiPipeline();
-        log.info("started ui pipeline");
-        startCapturePipeline();
-        log.info("started capture pipeline");
-    }
-
     Flux<String> inputFlux() {
         return input.asFlux();
     }
@@ -104,36 +125,6 @@ public class QrServer implements Runnable {
         return Mono.create(sink -> {
             uiCommands.emitNext(new UiCommand(message, sink), Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout()));
         });
-    }
-
-    private void startUiPipeline() {
-        uiCommands.asFlux()
-                .publishOn(uiScheduler)
-                .concatMap(cmd ->
-                        runOnEdt(() -> showMessage(cmd.message))
-                                .then(Mono.delay(config.getMinOutputTime()))
-                                .doOnSuccess(ignored -> cmd.completion.success())
-                                .doOnError(cmd.completion::error)
-                )
-                .doOnError(e -> log.error("error startUiPipeline", e))
-                .retry()
-                .subscribe();
-    }
-
-    private void startCapturePipeline() {
-        Flux.using(
-                        this::openCameraStream,
-                        this::decodeQrFlux,
-                        this::closeCameraStream
-                )
-                .subscribeOn(Schedulers.boundedElastic())
-                .doOnEach(s -> log.trace("startCapturePipeline signal: {}", s))
-                .distinctUntilChanged()
-                .doOnNext(System.out::println)
-                .doOnNext(this::emitInput)
-                .doOnError(e -> log.error("startCapturePipeline error", e))
-                .retry()
-                .subscribe();
     }
 
     private CameraSession openCameraStream() {
@@ -209,18 +200,6 @@ public class QrServer implements Runnable {
         });
     }
 
-    private void closeCameraStream(CameraSession session) {
-        try {
-            session.close();
-        } catch (Exception e) {
-            log.error("closeCameraStream", e);
-        }
-    }
-
-    private void emitInput(String message) {
-        input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout()));
-    }
-
     private Mono<Void> runOnEdt(Runnable action) {
         return Mono.create(sink -> {
             SwingUtilities.invokeLater(() -> {
@@ -259,8 +238,9 @@ public class QrServer implements Runnable {
             FFmpegFrameGrabber grabber,
             Java2DFrameConverter converter
     ) implements AutoCloseable {
+        @SneakyThrows
         @Override
-        public void close() throws Exception {
+        public void close() {
             Exception first = null;
 
             try {
