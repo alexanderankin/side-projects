@@ -51,6 +51,10 @@ public class Qr implements Runnable {
         }
     }
 
+    public static void previewImage(BufferedImage bufferedImage) {
+        new Qr().preview(bufferedImage);
+    }
+
     @SneakyThrows
     private void preview(BufferedImage bufferedImage) {
         JFrame frame = new JFrame();

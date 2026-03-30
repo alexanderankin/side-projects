@@ -3,12 +3,16 @@ package org.example.webcam;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.server.HttpServer;
 
@@ -20,150 +24,244 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
+@Slf4j
 public class QrServer {
-    static void main() {
+
+    public static void main(String[] args) {
+        log.info("starting QrServer");
         var thing = new Thing(new QrService(new QrService.Config().setSize(new Dimension(400, 400))));
+        log.info("starting thing");
+        thing.start();
+
         HttpServer.create()
                 .accessLog(true)
-                .route(routes -> {
-                    routes.get("/messages", (req, res) -> res.sse().send(thing.input.asFlux().map(QrServer::toByteBuf), Objects::nonNull));
-                    routes.post("/messages", (req, res) -> req.receive().aggregate().flatMap(thing::show).then(res.status(HttpResponseStatus.ACCEPTED).send()));
-                })
                 .port(8080)
+                .route(routes -> {
+                    routes.get("/messages", (req, res) -> {
+                        log.info("starting /messages sse stream");
+                        return res.sse().send(thing.inputFlux().map(QrServer::toByteBuf), Objects::nonNull);
+                    });
+
+                    routes.post("/messages", (req, res) -> {
+                        log.info("new /messages message");
+                        return req.receive().aggregate().asString(StandardCharsets.UTF_8)
+                                .flatMap(thing::show)
+                                .then(res.status(HttpResponseStatus.ACCEPTED).send());
+                    });
+                })
                 .bindNow()
-                .onDispose().block();
+                .onDispose()
+                .block();
     }
 
     private static ByteBuf toByteBuf(String message) {
-        var charset = StandardCharsets.UTF_8;
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
+            var charset = StandardCharsets.UTF_8;
+            var out = new ByteArrayOutputStream();
             out.write("data: ".getBytes(charset));
             out.write(("{\"message\":\"" + message + "\"}").getBytes(charset));
             out.write("\n\n".getBytes(charset));
+            return ByteBufAllocator.DEFAULT.buffer().writeBytes(out.toByteArray());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to encode SSE payload", e);
         }
-        return ByteBufAllocator.DEFAULT.buffer().writeBytes(out.toByteArray());
     }
 
-    static class Thing {
-        final QrService qrService;
-        final Sinks.Many<Mono<Void>> queue;
-        final Sinks.Many<String> input;
-        JFrame frame;
-        ImageIcon image;
-        String last;
+    static final class Thing {
+        private final QrService qrService;
+
+        private final Scheduler uiScheduler = Schedulers.newSingle("qr-ui");
+        private final Sinks.Many<String> input =
+                Sinks.many().multicast().onBackpressureBuffer();
+
+        private final Sinks.Many<UiCommand> uiCommands =
+                Sinks.many().unicast().onBackpressureBuffer();
+
+        private volatile JFrame frame;
+        private volatile ImageIcon image;
 
         Thing(QrService qrService) {
             this.qrService = qrService;
-            queue = Sinks.many().unicast().onBackpressureBuffer();
-            queue.asFlux() //
-                    .concatMap(Function.identity()) // strict ordering
-                    .subscribeOn(Schedulers.fromExecutor(Executors.newVirtualThreadPerTaskExecutor())) //
-                    .subscribe();
-            input = Sinks.many().multicast().onBackpressureBuffer();
-            Thread.ofPlatform().start(this::initInput);
         }
 
-        @SneakyThrows
-        private void initInput() {
+        void start() {
+            startUiPipeline();
+            log.info("started ui pipeline");
+            startCapturePipeline();
+            log.info("started capture pipeline");
+        }
+
+        Flux<String> inputFlux() {
+            return input.asFlux();
+        }
+
+        Mono<Void> show(String message) {
+            return Mono.create(sink -> {
+                uiCommands.emitNext(new UiCommand(message, sink), Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+            });
+        }
+
+        private void startUiPipeline() {
+            uiCommands.asFlux()
+                    .publishOn(uiScheduler)
+                    .concatMap(cmd ->
+                            runOnEdt(() -> showMessage(cmd.message))
+                                    .then(Mono.delay(Duration.ofSeconds(1)))
+                                    .doOnSuccess(ignored -> cmd.completion.success())
+                                    .doOnError(cmd.completion::error)
+                    )
+                    .doOnError(e -> log.error("error startUiPipeline", e))
+                    .retry()
+                    .subscribe();
+        }
+
+        private void startCapturePipeline() {
+            Flux.using(
+                            this::openCameraStream,
+                            this::decodeQrFlux,
+                            this::closeCameraStream
+                    )
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .doOnEach(s -> log.info("startCapturePipeline signal: {}", s))
+                    .filter(Objects::nonNull)
+                    .distinctUntilChanged()
+                    .doOnNext(System.out::println)
+                    .doOnNext(this::emitInput)
+                    .doOnError(e -> log.error("startCapturePipeline", e))
+                    .retry()
+                    .subscribe();
+        }
+
+        private CameraSession openCameraStream() {
             var config = Exec.Config.builder()
                     .command("ffmpeg")
-                    .command("-f")
-                    .command("avfoundation")
-                    .command("-framerate")
-                    .command("30")
-                    .command("-i")
-                    .command("0:none")
-                    .command("-f").command("matroska") // ensures streamable output
+                    .command("-f").command("avfoundation")
+                    .command("-framerate").command("30")
+                    .command("-i").command("0:none")
+                    // .command("-f").command("matroska")
+                    // .command("-f").command("mjpeg")
+                    .command("-f").command("rawvideo")
+                    .command("-pix_fmt").command("bgr24")
+                    .command("-video_size").command("1280x720")
                     .command("-")
                     .build();
 
-            var result = Exec.INSTANCE.launch(config);
-            try (var inputStream = result.result().getOut();
-                 var imageStream = images(inputStream)) {
-                var qrStream = imageStream.filter(Objects::nonNull)
-                        // .peek(this::preview)
-                        .map(qrService::decodeQR);
+            var launched = Exec.INSTANCE.launch(config);
+            InputStream inputStream = launched.result().getOut();
 
-                qrStream
-                        .peek(each -> {
-                            System.out.println(each);
-                        })
-                        .filter(Objects::nonNull)
-                        .distinct().forEach(d -> {
-                            input.emitNext(d, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
-                        });
-            }
-        }
-
-        @SneakyThrows
-        Stream<BufferedImage> images(InputStream inputStream) {
-            FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(inputStream);
-            grabber.start();
-            Java2DFrameConverter converter = new Java2DFrameConverter();
-
-            Stream<BufferedImage> imageStream = Stream.generate(() -> {
-                try {
-                    var frame = grabber.grabImage();
-                    if (frame == null) return null;
-                    return converter.convert(frame);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            var close = new Runnable() {
-                @SneakyThrows
-                @Override
-                public void run() {
-                    grabber.close();
-                }
-            };
-            return imageStream.onClose(close);
-        }
-
-
-        @SneakyThrows
-        void processStream(InputStream in, Sinks.Many<String> sink) {
-            try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(in)) {
+            try {
+                var grabber = new FFmpegFrameGrabber(inputStream);
                 grabber.setFormat("rawvideo");
                 grabber.setPixelFormat(avutil.AV_PIX_FMT_BGR24);
-
-                System.out.println("grabber starting");
-                grabber.start();
-                System.out.println("grabber started");
-                try (Java2DFrameConverter converter = new Java2DFrameConverter()) {
-                    var qr = new QrService(new QrService.Config().setSize(new Dimension(400, 400)));
-
-                    System.out.println("hi");
-                    while (!Thread.currentThread().isInterrupted()) {
-                        var frame = grabber.grabImage();
-                        if (frame == null)
-                            continue;
-                        var bufferedImage = converter.convert(frame);
-
-                        String decoded = qr.decodeQR(bufferedImage);
-                        if (decoded != null && !decoded.equals(last)) {
-                            sink.tryEmitNext(decoded);
-                            last = decoded;
-                        }
-                    }
+                grabber.setImageWidth(1280);
+                grabber.setImageHeight(720);
+                grabber.setFrameRate(30);
+                log.info("grabber starting");
+                grabber.start(false);
+                log.info("grabber started");
+                var cameraSession = new CameraSession(inputStream, grabber, new Java2DFrameConverter());
+                log.info("created cameraSession");
+                return cameraSession;
+            } catch (Exception e) {
+                try {
+                    inputStream.close();
+                } catch (Exception ee) {
+                    log.error("openCameraStream", ee);
                 }
+                throw new RuntimeException("Failed to start FFmpegFrameGrabber", e);
             }
         }
 
-        void showMessage(String message) {
+        private Flux<String> decodeQrFlux(CameraSession session) {
+            return Flux.create(sink -> {
+                try {
+                    while (!sink.isCancelled()) {
+                        Frame frame = session.grabber.grabImage();
+                        log.info("decodeQrFlux frame: '{}'", frame);
+                        if (frame == null) {
+                            continue;
+                        }
+
+                        BufferedImage image = session.converter.convert(frame);
+                        log.info("decodeQrFlux image: '{}'", image);
+                        if (image == null) {
+                            continue;
+                        }
+
+                        String decoded = qrService.decodeQR(image);
+                        log.info("decodeQrFlux decoded: '{}'", decoded);
+                        if (decoded != null) {
+                            sink.next(decoded);
+                        }
+                    }
+                } catch (Exception e) {
+                    sink.error(e);
+                }
+            });
+
+            // return Flux.generate(sink -> {
+            //     try {
+            //         log.info("grabbing image");
+            //         Frame frame = session.grabber.grabImage();
+            //         log.info("frame was: {}", frame);
+            //         if (frame == null) {
+            //             return;
+            //         }
+            //
+            //         BufferedImage image = session.converter.convert(frame);
+            //         log.info("image was {}", image);
+            //         if (image == null) {
+            //             return;
+            //         }
+            //
+            //         String decoded = qrService.decodeQR(image);
+            //         if (decoded == null) {
+            //             log.info("decoded value was null");
+            //             return;
+            //         }
+            //
+            //         sink.next(decoded);
+            //     } catch (Exception e) {
+            //         log.error("generation failed", e);
+            //         sink.error(e);
+            //     }
+            // });
+        }
+
+        private void closeCameraStream(CameraSession session) {
+            try {
+                session.close();
+            } catch (Exception e) {
+                log.error("closeCameraStream", e);
+            }
+        }
+
+        private void emitInput(String message) {
+            input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(Duration.ofSeconds(1)));
+        }
+
+        private Mono<Void> runOnEdt(Runnable action) {
+            return Mono.create(sink -> {
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        action.run();
+                        sink.success();
+                    } catch (Throwable t) {
+                        sink.error(t);
+                    }
+                });
+            });
+        }
+
+        private void showMessage(String message) {
             var qrImage = qrService.toQrImage(message);
 
-            if (image == null) {
-                frame = new JFrame();
-                frame.setSize(400, 400);
+            if (frame == null) {
+                frame = new JFrame("QR");
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 frame.getContentPane().setLayout(new FlowLayout());
+
                 image = new ImageIcon(qrImage);
                 frame.getContentPane().add(new JLabel(image));
                 frame.pack();
@@ -174,22 +272,38 @@ public class QrServer {
             }
         }
 
-        Mono<Void> show(ByteBuf byteBuf) {
-            String message = byteBuf.toString(StandardCharsets.UTF_8);
-            var task = Mono.fromRunnable(() -> showMessage(message)).then(Mono.delay(Duration.ofSeconds(1))).then();
-            var completion = Sinks.<Void>one();
-            var wrapped = task.doOnTerminate(completion::tryEmitEmpty);
+        private record UiCommand(String message, MonoSink<Void> completion) {
+        }
 
-            Sinks.EmitResult result;
-            do {
-                result = queue.tryEmitNext(wrapped);
-            } while (result == Sinks.EmitResult.FAIL_NON_SERIALIZED);
+        private record CameraSession(
+                InputStream inputStream,
+                FFmpegFrameGrabber grabber,
+                Java2DFrameConverter converter
+        ) implements AutoCloseable {
+            @Override
+            public void close() throws Exception {
+                Exception first = null;
 
-            if (result.isFailure()) {
-                return Mono.error(new IllegalStateException("Failed to enqueue: " + result));
+                try {
+                    converter.close();
+                } catch (Exception e) {
+                    first = e;
+                }
+
+                try {
+                    grabber.close();
+                } catch (Exception e) {
+                    if (first == null) first = e;
+                }
+
+                try {
+                    inputStream.close();
+                } catch (Exception e) {
+                    if (first == null) first = e;
+                }
+
+                if (first != null) throw first;
             }
-
-            return completion.asMono();
         }
     }
 }
