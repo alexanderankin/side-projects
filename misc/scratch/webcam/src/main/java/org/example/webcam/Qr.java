@@ -10,7 +10,11 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowStateListener;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -21,6 +25,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+import static java.awt.event.WindowEvent.WINDOW_CLOSED;
+import static java.awt.event.WindowEvent.WINDOW_CLOSING;
+
 public class Qr implements Runnable {
 
     static void main() {
@@ -29,11 +36,13 @@ public class Qr implements Runnable {
 
     @SneakyThrows
     public void run() {
+        var qrService = new QrService(new QrService.Config().setSize(new Dimension(400, 400)));
+
         try (var inputStream = Files.newInputStream(Path.of("capture.mkv"));
              var imageStream = images(inputStream)) {
             var qrStream = imageStream.filter(Objects::nonNull)
                     // .peek(this::preview)
-                    .map(this::decodeQR);
+                    .map(qrService::decodeQR);
 
             var counter = new AtomicInteger();
             qrStream.forEach(string -> {
@@ -48,9 +57,8 @@ public class Qr implements Runnable {
         frame.setSize(400, 400);
         frame.getContentPane().setLayout(new FlowLayout());
         frame.getContentPane().add(new JLabel(new ImageIcon(bufferedImage)));
-        var button = new JButton();
+        var button = new JButton("close");
         frame.getContentPane().add(button);
-        frame.pack();
 
         var cdl = new CountDownLatch(1);
         var closed = new AtomicBoolean(false);
@@ -83,6 +91,14 @@ public class Qr implements Runnable {
         timer[0] = new Timer(10_000, ignored -> close.run());
         timer[0].start();
 
+        frame.pack();
+        frame.addWindowListener(new AbstractWindowListener() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.out.println("windowClosing");
+                close.run();
+            }
+        });
         frame.setVisible(true);
         cdl.await();
     }
@@ -112,14 +128,33 @@ public class Qr implements Runnable {
         return imageStream.takeWhile(Objects::nonNull).onClose(close);
     }
 
-    String decodeQR(BufferedImage image) {
-        try {
-            LuminanceSource source = new BufferedImageLuminanceSource(image);
-            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
-            Result result = new MultiFormatReader().decode(bitmap);
-            return result.getText();
-        } catch (NotFoundException e) {
-            return null; // no QR in this frame
+    private static class AbstractWindowListener implements WindowListener {
+        @Override
+        public void windowOpened(WindowEvent e) {
+        }
+
+        @Override
+        public void windowClosing(WindowEvent e) {
+        }
+
+        @Override
+        public void windowClosed(WindowEvent e) {
+        }
+
+        @Override
+        public void windowIconified(WindowEvent e) {
+        }
+
+        @Override
+        public void windowDeiconified(WindowEvent e) {
+        }
+
+        @Override
+        public void windowActivated(WindowEvent e) {
+        }
+
+        @Override
+        public void windowDeactivated(WindowEvent e) {
         }
     }
 }

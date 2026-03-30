@@ -7,6 +7,7 @@ application.mainClass = 'org.example.webcam.FfmpegExample'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     // implementation 'com.github.sarxos:webcam-capture:0.3.12'
     // implementation 'com.github.sarxos:webcam-capture-drivers:0.3.12'
     // implementation 'com.github.sarxos:webcam-capture-driver-opencv:0.3.12'
@@ -23,4 +24,7 @@ dependencies {
     def arch =  System.getProperty('os.arch').toLowerCase().with { ['aarch64': 'arm64', 'amd64': 'x86_64'].getOrDefault(it, it) }
     def os =  System.getProperty('os.name').substring(0, 3).toLowerCase().with { ['mac': 'macosx', 'win': 'windows', 'lin': 'linux'][it] }
     implementation "org.bytedeco:ffmpeg:8.0.1-1.5.13:${os}-${arch}"
+
+    // Source: https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty
+    implementation 'io.projectreactor.netty:reactor-netty'
 }
