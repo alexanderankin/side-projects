@@ -149,7 +149,8 @@ public class QrServer implements Runnable {
         InputStream inputStream = launched.result().getOut();
 
         try {
-            var grabber = new FFmpegFrameGrabber(inputStream);
+            // https://github.com/bytedeco/javacv/issues/1068
+            var grabber = new FFmpegFrameGrabber(inputStream, 1_000_000);
             grabber.setFormat("rawvideo");
             grabber.setPixelFormat(avutil.AV_PIX_FMT_BGR24);
             // grabber.setPixelFormat(avutil.AV_PIX_FMT_UYVY422);
@@ -176,8 +177,9 @@ public class QrServer implements Runnable {
         return Flux.create(sink -> {
             try {
                 while (!sink.isCancelled()) {
+                    long t0 = System.nanoTime();
                     Frame frame = session.grabber.grabImage();
-                    log.trace("decodeQrFlux frame: '{}'", frame);
+                    log.trace("decodeQrFlux frame: '{}' in {}", frame, Duration.ofNanos(System.nanoTime() - t0));
                     if (frame == null) {
                         continue;
                     }
@@ -227,6 +229,7 @@ public class QrServer implements Runnable {
         } else {
             image.setImage(qrImage);
             frame.repaint();
+            frame.setVisible(true);
         }
     }
 

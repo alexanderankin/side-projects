@@ -3,7 +3,7 @@ plugins {
     id 'picocli-conventions'
 }
 
-application.mainClass = 'org.example.webcam.FfmpegExample'
+application.mainClass = 'org.example.webcam.QrServer'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-logging'
