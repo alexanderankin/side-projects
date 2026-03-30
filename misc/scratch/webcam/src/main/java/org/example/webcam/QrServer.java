@@ -1,8 +1,10 @@
 package org.example.webcam;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
@@ -19,14 +21,15 @@ import reactor.netty.http.server.HttpServer;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
 public class QrServer {
+    static JsonMapper jsonMapper = JsonMapper.builder().build();
 
     public static void main(String[] args) {
         log.info("starting QrServer");
@@ -40,7 +43,7 @@ public class QrServer {
                 .route(routes -> {
                     routes.get("/messages", (req, res) -> {
                         log.info("starting /messages sse stream");
-                        return res.sse().send(thing.inputFlux().map(QrServer::toByteBuf), Objects::nonNull);
+                        return res.sse().send(thing.inputFlux().map(QrServer::toData), Objects::nonNull);
                     });
 
                     routes.post("/messages", (req, res) -> {
@@ -55,19 +58,16 @@ public class QrServer {
                 .block();
     }
 
-    private static ByteBuf toByteBuf(String message) {
+    private static ByteBuf toData(String message) {
         try {
-            var charset = StandardCharsets.UTF_8;
-            var out = new ByteArrayOutputStream();
-            out.write("data: ".getBytes(charset));
-            out.write(("{\"message\":\"" + message + "\"}").getBytes(charset));
-            out.write("\n\n".getBytes(charset));
-            return ByteBufAllocator.DEFAULT.buffer().writeBytes(out.toByteArray());
+            var data = "data: " + jsonMapper.writeValueAsString(Map.of("message", message)) + "\n\n";
+            return ByteBufAllocator.DEFAULT.buffer().writeBytes(data.getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             throw new RuntimeException("Failed to encode SSE payload", e);
         }
     }
 
+    @RequiredArgsConstructor
     static final class Thing {
         private final QrService qrService;
 
@@ -80,10 +80,6 @@ public class QrServer {
 
         private volatile JFrame frame;
         private volatile ImageIcon image;
-
-        Thing(QrService qrService) {
-            this.qrService = qrService;
-        }
 
         void start() {
             startUiPipeline();
@@ -123,12 +119,11 @@ public class QrServer {
                             this::closeCameraStream
                     )
                     .subscribeOn(Schedulers.boundedElastic())
-                    .doOnEach(s -> log.info("startCapturePipeline signal: {}", s))
-                    .filter(Objects::nonNull)
+                    .doOnEach(s -> log.trace("startCapturePipeline signal: {}", s))
                     .distinctUntilChanged()
                     .doOnNext(System.out::println)
                     .doOnNext(this::emitInput)
-                    .doOnError(e -> log.error("startCapturePipeline", e))
+                    .doOnError(e -> log.error("startCapturePipeline error", e))
                     .retry()
                     .subscribe();
         }
@@ -142,7 +137,7 @@ public class QrServer {
                     // .command("-f").command("matroska")
                     // .command("-f").command("mjpeg")
 
-                    .command("-vf").command("fps=2,scale=640:480")
+                    .command("-vf").command("fps=10,scale=640:480")
                     .command("-pix_fmt").command("bgr24")
                     .command("-f").command("rawvideo")
 
@@ -161,7 +156,7 @@ public class QrServer {
                 // grabber.setPixelFormat(avutil.AV_PIX_FMT_UYVY422);
                 grabber.setImageWidth(640);
                 grabber.setImageHeight(480);
-                grabber.setFrameRate(2);
+                // grabber.setFrameRate(2);
                 log.info("grabber starting");
                 grabber.start(false);
                 log.info("grabber started");
@@ -183,19 +178,19 @@ public class QrServer {
                 try {
                     while (!sink.isCancelled()) {
                         Frame frame = session.grabber.grabImage();
-                        log.info("decodeQrFlux frame: '{}'", frame);
+                        log.trace("decodeQrFlux frame: '{}'", frame);
                         if (frame == null) {
                             continue;
                         }
 
                         BufferedImage image = session.converter.convert(frame);
-                        log.info("decodeQrFlux image: '{}'", image);
+                        log.trace("decodeQrFlux image: '{}'", image);
                         if (image == null) {
                             continue;
                         }
 
                         String decoded = qrService.decodeQR(image);
-                        log.info("decodeQrFlux decoded: '{}'", decoded);
+                        log.debug("decodeQrFlux decoded: '{}'", decoded);
                         if (decoded != null) {
                             sink.next(decoded);
                         }
@@ -204,34 +199,6 @@ public class QrServer {
                     sink.error(e);
                 }
             });
-
-            // return Flux.generate(sink -> {
-            //     try {
-            //         log.info("grabbing image");
-            //         Frame frame = session.grabber.grabImage();
-            //         log.info("frame was: {}", frame);
-            //         if (frame == null) {
-            //             return;
-            //         }
-            //
-            //         BufferedImage image = session.converter.convert(frame);
-            //         log.info("image was {}", image);
-            //         if (image == null) {
-            //             return;
-            //         }
-            //
-            //         String decoded = qrService.decodeQR(image);
-            //         if (decoded == null) {
-            //             log.info("decoded value was null");
-            //             return;
-            //         }
-            //
-            //         sink.next(decoded);
-            //     } catch (Exception e) {
-            //         log.error("generation failed", e);
-            //         sink.error(e);
-            //     }
-            // });
         }
 
         private void closeCameraStream(CameraSession session) {
@@ -264,7 +231,6 @@ public class QrServer {
 
             if (frame == null) {
                 frame = new JFrame("QR");
-                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                 frame.getContentPane().setLayout(new FlowLayout());
 
                 image = new ImageIcon(qrImage);

@@ -26,5 +26,5 @@ dependencies {
     implementation "org.bytedeco:ffmpeg:8.0.1-1.5.13:${os}-${arch}"
 
     // Source: https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty
-    implementation 'io.projectreactor.netty:reactor-netty'
+    implementation 'io.projectreactor.netty:reactor-netty:1.3.4'
 }
