@@ -21,6 +21,7 @@ import java.util.Map;
 @Data
 public class QrService {
     final Config config;
+    private MultiFormatReader multiFormatReader = new MultiFormatReader();
 
     @SneakyThrows
     public BufferedImage toQrImage(String text) {
@@ -47,7 +48,9 @@ public class QrService {
             hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
             hints.put(DecodeHintType.POSSIBLE_FORMATS, java.util.List.of(BarcodeFormat.QR_CODE));
 
-            Result result = new MultiFormatReader().decode(bitmap, hints);
+            multiFormatReader.setHints(hints);
+            Result result = multiFormatReader.decodeWithState(bitmap);
+            multiFormatReader.reset();
             return result.getText();
         } catch (NotFoundException e) {
             return null; // no QR in this frame

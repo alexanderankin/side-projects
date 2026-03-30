@@ -141,11 +141,15 @@ public class QrServer {
                     .command("-i").command("0:none")
                     // .command("-f").command("matroska")
                     // .command("-f").command("mjpeg")
-                    .command("-f").command("rawvideo")
+
+                    .command("-vf").command("fps=2,scale=640:480")
                     .command("-pix_fmt").command("bgr24")
-                    .command("-video_size").command("1280x720")
+                    .command("-f").command("rawvideo")
+
                     .command("-")
                     .build();
+
+            log.info("running ffmpeg with: {}", String.join(" ", config.getCommands()));
 
             var launched = Exec.INSTANCE.launch(config);
             InputStream inputStream = launched.result().getOut();
@@ -154,9 +158,10 @@ public class QrServer {
                 var grabber = new FFmpegFrameGrabber(inputStream);
                 grabber.setFormat("rawvideo");
                 grabber.setPixelFormat(avutil.AV_PIX_FMT_BGR24);
-                grabber.setImageWidth(1280);
-                grabber.setImageHeight(720);
-                grabber.setFrameRate(30);
+                // grabber.setPixelFormat(avutil.AV_PIX_FMT_UYVY422);
+                grabber.setImageWidth(640);
+                grabber.setImageHeight(480);
+                grabber.setFrameRate(2);
                 log.info("grabber starting");
                 grabber.start(false);
                 log.info("grabber started");
