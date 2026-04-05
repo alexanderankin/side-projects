@@ -1,5 +1,6 @@
 package side.learning;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -72,5 +73,76 @@ class ByteArrayBigIntegerTest {
     })
     void test_parseSerializeStringRadixLarge(String decimalString, String binaryString) {
         assertThat(ByteArrayBigInteger.of(binaryString, 2).toString(10), is(decimalString));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0, 0, 0",
+            "1, 1, 1",
+            "1, 0, 0",
+            "255, 1, 1",
+            "255, 128, 128",
+            "170, 85, 0" // 10101010 & 01010101 = 0
+    })
+    void test_and_basic(int a, int b, int expected) {
+        var result = ByteArrayBigInteger.of(a).and(ByteArrayBigInteger.of(b));
+        assertThat(result.intValue(), is(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "65535, 255, 255", // length mismatch
+            "256, 1, 0",
+            "257, 1, 1",
+    })
+    void test_and_lengthExtension(int a, int b, int expected) {
+        var result = ByteArrayBigInteger.of(a).and(ByteArrayBigInteger.of(b));
+        assertThat(result.intValue(), is(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "65535, 255, 65535",
+            "65536, 1, 65537",
+            "256, 1, 257",
+            "257, 1, 257",
+            "256, 255, 511",
+    })
+    void test_or_lengthExtension(int a, int b, int expected) {
+        var result = ByteArrayBigInteger.of(a).or(ByteArrayBigInteger.of(b));
+        assertThat(result.intValue(), is(expected));
+    }
+
+    @Test
+    void test_and_doesNotMutateInputs() {
+        var a = ByteArrayBigInteger.of(0b1111);
+        var b = ByteArrayBigInteger.of(0b0011);
+
+        var result = a.and(b);
+
+        assertThat(result.intValue(), is(0b0011));
+        assertThat(a.intValue(), is(0b1111)); // unchanged
+        assertThat(b.intValue(), is(0b0011)); // unchanged
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0, 255",
+            "1, 254",
+            "255, 0",
+    })
+    void test_invert_basic(int value, int expected) {
+        var result = ByteArrayBigInteger.of(value).invert();
+        assertThat(result.intValue(), is(expected));
+    }
+
+    @Test
+    void test_invert_doesNotMutateOriginal() {
+        var original = ByteArrayBigInteger.of(0b00001111);
+        assertThat(original.intValue(), is(0b00001111 & 0xff));
+
+        var inverted = original.invert();
+        assertThat(inverted.intValue(), is(~0b00001111 & 0xff));
+        assertThat(original.intValue(), is(0b00001111 & 0xff));
     }
 }

@@ -1,22 +1,23 @@
 package side.learning;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.Arrays;
 
-@SuppressWarnings("Lombok")
+@EqualsAndHashCode(callSuper = false)
 @Data
 @Accessors(chain = true)
 public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayBigInteger> {
-    private static final byte[] DEFAULT_DATA = new byte[0];
-    // private static final int DEFAULT_LENGTH = 1;
+    private static final byte[] DEFAULT_DATA = new byte[]{0};
+    private static final int DEFAULT_LENGTH = 1;
 
     @ToString.Exclude
     byte[] data = DEFAULT_DATA;
-    // int length = DEFAULT_LENGTH;
+    int length = DEFAULT_LENGTH;
     // int lastBitLength;
 
     public static ByteArrayBigInteger of(int i) {
@@ -34,7 +35,7 @@ public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayB
     }
 
     public static ByteArrayBigInteger ofLsb(byte[] data) {
-        return new ByteArrayBigInteger().setData(data);
+        return new ByteArrayBigInteger().setData(data).setLength(data.length);
     }
 
     public static ByteArrayBigInteger ofMsb(byte[] data, boolean inPlace) {
@@ -119,12 +120,12 @@ public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayB
     }
 
     public int length() {
-        return data.length;
+        return length;
     }
 
     @Override
     public int intValue() {
-        int len = Math.min(4, data.length);
+        int len = Math.min(4, length());
         int result = 0;
         for (int i = 0; i < len; i++) {
             result |= (data[i] & 0xFF) << (8 * i);
@@ -134,7 +135,7 @@ public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayB
 
     @Override
     public long longValue() {
-        int len = Math.min(8, data.length);
+        int len = Math.min(8, length());
         long result = 0;
         for (int i = 0; i < len; i++) {
             result |= ((long) data[i] & 0xFF) << (8 * i);
@@ -222,6 +223,8 @@ public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayB
         for (int i = 0; i < otherLength; i++) {
             data[i] &= other.data[i];
         }
+
+        length = otherLength;
     }
 
     public ByteArrayBigInteger and(ByteArrayBigInteger other) {
@@ -268,7 +271,7 @@ public class ByteArrayBigInteger extends Number implements Comparable<ByteArrayB
     }
 
     public ByteArrayBigInteger copy(int length) {
-        return new ByteArrayBigInteger().setData(Arrays.copyOf(data, length));
+        return new ByteArrayBigInteger().setData(Arrays.copyOf(data, length)).setLength(length);
     }
 
 }
