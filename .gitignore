@@ -6,5 +6,6 @@ build/
 !.terraform.lock.hcl
 *.tfstate*
 __pycache__/
+*.egg-info/
 local.properties
 node_modules/
