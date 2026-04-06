@@ -6,7 +6,7 @@ cd "$dir"
 
 mkdir -p build/
 
-ubuntu_version=${UBUNTU_VERSION:-24.04}
+ubuntu_version=${UBUNTU_VERSION}
 
 if ! docker image inspect ubuntu:${ubuntu_version} >/dev/null 2>&1 ; then echo "unknown ubuntu: ${ubuntu_version}"; exit 1; fi
 
@@ -18,7 +18,7 @@ c_v="-v ./build/output-${ubuntu_version}:/output"
 docker create --name get-debs $c_tmp $c_batch $c_no_apt_conf $c_v --init ubuntu:${ubuntu_version} sleep infinity
 
 docker start get-debs
-trap 'docker stop get-debs' EXIT
+trap 'docker stop get-debs ; while docker inspect get-debs > /dev/null 2>&1 ; do sleep 1; done' EXIT
 
 if [[ -z ${CLEAN:-} ]]
 then
@@ -75,6 +75,15 @@ docker exec get-debs bash -c '
   echo "deb [signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release; echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list
   { apt-get update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y docker-ce docker-ce-cli containerd.io=$(apt-cache madison containerd.io | grep " 2\\.1\\.[0-9]\\+" -m1 | cut -d"|" -f 2 | tr -d " ") docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1; } && status_docker=true || status_docker=false
   if ! [[ ${status_docker} == "true" ]]; then echo "not successful: docker"; exit 1; fi;
+
+  # https://www.rabbitmq.com/blog/2025/07/16/debian-apt-repositories-are-moving
+  status_rabbitmq=
+  curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" --output /usr/share/keyrings/com.rabbitmq.team.asc > /dev/null
+  codename=$(. /etc/os-release; echo $VERSION_CODENAME)
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/com.rabbitmq.team.asc] https://deb1.rabbitmq.com/rabbitmq-erlang/ubuntu/$codename $codename main" | tee /etc/apt/sources.list.d/rabbitmq-erlang.list >/dev/null 2>&1
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/com.rabbitmq.team.asc] https://deb1.rabbitmq.com/rabbitmq-server/ubuntu/$codename $codename main" | tee /etc/apt/sources.list.d/rabbitmq-server.list >/dev/null 2>&1
+  { apt update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y rabbitmq-server >/dev/null 2>&1; } && status_rabbitmq=true || status_rabbitmq=false
+  if ! [[ ${status_rabbitmq} == "true" ]]; then echo "not successful: status_rabbitmq"; exit 1; fi;
 
   echo "[$(date --iso=s)] Copying to output"
   cp -v /etc/apt/sources.list /output/sources/;
