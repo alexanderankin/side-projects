@@ -38,6 +38,15 @@ public class PebbleChallengeServerTestContainer extends GenericContainer<PebbleC
         this.waitingFor(Wait.forHttp("/").forPort(MGMT_PORT).forStatusCode(404));
     }
 
+    static String ipv4ToIpv4MappedIpv6(String ipV4) {
+        var split = ipV4.split("\\.");
+        if (split.length != 4) throw new IllegalArgumentException("Expected IPv4 address, got: " + ipV4);
+        return "::ffff:" +
+                Integer.toHexString(Integer.parseInt(split[0]) << 8 | Integer.parseInt(split[1])) +
+                ":" +
+                Integer.toHexString(Integer.parseInt(split[2]) << 8 | Integer.parseInt(split[3]));
+    }
+
     public PebbleChallengeServerTestContainer withDnsOverHttpCert(String dnsOverHttpCert) {
         this.dnsOverHttpCert = dnsOverHttpCert;
         return this;
@@ -74,7 +83,10 @@ public class PebbleChallengeServerTestContainer extends GenericContainer<PebbleC
     @Override
     protected void containerIsStarted(InspectContainerResponse containerInfo, boolean reused) {
         super.containerIsStarted(containerInfo, reused);
-        RestClient.builder().baseUrl(baseUrl()).build().post().uri("/set-default-ipv4").body(Map.of("ip", Objects.requireNonNull(containerInfo.getNetworkSettings().getNetworks().values().iterator().next().getIpAddress()))).retrieve().toBodilessEntity();
+        var ipV4 = Objects.requireNonNull(containerInfo.getNetworkSettings().getNetworks().values().iterator().next().getIpAddress());
+        var client = RestClient.builder().baseUrl(baseUrl()).build();
+        client.post().uri("/set-default-ipv4").body(Map.of("ip", ipV4)).retrieve().toBodilessEntity();
+        client.post().uri("/set-default-ipv6").body(Map.of("ip", ipv4ToIpv4MappedIpv6(ipV4))).retrieve().toBodilessEntity();
     }
 
     public URI baseUrl() {

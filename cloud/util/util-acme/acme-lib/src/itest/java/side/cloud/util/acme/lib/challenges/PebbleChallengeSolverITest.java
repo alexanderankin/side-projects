@@ -61,7 +61,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
         var challengeReady = acmeClient.postResource(sckp, account.id(), c.getUrl(), Map.of(), String.class);
         System.out.println("challengeReady: " + challengeReady);
 
-        Thread.sleep(1000);
+        Thread.sleep(10_000);
         var challenge = acmeClient.getResource(sckp, account.id(), c.getUrl(), String.class);
         System.out.println("challenge: " + challenge);
     }
