@@ -1,5 +1,6 @@
 package side.cloud.util.acme.lib.challenges;
 
+import side.cloud.util.acme.lib.model.AcmeResources.Authorization;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
@@ -16,5 +17,5 @@ public interface ChallengeSolver {
      *
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc8555/#section-8.4">rfc8555 8.4 dns-01</a>
      */
-    void dnsChallenge(Challenge challenge, SupportedClientKeyPair keyPair);
+    void dnsChallenge(Challenge challenge, SupportedClientKeyPair keyPair, Authorization authorization);
 }

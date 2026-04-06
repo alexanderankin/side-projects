@@ -2,6 +2,7 @@ package side.cloud.util.acme.lib.challenges.pebble;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.util.Assert;
 import side.cloud.util.acme.lib.challenges.ChallengeSolver;
 import side.cloud.util.acme.lib.challenges.ChallengeSupport;
 import side.cloud.util.acme.lib.model.AcmeResources;
@@ -17,8 +18,11 @@ public class PebbleChallengeSolver implements ChallengeSolver {
     }
 
     @Override
-    public void dnsChallenge(AcmeResources.Challenge challenge, SupportedClientKeyPair keyPair) {
-
+    public void dnsChallenge(AcmeResources.Challenge challenge, SupportedClientKeyPair keyPair, AcmeResources.Authorization authorization) {
+        var value = authorization.getIdentifier().getValue();
+        var dnsHost = value.startsWith("*.") ? value.substring(2) : value;
+        var txtName = "_acme-challenge." + dnsHost;
+        config.client.addDnsTxt(txtName, ChallengeSupport.hashOfTokenAndKey(keyPair, challenge.getToken()));
     }
 
     @Data
