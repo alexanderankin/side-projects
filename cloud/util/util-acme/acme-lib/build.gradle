@@ -18,6 +18,7 @@ dependencies {
     implementation 'org.springframework.security:spring-security-oauth2-jose'
 
     itestImplementation 'org.testcontainers:testcontainers'
+    itestImplementation project(':cloud:util:util-acme-testcontainers:pebble')
 }
 
 configurations {

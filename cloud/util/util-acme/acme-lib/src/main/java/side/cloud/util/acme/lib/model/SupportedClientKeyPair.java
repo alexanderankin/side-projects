@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -55,6 +56,7 @@ public class SupportedClientKeyPair {
 
     @NotNull
     @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     KeyPair keyPair;
     @NotNull
     SupportedClientKeyPairAlgorithm algorithm;
@@ -145,6 +147,7 @@ public class SupportedClientKeyPair {
         return keyPairPublic.getEncoded();
     }
 
+    @ToString.Include
     @JsonValue
     public String serialize() {
         String pub = B64E.encodeToString(keyPair.getPublic().getEncoded());
@@ -245,6 +248,11 @@ public class SupportedClientKeyPair {
 
         jwsObjectJSON.sign(jwsHeader, nimbusSigner());
         return jwsObjectJSON.serializeFlattened();
+    }
+
+    @SneakyThrows
+    public String jwkPublicKeySha256Thumbprint() {
+        return asJwk().toPublicJWK().computeThumbprint("SHA-256").toString();
     }
 
     public enum Mode {
