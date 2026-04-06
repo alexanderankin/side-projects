@@ -13,7 +13,7 @@ public class PebbleChallengeSolver implements ChallengeSolver {
 
     @Override
     public void httpChallenge(AcmeResources.Challenge challenge, SupportedClientKeyPair keyPair) {
-        config.client.addHttp01(challenge.getToken(), ChallengeSupport.hashOfTokenAndKey(keyPair, challenge.getToken()));
+        config.client.addHttp01(challenge.getToken(), ChallengeSupport.keyAuthorization(keyPair, challenge.getToken()));
     }
 
     @Override
