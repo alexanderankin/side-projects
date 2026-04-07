@@ -99,7 +99,7 @@ public class PebbleChallengeServerClient {
     }
 
     public void addTlsAlpn01(String host, String keyAuthorization) {
-        post("/add-tlsalpn01", Map.of("host", host, "keyAuthorization", keyAuthorization));
+        post("/add-tlsalpn01", Map.of("host", host, "content", keyAuthorization));
     }
 
     public void deleteTlsAlpn01(String host) {

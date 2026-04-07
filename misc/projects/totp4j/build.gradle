@@ -11,6 +11,5 @@ java {
 application { mainClass.set('totp4j.cli.Totp4j') }
 
 dependencies {
-    // https://mvnrepository.com/artifact/commons-codec/commons-codec
-    implementation 'commons-codec:commons-codec:1.17.1'
+    implementation 'commons-codec:commons-codec'
 }

@@ -16,6 +16,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
     implementation 'com.google.crypto.tink:tink:1.20.0'
     implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'commons-codec:commons-codec'
 
     itestImplementation 'org.testcontainers:testcontainers'
     itestImplementation project(':cloud:util:util-acme-testcontainers:pebble')

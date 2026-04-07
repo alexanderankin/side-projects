@@ -11,6 +11,5 @@ java {
 application.mainClass.set('side.pkg.gradle2maven.GradleToMavenCli')
 
 dependencies {
-    // https://mvnrepository.com/artifact/commons-codec/commons-codec
-    implementation 'commons-codec:commons-codec:1.17.1'
+    implementation 'commons-codec:commons-codec'
 }
