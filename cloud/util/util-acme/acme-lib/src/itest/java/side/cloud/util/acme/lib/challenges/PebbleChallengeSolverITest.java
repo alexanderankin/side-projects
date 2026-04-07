@@ -58,7 +58,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver(new PebbleChallengeSolver.Config().setClient(pebbleChallengeClient));
+        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
         solver.httpChallenge(challenge, sckp);
 
         assertThat(challenge.getStatus(), is(pending));
@@ -104,8 +104,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                     .findAny().orElseThrow();
 
             var pebbleChallengeClient = getPebbleChallengeClient();
-            var solver = new PebbleChallengeSolver(new PebbleChallengeSolver.Config()
-                    .setClient(pebbleChallengeClient));
+            var solver = new PebbleChallengeSolver(pebbleChallengeClient);
             solver.dnsChallenge(challenge, sckp, authorization);
 
             assertThat(challenge.getStatus(), is(pending));
@@ -149,7 +148,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver(new PebbleChallengeSolver.Config().setClient(pebbleChallengeClient));
+        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
         solver.tlsAlpnChallenge(challenge, sckp, authorization);
 
         assertThat(challenge.getStatus(), is(pending));
@@ -192,7 +191,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver(new PebbleChallengeSolver.Config().setClient(pebbleChallengeClient));
+        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
         solver.dnsAccountChallenge(challenge, sckp, authorization, account.id());
 
         assertThat(challenge.getStatus(), is(pending));
@@ -235,7 +234,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver(new PebbleChallengeSolver.Config().setClient(pebbleChallengeClient));
+        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
         solver.dnsPersistChallenge(challenge, authorization, account.id());
 
         assertThat(challenge.getStatus(), is(pending));

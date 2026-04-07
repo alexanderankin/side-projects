@@ -9,7 +9,6 @@ import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Base64;
@@ -18,7 +17,6 @@ import java.util.List;
 @Slf4j
 public class ChallengeSupport {
     private static final Base32 BASE_32_ENCODER = Base32.builder().setPadding((byte) 0).get();
-
 
     /**
      * @see ChallengeSolver#httpChallenge(Challenge, SupportedClientKeyPair)
@@ -33,15 +31,15 @@ public class ChallengeSupport {
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc8555/#section-8.4">rfc8555 8.4 dns-01</a>
      */
     @SneakyThrows
-    public static String hashOfTokenAndKey(SupportedClientKeyPair keyPair, String token) {
+    public static String dns01KeyAuthorizationHash(SupportedClientKeyPair keyPair, String token) {
         var keyAuthorization = keyAuthorization(keyPair, token);
-        var digest = MessageDigest.getInstance("SHA-256").digest(keyAuthorization.getBytes(StandardCharsets.US_ASCII));
+        var digest = MessageDigest.getInstance("SHA-256").digest(keyAuthorization.getBytes());
         var authorizedKeysDigest = Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-        log.trace("hashOfTokenAndKey: {} from key pair {} and token {}", authorizedKeysDigest, keyPair, token);
+        log.trace("dns01KeyAuthorizationHash: {} from key pair {} and token {}", authorizedKeysDigest, keyPair, token);
         return authorizedKeysDigest;
     }
 
-    public static String dnsHost(Authorization authorization) {
+    public static String authorizationIdentifierDomain(Authorization authorization) {
         Assert.notNull(authorization, "authorization must not be null");
         Assert.notNull(authorization.getIdentifier(), "authorization.identifier must not be null");
         Assert.hasText(authorization.getIdentifier().getValue(), "authorization.identifier.value must not be blank");
@@ -50,37 +48,30 @@ public class ChallengeSupport {
     }
 
     public static String dns01TxtRecordName(Authorization authorization) {
-        return "_acme-challenge." + dnsHost(authorization);
+        return "_acme-challenge." + authorizationIdentifierDomain(authorization);
     }
 
     @SneakyThrows
-    public static String dnsAccount01Label(URI accountUrl) {
-        Assert.notNull(accountUrl, "accountUrl must not be null");
-        var digest = MessageDigest.getInstance("SHA-256").digest(accountUrl.toString().getBytes(StandardCharsets.US_ASCII));
-        var first10 = Arrays.copyOf(digest, 10);
-        return BASE_32_ENCODER.encodeToString(first10).toLowerCase();
-    }
-
     public static String dnsAccount01TxtRecordName(Authorization authorization, URI accountUrl) {
-        return "_" + dnsAccount01Label(accountUrl) + "._acme-challenge." + dnsHost(authorization);
+        Assert.notNull(accountUrl, "accountUrl must not be null");
+        var digest = MessageDigest.getInstance("SHA-256").digest(accountUrl.toString().getBytes());
+        var first10 = Arrays.copyOf(digest, 10);
+        return "_" + BASE_32_ENCODER.encodeToString(first10).toLowerCase() + "._acme-challenge." + authorizationIdentifierDomain(authorization);
     }
 
     public static String dnsPersist01TxtRecordName(Authorization authorization) {
-        return "_validation-persist." + dnsHost(authorization);
+        return "_validation-persist." + authorizationIdentifierDomain(authorization);
     }
 
     public static String dnsPersist01TxtRecordValue(Challenge challenge, Authorization authorization, URI accountUrl) {
         Assert.notNull(challenge, "challenge must not be null");
         Assert.notNull(authorization, "authorization must not be null");
         Assert.notNull(accountUrl, "accountUrl must not be null");
-        var issuerDomain = firstIssuerDomainName(challenge.getIssuerDomainNames());
+        List<String> issuerDomainNames = challenge.getIssuerDomainNames();
+        Assert.notEmpty(issuerDomainNames, "challenge.issuerDomainNames must not be empty");
+        var issuerDomain = issuerDomainNames.getFirst();
         var policy = authorization.isWildcard() ? "; policy=wildcard" : "";
         return issuerDomain + "; accounturi=" + accountUrl + policy;
-    }
-
-    private static String firstIssuerDomainName(List<String> issuerDomainNames) {
-        Assert.notEmpty(issuerDomainNames, "challenge.issuerDomainNames must not be empty");
-        return issuerDomainNames.getFirst();
     }
 
 }

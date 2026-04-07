@@ -29,8 +29,7 @@ public interface ChallengeSolver {
     void tlsAlpnChallenge(Challenge challenge, SupportedClientKeyPair keyPair, Authorization authorization);
 
     /**
-     * place base64url(sha256(keyAuthorization)) in _{acctlabel}._acme-challenge.{domain} TXT
-     * where acctlabel is base32(sha256(accountURL)[:10]) lower-case.
+     * place base64url(sha256(keyAuthorization)) in _{lower(base32(sha256(accountURL)[:10]))}._acme-challenge.{domain} TXT
      */
     void dnsAccountChallenge(Challenge challenge, SupportedClientKeyPair keyPair, Authorization authorization, URI accountUrl);
 
