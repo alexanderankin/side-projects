@@ -7,5 +7,6 @@ build/
 *.tfstate*
 __pycache__/
 *.egg-info/
+.venv/
 local.properties
 node_modules/
