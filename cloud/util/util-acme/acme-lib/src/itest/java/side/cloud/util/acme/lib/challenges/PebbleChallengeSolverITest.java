@@ -9,7 +9,6 @@ import org.springframework.web.client.RestClient;
 import side.cloud.util.acme.lib.AcmeClient;
 import side.cloud.util.acme.lib.AcmeClientTemplate;
 import side.cloud.util.acme.lib.AcmeLibBaseITest;
-import side.cloud.util.acme.lib.challenges.pebble.PebbleChallengeSolver;
 import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.AcmeResources.Authorization;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
@@ -58,20 +57,25 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
-        solver.httpChallenge(challenge, sckp);
+        var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
+                .setTtl(Duration.ofMinutes(5))
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+        var challengeId = challengeOperations.httpChallenge(challenge, sckp, authorization);
+        try {
+            assertThat(challenge.getStatus(), is(pending));
+            acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
 
-        assertThat(challenge.getStatus(), is(pending));
-        acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
+            var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
+                var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
+                Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
+                return latestChallenge;
+            });
 
-        var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
-            var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
-            Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
-            return latestChallenge;
-        });
-
-        assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
-        assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+            assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
+            assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+        } finally {
+            challengeOperations.cleanup(challengeId);
+        }
     }
 
     @SneakyThrows
@@ -104,20 +108,25 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                     .findAny().orElseThrow();
 
             var pebbleChallengeClient = getPebbleChallengeClient();
-            var solver = new PebbleChallengeSolver(pebbleChallengeClient);
-            solver.dnsChallenge(challenge, sckp, authorization);
+            var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
+                    .setTtl(Duration.ofMinutes(5))
+                    .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+            var challengeId = challengeOperations.dnsChallenge(challenge, sckp, authorization);
+            try {
+                assertThat(challenge.getStatus(), is(pending));
+                acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
 
-            assertThat(challenge.getStatus(), is(pending));
-            acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
+                var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
+                    var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
+                    Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
+                    return latestChallenge;
+                });
 
-            var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
-                var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
-                Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
-                return latestChallenge;
-            });
-
-            assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
-            assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+                assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
+                assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+            } finally {
+                challengeOperations.cleanup(challengeId);
+            }
         }
     }
 
@@ -148,20 +157,25 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
-        solver.tlsAlpnChallenge(challenge, sckp, authorization);
+        var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
+                .setTtl(Duration.ofMinutes(5))
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+        var challengeId = challengeOperations.tlsAlpnChallenge(challenge, sckp, authorization);
+        try {
+            assertThat(challenge.getStatus(), is(pending));
+            acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
 
-        assertThat(challenge.getStatus(), is(pending));
-        acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
+            var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
+                var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
+                Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
+                return latestChallenge;
+            });
 
-        var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
-            var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
-            Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
-            return latestChallenge;
-        });
-
-        assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
-        assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+            assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
+            assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+        } finally {
+            challengeOperations.cleanup(challengeId);
+        }
     }
 
     @SneakyThrows
@@ -191,20 +205,25 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
-        solver.dnsAccountChallenge(challenge, sckp, authorization, account.id());
+        var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
+                .setTtl(Duration.ofMinutes(5))
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+        var challengeId = challengeOperations.dnsAccountChallenge(challenge, sckp, authorization, account.id());
+        try {
+            assertThat(challenge.getStatus(), is(pending));
+            acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
 
-        assertThat(challenge.getStatus(), is(pending));
-        acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
+            var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
+                var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
+                Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
+                return latestChallenge;
+            });
 
-        var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
-            var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
-            Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
-            return latestChallenge;
-        });
-
-        assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
-        assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+            assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
+            assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+        } finally {
+            challengeOperations.cleanup(challengeId);
+        }
     }
 
     @SneakyThrows
@@ -234,19 +253,24 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
                 .findAny().orElseThrow();
 
         var pebbleChallengeClient = getPebbleChallengeClient();
-        var solver = new PebbleChallengeSolver((pebbleChallengeClient));
-        solver.dnsPersistChallenge(challenge, authorization, account.id());
+        var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
+                .setTtl(Duration.ofMinutes(5))
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+        var challengeId = challengeOperations.dnsPersistChallenge(challenge, authorization, account.id());
+        try {
+            assertThat(challenge.getStatus(), is(pending));
+            acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
 
-        assertThat(challenge.getStatus(), is(pending));
-        acmeClient.postResource(sckp, account.id(), challenge.getUrl(), Map.of(), Challenge.class);
+            var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
+                var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
+                Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
+                return latestChallenge;
+            });
 
-        var doneChallenge = Unreliables.retryUntilSuccess(10, TimeUnit.SECONDS, () -> {
-            var latestChallenge = acmeClient.getResource(sckp, account.id(), challenge.getUrl(), Challenge.class);
-            Assert.isTrue(Set.of(valid, invalid).contains(latestChallenge.getStatus()), "status be terminal");
-            return latestChallenge;
-        });
-
-        assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
-        assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+            assertThat("doneChallenge did not reach terminal status before timeout", doneChallenge, is(notNullValue()));
+            assertThat("doneChallenge should be valid but was " + doneChallenge, doneChallenge.getStatus(), is(equalTo(valid)));
+        } finally {
+            challengeOperations.cleanup(challengeId);
+        }
     }
 }

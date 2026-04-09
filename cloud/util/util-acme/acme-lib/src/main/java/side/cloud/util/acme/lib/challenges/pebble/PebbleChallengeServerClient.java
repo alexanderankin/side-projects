@@ -2,12 +2,13 @@ package side.cloud.util.acme.lib.challenges.pebble;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
+import side.cloud.util.acme.lib.challenges.Presenter;
 
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-public class PebbleChallengeServerClient {
+public class PebbleChallengeServerClient implements Presenter {
     private final RestClient restClient;
 
     public PebbleChallengeServerClient(URI baseUrl) {
@@ -26,10 +27,12 @@ public class PebbleChallengeServerClient {
         return restClient.post().uri(path).retrieve().body(String.class);
     }
 
+    @Override
     public void addHttp01(String token, String content) {
         post("/add-http01", Map.of("token", token, "content", content));
     }
 
+    @Override
     public void deleteHttp01(String token) {
         post("/del-http01", Map.of("token", token));
     }
@@ -50,10 +53,12 @@ public class PebbleChallengeServerClient {
         post("/set-default-ipv6", Map.of("ip", ip));
     }
 
+    @Override
     public void addDnsTxt(String host, String value) {
         post("/set-txt", Map.of("host", host, "value", value));
     }
 
+    @Override
     public void deleteDnsTxt(String host) {
         post("/clear-txt", Map.of("host", host));
     }
@@ -98,10 +103,12 @@ public class PebbleChallengeServerClient {
         post("/clear-servfail", Map.of("host", host));
     }
 
+    @Override
     public void addTlsAlpn01(String host, String keyAuthorization) {
         post("/add-tlsalpn01", Map.of("host", host, "content", keyAuthorization));
     }
 
+    @Override
     public void deleteTlsAlpn01(String host) {
         post("/del-tlsalpn01", Map.of("host", host));
     }

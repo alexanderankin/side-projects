@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -67,11 +68,29 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
     }
 
     @Override
-    public long cleanExpiredNonces() {
+    public List<String> cleanExpiredItems(Instant instantNow) {
         log.debug("cleaning expired and used nonces");
-        return jdbcClient.sql(queries.cleanup)
-                .param(Timestamp.from(Instant.now()))
-                .update();
+        var now = Timestamp.from(instantNow);
+        return switch (properties.getDatabaseDriver()) {
+            case POSTGRESQL, SQLITE -> jdbcClient.sql(queries.cleanupReturning)
+                    .param(now)
+                    .query(String.class)
+                    .list();
+
+            // MySQL/MariaDB don't support RETURNING in same way → fallback
+            case null, default -> {
+                var nonces = jdbcClient.sql(queries.cleanupSelect)
+                        .param(now)
+                        .query(String.class)
+                        .list();
+
+                if (!nonces.isEmpty()) {
+                    jdbcClient.sql(queries.cleanup).param(now).update();
+                }
+
+                yield nonces;
+            }
+        };
     }
 
     @Override
@@ -121,6 +140,10 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
                     .useNonce(Queries.USE_NONCE.formatted(properties.getTableName()))
                     .cleanup("DELETE FROM %s WHERE expires_at <= ? OR used_at IS NOT NULL"
                             .formatted(properties.getTableName()))
+                    .cleanupSelect("SELECT nonce FROM %s WHERE expires_at <= ? OR used_at IS NOT NULL"
+                            .formatted(properties.getTableName()))
+                    .cleanupReturning("DELETE FROM %s WHERE expires_at <= ? OR used_at IS NOT NULL RETURNING nonce"
+                            .formatted(properties.getTableName()))
                     .build();
         }
     }
@@ -163,5 +186,7 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
         String exists;
         String useNonce;
         String cleanup;
+        String cleanupSelect;
+        String cleanupReturning;
     }
 }

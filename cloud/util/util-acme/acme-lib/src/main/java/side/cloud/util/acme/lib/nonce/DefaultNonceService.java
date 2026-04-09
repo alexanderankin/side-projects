@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 @Slf4j
@@ -19,7 +20,7 @@ public class DefaultNonceService implements NonceService {
 
     @Override
     public String newNonce() {
-        var newNonce = nonceRepository.newNonce(config.getTtl());
+        var newNonce = nonceRepository.newItem(null, Instant.now(), config.getTtl());
         log.debug("generated newNonce: {}", newNonce);
         return newNonce;
     }
@@ -66,7 +67,7 @@ public class DefaultNonceService implements NonceService {
                 log.trace("loopCleanup: waiting {}", cleanInterval);
                 Thread.sleep(cleanInterval);
 
-                var cleanedExpiredNonces = nonceRepository.cleanExpiredNonces();
+                var cleanedExpiredNonces = (long) nonceRepository.cleanExpiredItems(Instant.now()).size();
                 log.debug("loopCleanup: waited {}, cleaned {} expiredNonces", cleanInterval, cleanedExpiredNonces);
             } catch (InterruptedException e) {
                 break;

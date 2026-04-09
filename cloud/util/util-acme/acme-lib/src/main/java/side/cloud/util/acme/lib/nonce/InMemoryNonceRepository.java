@@ -1,18 +1,18 @@
 package side.cloud.util.acme.lib.nonce;
 
-import lombok.Value;
-
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class InMemoryNonceRepository implements NonceRepository {
     private final SecureRandom RANDOM = new SecureRandom();
     private final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
-    private final Map<String, NonceEntry> nonces = new ConcurrentHashMap<>();
+    private final Map<String, ExpiringValue<String>> nonces = new ConcurrentHashMap<>();
 
     private String generateNonce() {
         byte[] bytes = new byte[32];
@@ -21,7 +21,7 @@ public class InMemoryNonceRepository implements NonceRepository {
     }
 
     @Override
-    public String newNonce(Instant notBefore, Duration expiresIn) {
+    public String newItem(String ignored, Instant notBefore, Duration expiresIn) {
         String nonce;
         Instant expiresAt = notBefore.plus(expiresIn);
 
@@ -29,49 +29,32 @@ public class InMemoryNonceRepository implements NonceRepository {
             nonce = generateNonce();
         } while (nonces.containsKey(nonce));
 
-        nonces.put(nonce, new NonceEntry(notBefore, expiresAt));
+        nonces.put(nonce, new ExpiringValue<>(nonce, notBefore, expiresAt));
         return nonce;
     }
 
     @Override
     public boolean isNonceValid(String nonce) {
-        NonceEntry entry = nonces.get(nonce);
+        ExpiringValue<String> entry = nonces.get(nonce);
         return entry != null && entry.isValidNow(Instant.now());
     }
 
     @Override
     public boolean useNonce(String nonce) {
-        NonceEntry entry = nonces.remove(nonce);
+        ExpiringValue<String> entry = nonces.remove(nonce);
         return entry != null && entry.isValidNow(Instant.now());
     }
 
     @Override
-    public long cleanExpiredNonces() {
-        long removed = 0;
-        Instant now = Instant.now();
-
-        for (Map.Entry<String, NonceEntry> e : nonces.entrySet()) {
-            if (e.getValue().isExpired(now)) {
-                if (nonces.remove(e.getKey(), e.getValue())) {
-                    removed++;
-                }
+    public List<String> cleanExpiredItems(Instant now) {
+        var list = new ArrayList<String>();
+        for (Map.Entry<String, ExpiringValue<String>> e : nonces.entrySet()) {
+            if (!e.getValue().isValidNow(now)) {
+                nonces.remove(e.getKey());
+                list.add(e.getKey());
             }
         }
 
-        return removed;
-    }
-
-    @Value
-    private static class NonceEntry {
-        Instant notBefore;
-        Instant expiresAt;
-
-        boolean isValidNow(Instant now) {
-            return !now.isBefore(notBefore) && now.isBefore(expiresAt);
-        }
-
-        boolean isExpired(Instant now) {
-            return now.isAfter(expiresAt);
-        }
+        return list;
     }
 }

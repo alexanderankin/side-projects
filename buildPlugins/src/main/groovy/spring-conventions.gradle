@@ -9,5 +9,9 @@ dependencies {
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+    // todo remove me when spring boot 4
+    // Source: https://mvnrepository.com/artifact/org.jspecify/jspecify
+    implementation 'org.jspecify:jspecify:1.0.0'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
