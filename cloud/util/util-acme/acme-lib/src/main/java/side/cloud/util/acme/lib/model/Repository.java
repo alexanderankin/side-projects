@@ -22,9 +22,5 @@ public interface Repository<T> {
         public boolean isValidNow(Instant now) {
             return !now.isBefore(notBefore) && now.isBefore(expiresAt);
         }
-
-        public boolean isExpired(Instant now) {
-            return now.isAfter(expiresAt);
-        }
     }
 }

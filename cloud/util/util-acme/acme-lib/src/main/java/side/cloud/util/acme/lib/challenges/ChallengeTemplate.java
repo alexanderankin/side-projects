@@ -12,6 +12,7 @@ import org.springframework.util.Assert;
 import side.cloud.util.acme.lib.challenges.PresentedChallengeRepository.PresentedChallenge;
 import side.cloud.util.acme.lib.model.AcmeResources.Authorization;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
+import side.cloud.util.acme.lib.model.Repository;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 
 import java.net.URI;
@@ -31,7 +32,7 @@ import static org.slf4j.helpers.MessageFormatter.basicArrayFormat;
 public class ChallengeTemplate implements ChallengeOperations {
     private final Config config;
     private final Presenter challengePresenter;
-    private final PresentedChallengeRepository presentedChallengeRepository;
+    private final Repository<PresentedChallenge> presentedChallengeRepository;
     private volatile Thread cleanupThread;
 
     private static Presenter.Type typeOfChallenge(PresentedChallenge item) {

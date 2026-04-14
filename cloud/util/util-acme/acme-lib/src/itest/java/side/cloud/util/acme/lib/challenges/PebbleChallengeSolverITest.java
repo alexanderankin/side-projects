@@ -9,11 +9,14 @@ import org.springframework.web.client.RestClient;
 import side.cloud.util.acme.lib.AcmeClient;
 import side.cloud.util.acme.lib.AcmeClientTemplate;
 import side.cloud.util.acme.lib.AcmeLibBaseITest;
+import side.cloud.util.acme.lib.challenges.PresentedChallengeRepository.PresentedChallenge;
 import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.AcmeResources.Authorization;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
 import side.cloud.util.acme.lib.model.AcmeResources.NewAccount;
 import side.cloud.util.acme.lib.model.AcmeResources.NewOrder;
+import side.cloud.util.acme.lib.model.DefaultInMemoryRepository;
+import side.cloud.util.acme.lib.model.Repository;
 import side.cloud.util.acme.lib.model.SupportedClientKeyPairAlgorithm;
 
 import java.net.URI;
@@ -22,6 +25,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -30,6 +34,10 @@ import static side.cloud.util.acme.lib.model.AcmeIdentifier.AcmeIdentifierType.d
 import static side.cloud.util.acme.lib.model.AcmeResources.Challenge.ChallengeStatus.*;
 
 class PebbleChallengeSolverITest extends AcmeLibBaseITest {
+    private static Repository<PresentedChallenge> getPresentedChallengeRepository() {
+        return new DefaultInMemoryRepository<>(PresentedChallenge.class, PresentedChallenge::key, new ConcurrentHashMap<>());
+    }
+
     @SneakyThrows
     @Test
     void test_httpChallenge() {
@@ -59,7 +67,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
         var pebbleChallengeClient = getPebbleChallengeClient();
         var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
                 .setTtl(Duration.ofMinutes(5))
-                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, getPresentedChallengeRepository());
         var challengeId = challengeOperations.httpChallenge(challenge, sckp, authorization);
         try {
             assertThat(challenge.getStatus(), is(pending));
@@ -110,7 +118,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
             var pebbleChallengeClient = getPebbleChallengeClient();
             var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
                     .setTtl(Duration.ofMinutes(5))
-                    .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+                    .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, getPresentedChallengeRepository());
             var challengeId = challengeOperations.dnsChallenge(challenge, sckp, authorization);
             try {
                 assertThat(challenge.getStatus(), is(pending));
@@ -159,7 +167,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
         var pebbleChallengeClient = getPebbleChallengeClient();
         var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
                 .setTtl(Duration.ofMinutes(5))
-                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, getPresentedChallengeRepository());
         var challengeId = challengeOperations.tlsAlpnChallenge(challenge, sckp, authorization);
         try {
             assertThat(challenge.getStatus(), is(pending));
@@ -207,7 +215,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
         var pebbleChallengeClient = getPebbleChallengeClient();
         var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
                 .setTtl(Duration.ofMinutes(5))
-                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, getPresentedChallengeRepository());
         var challengeId = challengeOperations.dnsAccountChallenge(challenge, sckp, authorization, account.id());
         try {
             assertThat(challenge.getStatus(), is(pending));
@@ -255,7 +263,7 @@ class PebbleChallengeSolverITest extends AcmeLibBaseITest {
         var pebbleChallengeClient = getPebbleChallengeClient();
         var challengeOperations = new ChallengeTemplate(new ChallengeTemplate.Config()
                 .setTtl(Duration.ofMinutes(5))
-                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, new InMemoryPresentedChallengeRepository());
+                .setCleanInterval(Duration.ofMinutes(1)), pebbleChallengeClient, getPresentedChallengeRepository());
         var challengeId = challengeOperations.dnsPersistChallenge(challenge, authorization, account.id());
         try {
             assertThat(challenge.getStatus(), is(pending));

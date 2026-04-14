@@ -4,15 +4,18 @@ import org.junit.jupiter.api.Test;
 import side.cloud.util.acme.lib.challenges.PresentedChallengeRepository.PresentedChallenge;
 import side.cloud.util.acme.lib.model.AcmeResources.Authorization;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
+import side.cloud.util.acme.lib.model.DefaultInMemoryRepository;
+import side.cloud.util.acme.lib.model.Repository;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-class InMemoryPresentedChallengeRepositoryTest {
-    private final InMemoryPresentedChallengeRepository repository = new InMemoryPresentedChallengeRepository();
+class DefaultInMemoryRepositoryTest {
+    private final Repository<PresentedChallenge> repository = new DefaultInMemoryRepository<>(PresentedChallenge.class, PresentedChallenge::key, new ConcurrentHashMap<>());
 
     @Test
     void cleanupChallenge() {
@@ -23,7 +26,9 @@ class InMemoryPresentedChallengeRepositoryTest {
                         "value"),
                 Instant.now(), Duration.ofSeconds(30));
 
+        assertThat(repository.isItemValid(challengeId), is(notNullValue()));
         var removed = repository.useItem(challengeId);
+        assertThat(repository.isItemValid(challengeId), is(nullValue()));
 
         assertThat(removed, is(notNullValue()));
         assertThat(repository.isItemValid(challengeId), is(nullValue()));
