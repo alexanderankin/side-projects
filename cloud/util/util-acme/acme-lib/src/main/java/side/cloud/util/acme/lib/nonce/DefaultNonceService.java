@@ -27,14 +27,14 @@ public class DefaultNonceService implements NonceService {
 
     @Override
     public boolean nonceValid(String nonce) {
-        var nonceValid = nonceRepository.isNonceValid(nonce);
+        var nonceValid = nonceRepository.isItemValid(nonce) != null;
         log.debug("nonceValid found that {} is valid: {}", nonce, nonceValid);
         return nonceValid;
     }
 
     @Override
     public boolean useNonce(String nonce) {
-        var usedNonce = nonceRepository.useNonce(nonce);
+        var usedNonce = nonceRepository.useItem(nonce) != null;
         log.debug("useNonce used nonce {} successfully: {}", nonce, usedNonce);
         return usedNonce;
     }

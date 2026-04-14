@@ -34,15 +34,15 @@ public class InMemoryNonceRepository implements NonceRepository {
     }
 
     @Override
-    public boolean isNonceValid(String nonce) {
+    public String isItemValid(String nonce) {
         ExpiringValue<String> entry = nonces.get(nonce);
-        return entry != null && entry.isValidNow(Instant.now());
+        return entry != null && entry.isValidNow(Instant.now()) ? nonce : null;
     }
 
     @Override
-    public boolean useNonce(String nonce) {
+    public String useItem(String nonce) {
         ExpiringValue<String> entry = nonces.remove(nonce);
-        return entry != null && entry.isValidNow(Instant.now());
+        return entry != null && entry.isValidNow(Instant.now()) ? nonce : null;
     }
 
     @Override

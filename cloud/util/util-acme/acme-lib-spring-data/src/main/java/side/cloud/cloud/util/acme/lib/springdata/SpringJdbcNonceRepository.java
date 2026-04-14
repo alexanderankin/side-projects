@@ -29,7 +29,7 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
     private Queries queries;
 
     @Override
-    public String newNonce(Instant notBefore, Duration expiresIn) {
+    public String newItem(String ignored, Instant notBefore, Duration expiresIn) {
         var bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         var newNonce = HexFormat.of().formatHex(bytes);
@@ -45,7 +45,7 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
     }
 
     @Override
-    public boolean isNonceValid(String nonce) {
+    public String isItemValid(String nonce) {
         var now = Timestamp.from(Instant.now());
 
         var isValid = switch (properties.getDatabaseDriver()) {
@@ -55,16 +55,16 @@ public class SpringJdbcNonceRepository implements NonceRepository, InitializingB
                     jdbcClient.sql(queries.exists).params(nonce, now, now).query(Integer.class).optional().isPresent();
         };
         log.debug("checking nonce {} and it is valid: {}", nonce, isValid);
-        return isValid;
+        return isValid ? nonce : null;
     }
 
     @Override
-    public boolean useNonce(String nonce) {
+    public String useItem(String nonce) {
         var now = Timestamp.from(Instant.now());
         var updated = jdbcClient.sql(queries.useNonce).params(now, nonce, now, now).update();
         var successful = updated == 1;
         log.debug("using nonce {} was successful: {} (updated: {})", nonce, successful, updated);
-        return successful;
+        return successful ? nonce : null;
     }
 
     @Override
