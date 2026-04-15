@@ -1,6 +1,8 @@
 package side.cloud.util.acme.lib.nonce;
 
 public interface NonceService {
+    String generateNonce();
+
     String newNonce();
 
     boolean nonceValid(String nonce);

@@ -34,9 +34,12 @@ import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.springframework.util.Assert;
 import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.JwkAcmeJwsHeader;
 import side.cloud.util.acme.lib.model.AcmeJwsObject.AcmeJwsHeader.KidAcmeJwsHeader;
+import side.cloud.util.acme.lib.model.AcmeJwsObject.JsonAcmeJwsObject;
 
+import java.net.URI;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.interfaces.ECPrivateKey;
@@ -78,8 +81,8 @@ public class SupportedClientKeyPair {
 
         var supportedAlg = SupportedClientKeyPairAlgorithm.valueOf(alg);
         KeyFactory kf = supportedAlg.keyFactory();
-        var pub = kf.generatePublic(new X509EncodedKeySpec(B64D.decode(parts[2])));
-        var priv = kf.generatePrivate(new PKCS8EncodedKeySpec(B64D.decode(parts[3])));
+        var pub = parts[2].isEmpty() ? null : kf.generatePublic(new X509EncodedKeySpec(B64D.decode(parts[2])));
+        var priv = parts[3].isEmpty() ? null : kf.generatePrivate(new PKCS8EncodedKeySpec(B64D.decode(parts[3])));
 
         return new SupportedClientKeyPair()
                 .setAlgorithm(supportedAlg)
@@ -107,6 +110,30 @@ public class SupportedClientKeyPair {
         if (key.length != 32)
             throw new IllegalStateException("Expected 32 byte Ed25519 public key, got " + key.length);
         return key;
+    }
+
+    @SneakyThrows
+    public static SupportedClientKeyPair parseNewJwkFromJws(String jwsString) {
+        var jwsJson = JWSObjectJSON.parse(jwsString);
+        Assert.isTrue(jwsJson.getSignatures().size() == 1, "must have exactly one signature");
+        var sig = jwsJson.getSignatures().getFirst();
+
+        var header = sig.getHeader();
+        var jwk = header.getJWK();
+        if (jwk == null) {
+            throw new JOSEException("newAccount JWS must contain 'jwk'");
+        }
+
+        return new SupportedClientKeyPair()
+                .setAlgorithm(SupportedClientKeyPairAlgorithm.valueOf(header.getAlgorithm().getName()))
+                .setKeyPair(
+                        new KeyPair(switch (jwk) {
+                            case RSAKey rsaKey -> rsaKey.toPublicKey();
+                            case ECKey ecKey -> ecKey.toPublicKey();
+                            case OctetKeyPair okp -> okp.toPublicKey();
+                            case null, default -> throw new JOSEException("Unsupported JWK type");
+                        }, null)
+                );
     }
 
     @AssertTrue
@@ -150,10 +177,19 @@ public class SupportedClientKeyPair {
     @ToString.Include
     @JsonValue
     public String serialize() {
-        String pub = B64E.encodeToString(keyPair.getPublic().getEncoded());
-        String priv = B64E.encodeToString(keyPair.getPrivate().getEncoded());
+        String pub = keyPair.getPublic() == null ? "" : B64E.encodeToString(keyPair.getPublic().getEncoded());
+        String priv = keyPair.getPrivate() == null ? "" : B64E.encodeToString(keyPair.getPrivate().getEncoded());
 
         return "v1:" + algorithm.name() + ":" + pub + ":" + priv;
+    }
+
+    public SupportedClientKeyPair asPublic() {
+        if (keyPair.getPrivate() == null)
+            return this;
+
+        return new SupportedClientKeyPair()
+                .setAlgorithm(algorithm)
+                .setKeyPair(new KeyPair(keyPair.getPublic(), null));
     }
 
     @SneakyThrows
@@ -235,7 +271,7 @@ public class SupportedClientKeyPair {
     public String signAndSerialize(AcmeJwsObject jwsObject) {
         JWSObjectJSON jwsObjectJSON = switch (jwsObject) {
             case AcmeJwsObject.BlankAcmeJwsObject blank -> new JWSObjectJSON(new Payload(blank.getPayload()));
-            case AcmeJwsObject.JsonAcmeJwsObject json -> new JWSObjectJSON(new Payload(json.getPayload()));
+            case JsonAcmeJwsObject json -> new JWSObjectJSON(new Payload(json.getPayload()));
         };
 
         var jwsHeaderBuilder = new JWSHeader.Builder(JWSAlgorithm.parse(algorithm.name()));
@@ -248,6 +284,45 @@ public class SupportedClientKeyPair {
 
         jwsObjectJSON.sign(jwsHeader, nimbusSigner());
         return jwsObjectJSON.serializeFlattened();
+    }
+
+    @SneakyThrows
+    public AcmeJwsObject verifyAndDeserialize(String jwsString) {
+        var jwsJson = JWSObjectJSON.parse(jwsString);
+        if (jwsJson.getSignatures().size() != 1) {
+            throw new JOSEException("we need exactly one JWS signature here");
+        }
+
+        var signature = jwsJson.getSignatures().getFirst();
+        var header = signature.getHeader();
+        if (!JWSAlgorithm.parse(algorithm.name()).equals(header.getAlgorithm())) {
+            throw new JOSEException("Unexpected JWS algorithm");
+        }
+
+        if (header.getJWK() != null && header.getKeyID() != null) {
+            throw new JOSEException("Both jwk and kid present");
+        }
+
+        if (header.getJWK() == null && header.getKeyID() == null) {
+            throw new JOSEException("Neither jwk nor kid present");
+        }
+
+        if (!signature.verify(nimbusVerifier())) {
+            throw new JOSEException("Invalid JWS signature");
+        }
+
+        return new JsonAcmeJwsObject()
+                .setPayload(jwsJson.getPayload().toJSONObject())
+                .setHeaders(
+                        (
+                                header.getKeyID() != null
+                                        ? new KidAcmeJwsHeader().setKid(URI.create(header.getKeyID()))
+                                        : new JwkAcmeJwsHeader().setJwk(header.getJWK())
+                        )
+                                .setAlg(header.getAlgorithm().getName())
+                                .setUrl(URI.create(String.valueOf(header.getCustomParam("url"))))
+                                .setNonce(String.valueOf(header.getCustomParams().get("nonce")))
+                );
     }
 
     @SneakyThrows

@@ -12,5 +12,6 @@ public class AcmeIdentifier {
 
     public enum AcmeIdentifierType {
         dns,
+        ip,
     }
 }

@@ -12,6 +12,7 @@ import side.cloud.util.acme.lib.nonce.NonceRepository;
 import side.cloud.util.acme.lib.nonce.NonceRepositoryTestSuite;
 
 import java.security.SecureRandom;
+import java.util.Map;
 
 class SpringJdbcNonceRepositoryITest {
     static DataSourceProperties containerToDsp(JdbcDatabaseContainer<?> container) {
@@ -25,11 +26,10 @@ class SpringJdbcNonceRepositoryITest {
 
     static SpringJdbcNonceRepository driverToRepo(DatabaseDriver driver, DataSourceProperties dataSourceProperties) {
         var repo = new SpringJdbcNonceRepository(
-                new SpringJdbcNonceRepositoryProperties()
-                        .setTableName("nonces")
+                new SpringJdbcDefaultRepositoryProperties()
+                        .setTableNames(Map.of(SpringJdbcDefaultRepositoryProperties.AcmeTable.NONCE, "nonces"))
                         .setDatabaseDriver(driver),
-                JdbcClient.create(dataSourceProperties.initializeDataSourceBuilder().build()),
-                new SecureRandom()
+                JdbcClient.create(dataSourceProperties.initializeDataSourceBuilder().build())
         );
 
         repo.afterPropertiesSet();

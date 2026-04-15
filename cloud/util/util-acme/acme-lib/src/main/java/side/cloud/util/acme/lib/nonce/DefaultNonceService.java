@@ -6,21 +6,33 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.crypto.prng.DigestRandomGenerator;
 
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
 public class DefaultNonceService implements NonceService {
+    private final SecureRandom RANDOM = new SecureRandom();
+    private final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
     private final Config config;
     private final NonceRepository nonceRepository;
     private volatile Thread cleanupThread;
 
     @Override
+    public String generateNonce() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return ENCODER.encodeToString(bytes);
+    }
+
+    @Override
     public String newNonce() {
-        var newNonce = nonceRepository.newItem(null, Instant.now(), config.getTtl());
+        var newNonce = nonceRepository.newItem(generateNonce(), Instant.now(), config.getTtl());
         log.debug("generated newNonce: {}", newNonce);
         return newNonce;
     }

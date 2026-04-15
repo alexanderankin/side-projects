@@ -9,17 +9,19 @@ import org.springframework.boot.jdbc.DatabaseDriver;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.Map;
+
 @Data
 @Accessors(chain = true)
 @Component
-@ConfigurationProperties(prefix = "acme-lib.springdata.nonce-repository")
+@ConfigurationProperties(prefix = "acme-lib.springdata.jdbc-repository")
 @Validated
-public class SpringJdbcNonceRepositoryProperties {
+public class SpringJdbcDefaultRepositoryProperties {
     /**
      * table to store the nonces in
      */
     @NotNull
-    String tableName;
+    Map<AcmeTable, String> tableNames;
 
     /**
      * how many random bytes to use per nonce to form a hex string
@@ -71,5 +73,12 @@ public class SpringJdbcNonceRepositoryProperties {
                 CREATE INDEX IF NOT EXISTS idx___TABLE_NAME___used_at
                     ON __TABLE_NAME__ (used_at);
                 """;
+    }
+
+    public enum AcmeTable {
+        NONCE,
+        ACCOUNT,
+        ORDER,
+        CERTIFICATE,
     }
 }

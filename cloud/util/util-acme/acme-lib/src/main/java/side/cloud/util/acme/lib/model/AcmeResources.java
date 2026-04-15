@@ -180,12 +180,12 @@ public interface AcmeResources {
          * order.  The result of a successful finalization will be the
          * population of the certificate URL for the order.
          */
-        String finalize;
+        URI finalize;
         /**
          * A URL for the certificate that has
          * been issued in response to this order.
          */
-        String certificate;
+        URI certificate;
 
         /**
          * <pre>
