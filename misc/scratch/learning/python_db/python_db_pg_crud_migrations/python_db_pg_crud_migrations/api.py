@@ -2,17 +2,19 @@ import uuid
 from contextlib import asynccontextmanager
 from logging import INFO, basicConfig, getLogger
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from python_db_pg_crud_migrations.data_point_demo import DataPointQuery, DataPointTD
 from python_db_pg_crud_migrations.db import SessionLocal
-from python_db_pg_crud_migrations import migrations
+from python_db_pg_crud_migrations import data_point_demo, migrations
 from python_db_pg_crud_migrations import crud
 from python_db_pg_crud_migrations.models import NewCategory
 
 basicConfig(level=INFO)
 logger = getLogger(__name__)
 logger.info("created logger")
+
 
 # noinspection PyUnusedLocal
 @asynccontextmanager
@@ -55,7 +57,9 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/categories/{category_id}")
-def update_category(category_id: int, new_category: NewCategory, db: Session = Depends(get_db)):
+def update_category(
+    category_id: int, new_category: NewCategory, db: Session = Depends(get_db)
+):
     obj = crud.update_category(db, category_id, new_category.name)
     if not obj:
         raise HTTPException(404)
@@ -101,3 +105,51 @@ def delete_example(example_id: uuid.UUID, db: Session = Depends(get_db)):
     if not crud.delete_example(db, example_id):
         raise HTTPException(404)
     return {"ok": True}
+
+
+@app.post("/data-points/bulk")
+def create_data_points_bulk(
+    data_points: list[DataPointTD], db: Session = Depends(get_db)
+):
+    return data_point_demo.create_data_points(db, data_points)
+
+
+@app.get("/data-points")
+def get_data_points(
+    db: Session = Depends(get_db),
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int | None = Query(None, ge=0),
+    last_id: int | None = Query(None, ge=1),
+    x: int | None = Query(None),
+    y: int | None = Query(None),
+    z: int | None = Query(None),
+    x_min: int | None = Query(None),
+    y_min: int | None = Query(None),
+    z_min: int | None = Query(None),
+    x_max: int | None = Query(None),
+    y_max: int | None = Query(None),
+    z_max: int | None = Query(None),
+):
+    if offset is not None and last_id is not None:
+        raise HTTPException(
+            status_code=400, detail="offset/last_id are mutually exclusive"
+        )
+
+    query = DataPointQuery(x=x, y=y, z=z) if any((x, y, z)) else None
+    q_min = (
+        DataPointQuery(x=x_min, y=y_min, z=z_min)
+        if any((x_min, y_min, z_min))
+        else None
+    )
+    q_max = (
+        DataPointQuery(x=x_max, y=y_max, z=z_max)
+        if any((x_max, y_max, z_max))
+        else None
+    )
+
+    if last_id is not None:
+        return data_point_demo.get_all_keyset(db, limit, last_id, query, q_min, q_max)
+    else:
+        return data_point_demo.get_all_offset(
+            db, limit, offset or 0, query, q_min, q_max
+        )

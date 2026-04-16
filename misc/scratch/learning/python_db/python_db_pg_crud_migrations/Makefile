@@ -5,8 +5,18 @@ init:
 
 .PHONY: install
 install:
-	pip install --editable . --config-setting editable_mode=strict
+	[ -d .venv/bin ] && . .venv/bin/activate || . .venv/Scripts/activate; pip install --editable . --config-setting editable_mode=strict
 
 .PHONY: ci
 ci:
-	pip install --group dev --editable . --config-setting editable_mode=strict
+	[ -d .venv/bin ] && . .venv/bin/activate || . .venv/Scripts/activate; pip install --group dev --editable . --config-setting editable_mode=strict
+
+
+.PHONY: lint
+lint:
+	[ -d .venv/bin ] && . .venv/bin/activate || . .venv/Scripts/activate; ruff check ./python_db_pg_crud_migrations/; ruff format ./python_db_pg_crud_migrations/; ty check ./python_db_pg_crud_migrations/
+
+
+.PHONY: test
+test:
+	[ -d .venv/bin ] && . .venv/bin/activate || . .venv/Scripts/activate; pytest tests/

@@ -2,7 +2,7 @@
 name = "fastapi-alembic-app"
 version = "0.1.0"
 description = "FastAPI app with Alembic migrations and PostgreSQL"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
@@ -17,6 +17,7 @@ dev = [
     "testcontainers[postgres]",
     "faker",
     "ruff",
+    "ty",
 ]
 
 [build-system]
