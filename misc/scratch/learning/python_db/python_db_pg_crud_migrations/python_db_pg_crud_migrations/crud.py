@@ -54,9 +54,7 @@ def get_example(db: Session, example_id: uuid.UUID) -> Example | None:
 
 
 def list_examples_by_category(db: Session, category_id: int):
-    return db.scalars(
-        select(Example).where(Example.category_id == category_id)
-    ).all()
+    return db.scalars(select(Example).where(Example.category_id == category_id)).all()
 
 
 def update_example(db: Session, example_id: uuid.UUID, name: str):
