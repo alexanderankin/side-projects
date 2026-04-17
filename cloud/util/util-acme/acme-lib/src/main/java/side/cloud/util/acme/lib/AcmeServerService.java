@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 import org.springframework.web.util.UriComponentsBuilder;
 import side.cloud.util.acme.lib.challenges.KnownChallengeType;
 import side.cloud.util.acme.lib.model.AcmeError;
@@ -24,6 +25,7 @@ import side.cloud.util.acme.lib.model.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.nonce.NonceService;
 
 import java.net.URI;
+import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -133,13 +135,6 @@ public class AcmeServerService {
             authorizations.add(new ResourceWithId<>(authorization, authorizationUri));
         }
 
-        var authorizationUris = authorizations.stream()
-                .map(a -> this.authorizationRepository.newItem(new OrderAuthorization(orderId, a.resource()),
-                        newOrder.getNotBefore(),
-                        newOrder.getNotBefore().until(newOrder.getNotAfter())))
-                .map(id -> UriComponentsBuilder.fromUri(orderId).path("authorizations").path(id).build().toUri())
-                .toList();
-
         var order = new Order()
                 .setStatus(Order.OrderStatus.pending)
                 .setExpires(newOrder.getNotAfter())
@@ -147,9 +142,10 @@ public class AcmeServerService {
                 .setNotBefore(newOrder.getNotBefore())
                 .setNotAfter(newOrder.getNotAfter())
                 .setError(null)
-                .setAuthorizations(authorizationUris)
+                // .setAuthorizations()
                 .setFinalize(UriComponentsBuilder.fromUri(accountUri).path("finalize").build().toUri())
                 .setCertificate(null);
+        order.setAuthorizations(authorizationUris);
 
         orderRepository.newItem(
                 new AccountOrder(accountUri, order, authorizations),
@@ -173,23 +169,49 @@ public class AcmeServerService {
         return KnownChallengeType.ALL_TYPES;
     }
 
-    public ResourceWithId<Authorization> getAuthorization(URI uri, String authorizationId) {
+    @SneakyThrows
+    public ResourceWithId<Authorization> getAuthorization(URI accountId, JWSObjectJSON json, String authorizationId) {
         var authorization = authorizationRepository.isItemValid(authorizationId);
-        // authorization.authorization()
-        throw new UnsupportedOperationException();
+        if (authorization == null)
+            throw new IllegalArgumentException("authorizationId is not valid");
+        var account = accountRepository.isItemValid(authorization.accountOrder().accountId().toString());
+        if (account == null)
+            throw new IllegalArgumentException("account is not valid");
+
+        var actualKid = json.getSignatures().getFirst().getUnprotectedHeader().getKeyID();
+        var expectedKid = accountId.toString();
+        Assert.isTrue(MessageDigest.isEqual(actualKid.getBytes(), expectedKid.getBytes()), "request is not using the right account key");
+        json.getSignatures().getFirst().verify(SupportedClientKeyPair.deserialize(account.keyPair()).nimbusVerifier());
+
+        return authorization.authorization();
     }
 
-    public ResourceWithId<Challenge> getChallenge(URI uri, String authorizationId, String challengeId) {
-        throw new UnsupportedOperationException();
+    public ResourceWithId<Challenge> getChallenge(URI accountId, JWSObjectJSON json, String authorizationId, String challengeId) {
+        var authorization = getAuthorization(accountId, json, authorizationId);
+        return authorization.resource().getChallenges().stream()
+                .filter(c -> UriComponentsBuilder.fromUri(c.getUrl()).build().getPathSegments().getLast().equals(challengeId))
+                .findAny()
+                .map(c -> new ResourceWithId<>(c, c.getUrl()))
+                .orElseThrow();
     }
 
+    // this is the account
     public record AccountKeyPair(Account account, String keyPair) {
     }
 
+    // this is the order
     public record AccountOrder(URI accountId, Order order, List<ResourceWithId<Authorization>> authorizations) {
     }
 
-    public record OrderAuthorization(URI orderId, Authorization authorization) {
+    // this is purely for returning things
+    public record OrderAuthorization(AccountOrder accountOrder, ResourceWithId<Authorization> authorization) {
+        public Authorization getAuthorization() {
+            return authorization.resource();
+        }
+
+        public URI getAuthorizationId() {
+            return authorization.id();
+        }
     }
 
     @Data
