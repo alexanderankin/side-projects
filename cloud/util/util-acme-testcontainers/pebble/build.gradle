@@ -1,9 +1,0 @@
-plugins {
-    id 'spring-conventions'
-    id 'java-library'
-}
-
-dependencies {
-    implementation 'org.springframework:spring-web'
-    implementation 'org.testcontainers:testcontainers'
-}
