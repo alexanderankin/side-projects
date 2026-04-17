@@ -1,7 +1,16 @@
 import uuid
-from sqlalchemy.orm import Session
+from typing import Any, Sequence, cast
+
+from sqlalchemy.orm import Mapper, Session
 from sqlalchemy import select
-from python_db_pg_crud_migrations.models import Category, Example
+
+from python_db_pg_crud_migrations.data_point_demo import DataPointQuery
+from python_db_pg_crud_migrations.models import (
+    Category,
+    DataPoint,
+    DataPointEntity,
+    Example,
+)
 
 
 # ---- Category ----
@@ -74,3 +83,42 @@ def delete_example(db: Session, example_id: uuid.UUID):
     db.delete(obj)
     db.commit()
     return True
+
+
+def data_point_create_bulk(db: Session, data_points: list[DataPoint]):
+    d = [e.__dict__ for e in data_points]
+    data_point_entity_mapper = cast(Mapper[Any], cast(object, DataPointEntity))
+    db.bulk_insert_mappings(data_point_entity_mapper, d)
+    db.commit()
+
+
+def data_point_get_all(
+    db: Session,
+    limit: int,
+    offset: int | None,
+    last_id: int | None,
+    query: DataPointQuery | None,
+    range_min: DataPointQuery | None,
+    range_max: DataPointQuery | None,
+) -> Sequence[DataPointEntity]:
+    statement = select(DataPointEntity).limit(limit)
+
+    if offset is not None:
+        statement = statement.offset(offset)
+    elif last_id is not None:
+        statement = statement.where(DataPointEntity.id > last_id)
+
+    fields = ("x", "y", "z")
+    if query is not None:
+        for each_field in fields:
+            if (q_val := query.get(each_field)) is not None:
+                statement = statement.where(DataPointEntity.x == q_val)
+    if range_min is not None:
+        for each_field in fields:
+            if (r_min_val := range_min.get(each_field)) is not None:
+                statement = statement.where(DataPointEntity.x >= r_min_val)
+    if range_max is not None:
+        for each_field in fields:
+            if (r_max_val := range_max.get(each_field)) is not None:
+                statement = statement.where(DataPointEntity.x < r_max_val)
+    return db.execute(statement).scalars().all()

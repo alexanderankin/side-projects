@@ -1,9 +1,13 @@
+import base64
+
+import pytest
 import requests
 
-from python_db_pg_crud_migrations.data_point_demo import json_serialize_data_point
+from python_db_pg_crud_migrations.data_point_demo import json_deserialize_data_point, json_serialize_data_point
 
 
-def test_bulk_insert_and_offset_pagination(api_base_url, faker):
+@pytest.mark.parametrize("url_prefix", ["sqlalchemy", "manual"])
+def test_bulk_insert_and_offset_pagination(api_base_url, faker, url_prefix):
     unique_x = faker.pyint()
 
     items = [
@@ -11,16 +15,19 @@ def test_bulk_insert_and_offset_pagination(api_base_url, faker):
             "x": unique_x,
             "y": i,
             "z": i * 2,
-            "data_bytes": f"payload-{i}".encode(),
+            "data_bytes": f"payload-{i}".encode()
+            if url_prefix == "manual" else
+            base64.b64encode(f"payload-{i}".encode()).decode(),
         }
         for i in range(50)
     ]
 
-    list(map(json_serialize_data_point, items))
+    if url_prefix == "manual":
+        list(map(json_serialize_data_point, items))
 
     # bulk insert
     resp = requests.post(
-        f"{api_base_url}/data-points/bulk",
+        f"{api_base_url}/{url_prefix}/data-points/bulk",
         json=items,
     )
     assert resp.status_code == 200, resp.text
@@ -29,7 +36,7 @@ def test_bulk_insert_and_offset_pagination(api_base_url, faker):
     seen = []
     for offset in range(0, 50, 5):
         resp = requests.get(
-            f"{api_base_url}/data-points",
+            f"{api_base_url}/{url_prefix}/data-points",
             params={
                 "limit": 5,
                 "offset": offset,
@@ -50,7 +57,8 @@ def test_bulk_insert_and_offset_pagination(api_base_url, faker):
     assert len(set(seen)) == 50
 
 
-def test_bulk_insert_and_keyset_pagination(api_base_url, faker):
+@pytest.mark.parametrize("url_prefix", ["sqlalchemy", "manual"])
+def test_bulk_insert_and_keyset_pagination(api_base_url, faker, url_prefix):
     unique_x = faker.pyint()
 
     items = [
@@ -58,15 +66,18 @@ def test_bulk_insert_and_keyset_pagination(api_base_url, faker):
             "x": unique_x,
             "y": i,
             "z": i * 3,
-            "data_bytes": f"payload-{i}".encode(),
+            "data_bytes": f"payload-{i}".encode()
+            if url_prefix == "manual" else
+            base64.b64encode(f"payload-{i}".encode()).decode(),
         }
         for i in range(100)
     ]
-    list(map(json_serialize_data_point, items))
+    if url_prefix == "manual":
+        list(map(json_serialize_data_point, items))
 
     # bulk insert
     resp = requests.post(
-        f"{api_base_url}/data-points/bulk",
+        f"{api_base_url}/{url_prefix}/data-points/bulk",
         json=items
     )
     assert resp.status_code == 200, resp.text
@@ -74,7 +85,7 @@ def test_bulk_insert_and_keyset_pagination(api_base_url, faker):
     seen = []
 
     params = {"limit": 10, "x": unique_x}
-    resp = requests.get(f"{api_base_url}/data-points", params=params)
+    resp = requests.get(f"{api_base_url}/{url_prefix}/data-points", params=params)
     assert resp.status_code == 200, resp.text
 
     page = resp.json()
@@ -86,7 +97,7 @@ def test_bulk_insert_and_keyset_pagination(api_base_url, faker):
 
     while True:
         params = {"limit": 10, "x": unique_x, "last_id": last_id}
-        resp = requests.get(f"{api_base_url}/data-points", params=params)
+        resp = requests.get(f"{api_base_url}/{url_prefix}/data-points", params=params)
         assert resp.status_code == 200, resp.text
 
         page = resp.json()

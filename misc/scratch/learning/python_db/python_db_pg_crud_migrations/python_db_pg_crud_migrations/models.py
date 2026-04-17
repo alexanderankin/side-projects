@@ -1,9 +1,10 @@
+import base64
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer, field_validator
 from sqlalchemy import BigInteger, ForeignKey, String, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import BYTEA, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -55,3 +56,31 @@ class Example(Base):
     )
 
     category: Mapped["Category"] = relationship(back_populates="examples")
+
+
+class DataPoint(BaseModel):
+    id: int | None = None
+    x: int
+    y: int
+    z: int
+    data_bytes: bytes
+
+    @field_validator("data_bytes", mode="before")
+    def decode(cls, v):
+        if isinstance(v, str):
+            return base64.b64decode(v)
+        return v
+
+    @field_serializer("data_bytes")
+    def encode(self, v):
+        return base64.b64encode(v).decode()
+
+
+class DataPointEntity(Base):
+    __tablename__ = "data_point"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    x: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    y: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    z: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    data_bytes: Mapped[bytes] = mapped_column(BYTEA, nullable=False)

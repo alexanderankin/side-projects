@@ -5,11 +5,11 @@ from logging import INFO, basicConfig, getLogger
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from python_db_pg_crud_migrations import crud
+from python_db_pg_crud_migrations import data_point_demo, migrations
 from python_db_pg_crud_migrations.data_point_demo import DataPointQuery, DataPointTD
 from python_db_pg_crud_migrations.db import SessionLocal
-from python_db_pg_crud_migrations import data_point_demo, migrations
-from python_db_pg_crud_migrations import crud
-from python_db_pg_crud_migrations.models import NewCategory
+from python_db_pg_crud_migrations.models import DataPoint, NewCategory
 
 basicConfig(level=INFO)
 logger = getLogger(__name__)
@@ -107,14 +107,51 @@ def delete_example(example_id: uuid.UUID, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
-@app.post("/data-points/bulk")
+@app.post("/sqlalchemy/data-points/bulk")
+def sqla_create_data_points_bulk(
+    data_points: list[DataPoint], db: Session = Depends(get_db)
+):
+    return crud.data_point_create_bulk(db, data_points)
+
+
+@app.get("/sqlalchemy/data-points")
+def sqla_get_data_points(
+    db: Session = Depends(get_db),
+    limit: int = Query(100, ge=1, le=1000),
+    offset: int | None = Query(None, ge=0),
+    last_id: int | None = Query(None, ge=1),
+    x: int | None = Query(None),
+    y: int | None = Query(None),
+    z: int | None = Query(None),
+    x_min: int | None = Query(None),
+    y_min: int | None = Query(None),
+    z_min: int | None = Query(None),
+    x_max: int | None = Query(None),
+    y_max: int | None = Query(None),
+    z_max: int | None = Query(None),
+):
+    query = DataPointQuery(x=x, y=y, z=z) if any((x, y, z)) else None
+    q_min = (
+        DataPointQuery(x=x_min, y=y_min, z=z_min)
+        if any((x_min, y_min, z_min))
+        else None
+    )
+    q_max = (
+        DataPointQuery(x=x_max, y=y_max, z=z_max)
+        if any((x_max, y_max, z_max))
+        else None
+    )
+    return crud.data_point_get_all(db, limit, offset, last_id, query, q_min, q_max)
+
+
+@app.post("/manual/data-points/bulk")
 def create_data_points_bulk(
     data_points: list[DataPointTD], db: Session = Depends(get_db)
 ):
     return data_point_demo.create_data_points(db, data_points)
 
 
-@app.get("/data-points")
+@app.get("/manual/data-points")
 def get_data_points(
     db: Session = Depends(get_db),
     limit: int = Query(100, ge=1, le=1000),
