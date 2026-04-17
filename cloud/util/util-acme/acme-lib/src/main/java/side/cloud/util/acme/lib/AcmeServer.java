@@ -77,6 +77,7 @@ public class AcmeServer {
                             var json = JWSObjectJSON.parse(body);
                             var order = acmeService.getAuthorization(
                                     extractAccountId(json),
+                                    json,
                                     req.param("authorizationId").orElseThrow());
                             return ServerResponse.ok()
                                     .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JOSE_JSON)
@@ -90,6 +91,7 @@ public class AcmeServer {
                             var json = JWSObjectJSON.parse(body);
                             var order = acmeService.getChallenge(
                                     extractAccountId(json),
+                                    json,
                                     req.param("authorizationId").orElseThrow(),
                                     req.param("challengeId").orElseThrow());
                             return ServerResponse.ok()
