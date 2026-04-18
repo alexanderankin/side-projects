@@ -1,0 +1,19 @@
+plugins {
+    id 'spring-conventions'
+    id 'java-library'
+}
+
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-json'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    implementation 'org.bouncycastle:bcpkix-debug-jdk18on'
+    implementation 'org.bouncycastle:bcprov-debug-jdk18on'
+    // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
+    implementation 'com.google.crypto.tink:tink:1.20.0'
+    implementation 'commons-codec:commons-codec'
+}
