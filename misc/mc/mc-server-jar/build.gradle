@@ -1,0 +1,54 @@
+plugins {
+    id 'conventions'
+}
+
+// https://mcversions.net/download/26.1.2
+
+def manifestHead = { File jar, int n = 10 ->
+    if (!jar?.exists())
+        return null
+
+    def manifestFile = zipTree(jar).matching { include 'META-INF/MANIFEST.MF' }.files
+            .find { true } // grab first match
+
+    if (!manifestFile)
+        return null
+
+    manifestFile.readLines('UTF-8').take(n).join('\n')
+}
+
+// server file is ~/Downloads/server.jar exists and contains version.json
+def serverFile = file(System.getProperty('user.home')).toPath().resolve('Downloads').resolve('server.jar').toFile().with {
+    manifestHead(it).contains('Main-Class: net.minecraft.bundler.Main') ? it : null
+}
+
+def clientFile = file(System.getProperty('user.home')).toPath().resolve('Downloads').resolve('client.jar').toFile().with {
+    manifestHead(it).contains('Main-Class: net.minecraft.client.Main') ? it : null
+}
+
+if (serverFile.exists() || clientFile.exists()) {
+    def buildDir = layout.buildDirectory.get().asFile.getPath()
+
+    dependencies {
+        if (serverFile.exists()) implementation files(serverFile.getPath())
+        if (clientFile.exists()) implementation files(clientFile.getPath())
+    }
+
+    configurations { outerJarConfig }
+    if (serverFile.exists()) dependencies { outerJarConfig files(serverFile.getPath()) }
+    if (clientFile.exists()) dependencies { outerJarConfig files(clientFile.getPath()) }
+
+    tasks.register('extractInnerJar', Copy) {
+        from({
+            configurations.outerJarConfig.collect { jar ->
+                zipTree(jar).matching { include '**/*.jar' }
+            }
+        })
+        into "${buildDir}/extracted-libs"
+    }
+
+    def extractedJars =
+            fileTree(layout.buildDirectory.dir("extracted-libs")) { include '**/*.jar' }
+                    .builtBy(tasks.named('extractInnerJar'))
+    dependencies { implementation(extractedJars) }
+}
