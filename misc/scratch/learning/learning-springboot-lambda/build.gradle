@@ -1,0 +1,26 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+
+    // https://mvnrepository.com/artifact/com.amazonaws.serverless/aws-serverless-java-container-springboot3
+    implementation 'com.amazonaws.serverless:aws-serverless-java-container-springboot3:2.1.5'
+
+    // https://mvnrepository.com/artifact/com.amazonaws.serverless/aws-serverless-java-container-core
+    testImplementation 'com.amazonaws.serverless:aws-serverless-java-container-core:2.1.5:tests'
+}
+
+def buildZip = tasks.register('buildZip', Zip) {
+    from compileJava
+    from processResources
+    into(layout.buildDirectory.dir('lib')) {
+        from(configurations.compileClasspath) {
+            exclude 'tomcat-embed-*'
+        }
+    }
+}
+
+tasks.build.dependsOn buildZip
