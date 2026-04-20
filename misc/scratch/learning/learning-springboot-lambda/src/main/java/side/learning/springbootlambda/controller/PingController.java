@@ -1,4 +1,4 @@
-package my.service.controller;
+package side.learning.springbootlambda.controller;
 
 
 import org.springframework.web.bind.annotation.*;

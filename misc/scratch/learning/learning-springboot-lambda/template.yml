@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: AWS Serverless Spring Boot 2 API - my.service::my-service
+Description: AWS Serverless Spring Boot 3 API - side.learning.springbootlambda::learning-springboot-lambda
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
@@ -9,7 +9,7 @@ Resources:
   MyServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: my.service.StreamLambdaHandler::handleRequest
+      Handler: side.learning.springbootlambda.LearningSpringBootLambdaHandler::handleRequest
       Runtime: java21
       CodeUri: .
       MemorySize: 512

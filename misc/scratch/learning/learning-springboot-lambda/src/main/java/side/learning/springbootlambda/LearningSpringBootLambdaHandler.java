@@ -1,4 +1,4 @@
-package my.service;
+package side.learning.springbootlambda;
 
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException;
@@ -15,12 +15,12 @@ import java.io.OutputStream;
 
 
 @Slf4j
-public class StreamLambdaHandler implements RequestStreamHandler {
+public class LearningSpringBootLambdaHandler implements RequestStreamHandler {
     private static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
     static {
         try {
-            handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(Application.class);
+            handler = SpringBootLambdaContainerHandler.getAwsProxyHandler(LearningSpringBootLambdaApplication.class);
         } catch (ContainerInitializationException e) {
             log.error(e.getMessage(), e);
 

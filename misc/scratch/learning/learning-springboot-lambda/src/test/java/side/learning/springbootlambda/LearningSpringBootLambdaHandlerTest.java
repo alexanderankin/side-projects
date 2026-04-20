@@ -1,4 +1,4 @@
-package my.service;
+package side.learning.springbootlambda;
 
 
 import com.amazonaws.serverless.proxy.internal.LambdaContainerHandler;
@@ -18,14 +18,14 @@ import java.io.InputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class StreamLambdaHandlerTest {
+public class LearningSpringBootLambdaHandlerTest {
 
-    private static StreamLambdaHandler handler;
+    private static LearningSpringBootLambdaHandler handler;
     private static Context lambdaContext;
 
     @BeforeAll
     public static void setUp() {
-        handler = new StreamLambdaHandler();
+        handler = new LearningSpringBootLambdaHandler();
         lambdaContext = new MockLambdaContext();
     }
 

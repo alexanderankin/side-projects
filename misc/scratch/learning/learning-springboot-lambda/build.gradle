@@ -14,13 +14,16 @@ dependencies {
 }
 
 def buildZip = tasks.register('buildZip', Zip) {
-    from compileJava
+    from sourceSets.main.output
     from processResources
-    into(layout.buildDirectory.dir('lib')) {
-        from(configurations.compileClasspath) {
+    into('lib') {
+        from(configurations.runtimeClasspath) {
             exclude 'tomcat-embed-*'
         }
     }
+
+    destinationDirectory = layout.buildDirectory.dir('lambda')
+    archiveFileName = 'lambda.zip'
 }
 
 tasks.build.dependsOn buildZip

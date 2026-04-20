@@ -1,6 +1,6 @@
-package my.service;
+package side.learning.springbootlambda;
 
-import my.service.controller.PingController;
+import side.learning.springbootlambda.controller.PingController;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -8,11 +8,11 @@ import org.springframework.context.annotation.Import;
 
 @SpringBootApplication
 // We use direct @Import instead of @ComponentScan to speed up cold starts
-// @ComponentScan(basePackages = "my.service.controller")
+// @ComponentScan(basePackages = "side.learning.springbootlambda.controller")
 @Import({PingController.class})
-public class Application {
+public class LearningSpringBootLambdaApplication {
 
     static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(LearningSpringBootLambdaApplication.class, args);
     }
 }
