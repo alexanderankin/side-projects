@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+    }
+  }
+}
+
 resource "aws_s3_bucket" "frontend" {
   bucket = "${var.environment}-subdomain-frontend"
 
