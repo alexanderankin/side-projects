@@ -7,14 +7,11 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+dependencies = [
+    "PyYAML>=6.0.2,<7.0.0",
+]
 
-[tool.poetry.dependencies]
-PyYAML = "^6.0.2"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.4.1"
-
-[tool.poetry.scripts]
+[project.scripts]
 json-conv = "json_conv.cli:main"
 json2yaml = "json_conv.cli:main"
 yaml2json = "json_conv.cli:main"
@@ -23,6 +20,11 @@ json2toml = "json_conv.cli:main"
 json2csv = "json_conv.cli:main"
 csv2json = "json_conv.cli:main"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1,<9.0.0",
+]
+
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
