@@ -1,7 +1,7 @@
-import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { configureStore, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { useDispatch, useSelector } from "react-redux";
-import { NewTask, Page, Pageable, Task } from "./models.tsx";
+import { type NewTask, type Page, type Pageable, type Task } from "./models.tsx";
 
 const tasksApiTag = "Task" as const;
 export const tasksApi = createApi({

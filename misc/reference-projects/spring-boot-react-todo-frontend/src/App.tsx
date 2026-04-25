@@ -1,5 +1,5 @@
 import viteLogo from "/vite.svg";
-import { FC, PropsWithChildren, useEffect, useRef, useState } from "react";
+import { type FC, type PropsWithChildren, useEffect, useRef, useState } from "react";
 import { Button, Input, ListGroup, ListGroupItem } from "reactstrap";
 import reactLogo from "./assets/react.svg";
 import { tasksApi, tasksUi, useAppDispatch, useAppSelector } from "./store.tsx";
@@ -51,7 +51,9 @@ function TaskList() {
                 });
             }}>
               <input
-                ref={el => el && (inputRef.current[index] = el)}
+                ref={el => {
+                  if (el !== null) inputRef.current[index] = el;
+                }}
                 disabled={updateTaskResult.isLoading}
                 value={editedTasks[t.id]?.newData?.title || ""}
                 onBlur={() => appDispatch(tasksUi.actions.stopEditingPost(t.id))}
