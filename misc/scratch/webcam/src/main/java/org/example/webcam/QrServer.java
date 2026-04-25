@@ -20,6 +20,7 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.server.HttpServer;
+import reactor.util.retry.Retry;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +82,7 @@ public class QrServer implements Runnable {
                 .doOnNext(System.out::println)
                 .doOnNext(message -> input.emitNext(message, Sinks.EmitFailureHandler.busyLooping(config.getQueueTimeout())))
                 .doOnError(e -> log.error("startCapturePipeline error", e))
-                .retry()
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(3)))
                 .subscribe();
         log.info("started capture pipeline");
 
@@ -127,12 +128,29 @@ public class QrServer implements Runnable {
         });
     }
 
+    @SneakyThrows
     private CameraSession openCameraStream() {
+        enum Os {
+            win, lin, mac;
+
+            static Os current() {
+                return Os.valueOf(System.getProperty("os.name").toLowerCase().substring(0, 3));
+            }
+        }
+        Os current = Os.current();
         var config = Exec.Config.builder()
                 .command("ffmpeg")
-                .command("-f").command("avfoundation")
+                .command("-f").command(switch (current) {
+                    case win -> throw new UnsupportedOperationException();
+                    case lin -> "v4l2";
+                    case mac -> "avfoundation";
+                })
                 .command("-framerate").command("30")
-                .command("-i").command("0:none")
+                .command("-i").command(switch (current){
+                    case win -> throw new UnsupportedOperationException();
+                    case lin -> "/dev/video0";
+                    case mac -> "0:none";
+                })
                 // .command("-f").command("matroska")
                 // .command("-f").command("mjpeg")
 
@@ -147,6 +165,13 @@ public class QrServer implements Runnable {
 
         var launched = Exec.INSTANCE.launch(config);
         InputStream inputStream = launched.result().getOut();
+
+        if (launched.process().waitFor(Duration.ofSeconds(5))) {
+            System.err.println("ffmpeg failed:");
+            System.err.println("out: " + new String(launched.result().getOut().readAllBytes()));
+            System.err.println("err: " + new String(launched.result().getErr().readAllBytes()));
+            throw new Exec.ExitCodeException(config, launched.result());
+        }
 
         try {
             // https://github.com/bytedeco/javacv/issues/1068

@@ -189,7 +189,9 @@ public class Exec {
         @SneakyThrows
         @Override
         public void run() {
-            errStream.transferTo(err);
+            try (errStream; err) {
+                errStream.transferTo(err);
+            }
         }
     }
 }
