@@ -1,0 +1,21 @@
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW IN    192.168.0.0/24             (log) # comment
+Anywhere on wg1            ALLOW IN    Anywhere
+80,443,8080,8443/tcp       ALLOW IN    192.168.0.22               (log-all)
+22/tcp                     ALLOW IN    5.6.7.8
+80,443,25565:25600/tcp     ALLOW IN    5.6.7.9                    # comment 0
+80,443,5000,25565:25600/tcp ALLOW IN    192.168.0.0/24
+80,443/tcp                 ALLOW IN    Anywhere
+22,80,443,25565:25600/tcp  ALLOW IN    5.6.7.10                   # comment 1
+22/tcp                     ALLOW IN    5.6.7.9                    # comment 2
+3000                       ALLOW IN    Anywhere
+22/tcp                     ALLOW IN    5.6.7.11                   # comment 3
+Anywhere (v6) on wg1       ALLOW IN    Anywhere (v6)
+22/tcp                     ALLOW IN    2601:a000:a00:a0::a0:a001
+3000 (v6)                  ALLOW IN    Anywhere (v6)

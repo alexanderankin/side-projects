@@ -1,0 +1,62 @@
+{
+  "status": "active",
+  "logging": "on",
+  "loggingLevel": "low",
+  "defaultPolicies": {
+    "incoming": "deny",
+    "outgoing": "allow",
+    "routed": "deny"
+  },
+  "newProfilePolicy": "skip",
+  "rules": [
+    {
+      "to": "22/tcp", "action": "ALLOW IN", "from": "192.168.0.0/24",
+      "log": "log",
+      "comment": "comment"
+    },
+    {
+      "to": "Anywhere on wg1", "action": "ALLOW IN", "from": "Anywhere"
+    },
+    {
+      "to": "80,443,8080,8443/tcp", "action": "ALLOW IN", "from": "192.168.0.22",
+      "log": "log-all"
+    },
+    {
+      "to": "22/tcp", "action": "ALLOW IN", "from": "5.6.7.8"
+    },
+    {
+      "to": "80,443,25565:25600/tcp", "action": "ALLOW IN", "from": "5.6.7.9",
+      "comment": "comment 0"
+    },
+    {
+      "to": "80,443,5000,25565:25600/tcp", "action": "ALLOW IN", "from": "192.168.0.0/24"
+    },
+    {
+      "to": "80,443/tcp", "action": "ALLOW IN", "from": "Anywhere"
+    },
+    {
+      "to": "22,80,443,25565:25600/tcp", "action": "ALLOW IN", "from": "5.6.7.10",
+      "comment": "comment 1"
+    },
+    {
+      "to": "22/tcp", "action": "ALLOW IN", "from": "5.6.7.9",
+      "comment": "comment 2"
+    },
+    {
+      "to": "3000", "action": "ALLOW IN", "from": "Anywhere"
+    },
+    {
+      "to": "22/tcp", "action": "ALLOW IN", "from": "5.6.7.11",
+      "comment": "comment 3"
+    },
+    {
+      "to": "Anywhere (v6) on wg1", "action": "ALLOW IN", "from": "Anywhere (v6)"
+    },
+    {
+      "to": "22/tcp", "action": "ALLOW IN", "from": "2601:a000:a00:a0::a0:a001"
+    },
+    {
+      "to": "3000 (v6)", "action": "ALLOW IN", "from": "Anywhere (v6)"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+logging:
+  level:
+    side.ufw.web: DEBUG
+
+spring:
+  application:
+    name: ufw-server

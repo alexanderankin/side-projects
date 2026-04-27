@@ -7,7 +7,7 @@ application.mainClass = 'side.cloud.util.packer.PackerToolCli'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-json'
-    // https://mvnrepository.com/artifact/com.github.mwiede/jsch
+    // https://mvnrepository.com/artifact/com.github.mwiede/jsch // ssh
     implementation 'com.github.mwiede:jsch:2.27.7'
     // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-retry
     implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'

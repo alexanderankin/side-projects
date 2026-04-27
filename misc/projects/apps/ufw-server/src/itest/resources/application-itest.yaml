@@ -1,0 +1,7 @@
+ufw-exec:
+  type: ssh
+  ssh:
+    host: 192.168.0.21
+    user: ufw_server_exec
+    auth:
+      use-identity: true
