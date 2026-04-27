@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 
 import java.net.URI;
@@ -150,8 +151,10 @@ public interface AcmeResources {
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant expires;
         List<AcmeIdentifier> identifiers;
+        @Nullable
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant notBefore;
+        @Nullable
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant notAfter;
         /**
@@ -454,13 +457,19 @@ public interface AcmeResources {
          */
         List<AcmeIdentifier> identifiers;
         /**
+         * not supported by LE-Boulder
+         *
          * @see Order#notBefore
          */
+        @Nullable
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant notBefore;
         /**
+         * not supported by LE-Boulder
+         *
          * @see Order#notAfter
          */
+        @Nullable
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         Instant notAfter;
     }

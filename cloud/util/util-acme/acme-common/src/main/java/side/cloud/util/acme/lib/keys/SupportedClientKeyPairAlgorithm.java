@@ -34,7 +34,7 @@ public enum SupportedClientKeyPairAlgorithm {
 
     @SneakyThrows
     private static KeyPair generateEd25519() {
-        if (AcmeLibProperties.readProperty(AcmeLibProperties.FIPS_MODE))
+        if (AcmeLibProperties.FIPS_MODE.read())
             throw new UnsupportedOperationException("Ed25519 not supported");
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("Ed25519", BC);
         return kpg.generateKeyPair();

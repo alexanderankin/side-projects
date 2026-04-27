@@ -17,7 +17,6 @@ import org.springframework.hateoas.Links;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe;
@@ -27,6 +26,7 @@ import side.cloud.util.acme.lib.model.AcmeResources.*;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import static side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe.REPLAY_NONCE;
@@ -35,7 +35,6 @@ import static side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe.REPLAY_NON
 public class AcmeClient {
     static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
     };
-    private final RestClient restClient;
     private final RestTemplate restTemplate;
     private final JsonMapper jsonMapper;
     private final RetryRegistry retryRegistry;
@@ -57,11 +56,11 @@ public class AcmeClient {
     }
 
     private Directory doDirectory() {
-        return restClient.get().uri(config.getDirectoryUrl()).retrieve().body(Directory.class);
+        return restTemplate.getForObject(config.getDirectoryUrl(), Directory.class);
     }
 
     public String nonce() {
-        return restClient.head().uri(directory().getNewNonce()).retrieve().toBodilessEntity().getHeaders().getFirst(REPLAY_NONCE);
+        return restTemplate.headForHeaders(directory().getNewNonce()).getFirst(REPLAY_NONCE);
     }
 
     public SupportedClientKeyPair supportedClientKeyPair() {
@@ -71,6 +70,12 @@ public class AcmeClient {
         return supportedClientKeyPair;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    public URI createAccount() {
+        return accountId(false);
+    }
+
+    @SneakyThrows
     public URI accountId(boolean onlyReturnExisting) {
         if (accountId == null) {
             synchronized (this) {
@@ -78,18 +83,21 @@ public class AcmeClient {
                 if (configuredAccountId != null) {
                     accountId = configuredAccountId;
                 } else if (accountId == null) {
-                    var configuredNewAccountParameters = directory().getNewAccount();
+                    var configuredNewAccountParameters = config.getNewAccount();
                     var lookup = jsonMapper.convertValue(configuredNewAccountParameters, NewAccount.class);
                     lookup.setOnlyReturnExisting(onlyReturnExisting);
 
-                    var req = AcmeRequestSerDe.serialize(new AcmeRequestSerDe.RequestAndKeyPair(
-                            new AcmeRequests.AcmeRequest()
-                                    .setUrl(configuredNewAccountParameters)
-                                    .setNonce(nonce())
-                                    .setPayload(jsonMapper.convertValue(new NewAccount(), MAP_TYPE_REFERENCE)),
-                            supportedClientKeyPair()
-                    ));
-                    var entity = restTemplate.exchange(req, Account.class);
+                    var retry = retryRegistry.retry(getClass().getSimpleName(), config.getRetry().asRetryConfig());
+                    var entity = retry.executeCallable(() -> {
+                        var req = AcmeRequestSerDe.serialize(new AcmeRequestSerDe.RequestAndKeyPair(
+                                new AcmeRequests.AcmeRequest()
+                                        .setUrl(directory().getNewAccount())
+                                        .setNonce(nonce())
+                                        .setPayload(jsonMapper.convertValue(lookup, MAP_TYPE_REFERENCE)),
+                                supportedClientKeyPair()
+                        ));
+                        return restTemplate.exchange(req, Account.class);
+                    });
                     accountId = entity.getHeaders().getLocation();
                 }
             }
@@ -110,7 +118,7 @@ public class AcmeClient {
 
         var result = new TypedAcmeResponse<T>();
         result
-                .setTypedPayload(jsonMapper.convertValue(response.getBody(), responseType))
+                .setTypedPayload(jsonMapper.readValue(response.getBody(), responseType))
                 .setPayload(jsonMapper.readValue(response.getBody(), MAP_TYPE_REFERENCE))
                 .setLocation(response.getHeaders().getLocation())
                 .setNext(next);
@@ -120,10 +128,7 @@ public class AcmeClient {
     @SneakyThrows
     private ResponseEntity<String> postWithRetry(URI uri, Object body) {
         ResponseEntity<String> response;
-        // disable retries in development
-        if (2 > 1) {
-            response = doPost(uri, body);
-        } else {
+        {
             var retry = retryRegistry.retry(getClass().getSimpleName(), config.getRetry().asRetryConfig());
             response = retry.executeCallable(() -> doPost(uri, body));
         }
@@ -150,15 +155,22 @@ public class AcmeClient {
         return post(directory().getNewOrder(), order, Order.class);
     }
 
+    public Account getAccount() {
+        return getAccount(accountId(true));
+    }
+
+    public Account getAccount(URI uri) {
+        return get(uri, Account.class).getTypedPayload();
+    }
+
     public Order getOrder(URI uri) {
         return get(uri, Order.class).getTypedPayload();
     }
 
-    public TypedAcmeResponse<Orders> orders() {
-        var accountId = accountId(true);
-        var account = get(accountId, Account.class);
-        var ordersUrl = account.getTypedPayload().getOrders();
-        return get(ordersUrl, Orders.class);
+    public List<URI> orders() {
+        var account = getAccount();
+        var ordersUrl = account.getOrders();
+        return get(ordersUrl, Orders.class).getTypedPayload().getOrders();
     }
 
     public Authorization getAuthorization(URI uri) {
@@ -231,7 +243,8 @@ public class AcmeClient {
         @Data
         @Accessors(chain = true)
         public static class Retry {
-            int attempts = 3;
+            // disable retries in development
+            int attempts = 1;
             Duration interval = Duration.ofSeconds(5);
 
             RetryConfig asRetryConfig() {

@@ -29,6 +29,8 @@ public class AcmeRequestSerDe {
     public static RequestEntity<String> serialize(RequestAndKeyPair requestAndKeyPair) {
         AcmeRequests.AcmeRequest acmeRequest = requestAndKeyPair.request();
         SupportedClientKeyPair keyPair = requestAndKeyPair.keyPair();
+
+        // headers
         AcmeJwsObject.AcmeJwsHeader headers;
         var kid = acmeRequest.getAccountId();
         if (kid != null)
@@ -40,7 +42,7 @@ public class AcmeRequestSerDe {
                 .setUrl(acmeRequest.getUrl())
                 .setNonce(acmeRequest.getNonce());
 
-
+        // object
         AcmeJwsObject acmeJwsObject;
         var requestPayload = acmeRequest.getPayload();
         if (requestPayload != null) {
@@ -55,7 +57,6 @@ public class AcmeRequestSerDe {
 
         return RequestEntity.post(acmeRequest.getUrl())
                 .header(HttpHeaders.CONTENT_TYPE, APPLICATION_JOSE_JSON)
-                .header(REPLAY_NONCE, acmeRequest.getNonce())
                 .body(body);
     }
 

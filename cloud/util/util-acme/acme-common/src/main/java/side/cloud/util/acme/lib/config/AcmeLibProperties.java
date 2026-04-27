@@ -14,5 +14,8 @@ public class AcmeLibProperties {
     }
 
     public record Property<T>(String name, Class<T> type, T defaultValue) {
+        public T read() {
+            return readProperty(this);
+        }
     }
 }

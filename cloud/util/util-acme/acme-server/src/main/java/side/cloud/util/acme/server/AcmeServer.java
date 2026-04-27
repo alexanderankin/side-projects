@@ -31,6 +31,7 @@ public class AcmeServer {
         route.GET(config.getDirectoryPath(), ignored -> ServerResponse.ok().body(d));
         route.HEAD(d.getNewNonce().getPath(), ignored -> ServerResponse.ok().header(REPLAY_NONCE, nonceService.newNonce()).build());
         route.POST(d.getNewAccount().getPath(), r -> ser(newAccount(de(r))));
+        // route.POST(d.getNewAccount().getPath() + "/{accountId}", r -> ser(newAccount(de(r))));
 
         return route.build();
     }
