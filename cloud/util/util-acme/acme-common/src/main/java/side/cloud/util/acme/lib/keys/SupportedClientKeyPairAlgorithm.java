@@ -70,7 +70,11 @@ public enum SupportedClientKeyPairAlgorithm {
         return switch (this) {
             case RS256, RS384, RS512 -> KeyFactory.getInstance("RSA", BC);
             case ES256, ES384, ES512 -> KeyFactory.getInstance("EC", BC);
-            case EdDSA -> KeyFactory.getInstance("Ed25519", BC);
+            case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException();
+                yield KeyFactory.getInstance("Ed25519", BC);
+            }
         };
     }
 

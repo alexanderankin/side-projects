@@ -3,9 +3,6 @@ package side.cloud.util.acme.lib.model.challenge.presentation;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
-import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.challenge.ChallengeSolution;
 import side.cloud.util.acme.lib.model.challenge.SupportedChallengeType;
 

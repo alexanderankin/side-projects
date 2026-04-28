@@ -35,6 +35,7 @@ import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.springframework.util.Assert;
+import side.cloud.util.acme.lib.config.AcmeLibProperties;
 import side.cloud.util.acme.lib.keys.AcmeJwsObject.AcmeJwsHeader.JwkAcmeJwsHeader;
 import side.cloud.util.acme.lib.keys.AcmeJwsObject.AcmeJwsHeader.KidAcmeJwsHeader;
 import side.cloud.util.acme.lib.keys.AcmeJwsObject.JsonAcmeJwsObject;
@@ -232,6 +233,8 @@ public class SupportedClientKeyPair {
                         .build();
             }
             case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException();
                 OctetKeyPair okp = new OctetKeyPair.Builder(Curve.Ed25519, Base64URL.encode(extractPublicKeyOctets(getKeyPair().getPublic().getEncoded())))
                         .d(Base64URL.encode(extractPrivateKeyOctets(getKeyPair().getPrivate().getEncoded())))
                         .build();
@@ -248,6 +251,8 @@ public class SupportedClientKeyPair {
             case RS256, RS384, RS512 -> new RSASSASigner(keyPair.getPrivate());
             case ES256, ES384, ES512 -> new com.nimbusds.jose.crypto.ECDSASigner((ECPrivateKey) keyPair.getPrivate());
             case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException();
                 var okp = (OctetKeyPair) asJwk();
                 yield new com.nimbusds.jose.crypto.Ed25519Signer(okp);
             }
@@ -260,6 +265,8 @@ public class SupportedClientKeyPair {
             case RS256, RS384, RS512 -> new RSASSAVerifier((RSAPublicKey) keyPair.getPublic());
             case ES256, ES384, ES512 -> new ECDSAVerifier((ECPublicKey) keyPair.getPublic());
             case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException();
                 OctetKeyPair okp = new OctetKeyPair.Builder(Curve.Ed25519, Base64URL.encode(extractPublicKeyOctets(getKeyPair().getPublic().getEncoded())))
                         .build();
                 yield new Ed25519Verifier(okp);
@@ -342,6 +349,8 @@ public class SupportedClientKeyPair {
 
             return switch (algorithm) {
                 case EdDSA -> {
+                    if (AcmeLibProperties.FIPS_MODE.read())
+                        throw new UnsupportedOperationException();
                     var signer = new Ed25519Signer();
                     if (forSigning) {
                         signer.init(true, new Ed25519PrivateKeyParameters(keyPair.getPrivate().getEncoded()));

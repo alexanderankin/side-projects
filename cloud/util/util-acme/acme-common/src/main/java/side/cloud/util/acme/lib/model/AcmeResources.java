@@ -113,7 +113,8 @@ public interface AcmeResources {
         }
 
         /**
-         * todo review if this is accurate
+         * @see <a href=https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2>Account Objects</a>
+         * @see <a href=https://datatracker.ietf.org/doc/html/rfc8555#section-7.3.4>External Account Binding</a>
          */
         @Data
         @Accessors(chain = true)

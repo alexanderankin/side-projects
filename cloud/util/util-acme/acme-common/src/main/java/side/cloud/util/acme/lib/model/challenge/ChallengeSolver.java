@@ -88,8 +88,7 @@ public class ChallengeSolver {
                 for (ChallengeSolution challenge : cleanedExpiredChallenges) {
                     var type = challenge.getType();
                     try {
-                        challengePresenter.remove(challenge);
-                        solutionRepository.remove(challenge);
+                        clean(challenge);
                     } catch (Exception e) {
                         log.error("could not clean expired challenge {}: of type {}: {}", challenge, type, challenge);
                     }
