@@ -68,7 +68,7 @@ dependencies {
         ].each { l ->
             ['implementation'].each { String c ->
                 add(c, l.getFirst()) {
-                    version { prefer l.getLast() }
+                    version { strictly "[${l[1]},)" }
                 }
             }
         }
@@ -80,7 +80,7 @@ dependencies {
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
                 add(c, l.getFirst()) {
-                    version { require l.getLast() }
+                    version { strictly "[${l[1]},)" }
                 }
             }
         }
@@ -95,7 +95,7 @@ dependencies {
                 ['org.mockito:mockito-core', '5.11.0'],
         ].each { l ->
             add('testImplementation', l.getFirst()) {
-                version { prefer l.getLast() }
+                version { strictly "[${l[1]},)" }
             }
         }
     }

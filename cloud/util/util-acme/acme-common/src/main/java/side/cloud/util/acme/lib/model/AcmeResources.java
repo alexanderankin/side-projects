@@ -229,6 +229,9 @@ public interface AcmeResources {
         }
     }
 
+    /**
+     * @see <a href=https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.4>rfc8555: 7.1.4</a>
+     */
     @Dto
     @Data
     @Accessors(chain = true)

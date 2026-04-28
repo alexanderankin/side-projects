@@ -2,10 +2,13 @@ package side.cloud.util.acme.lib.model.challenge;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import side.cloud.util.acme.lib.model.AcmeIdentifier;
 
 @Data
 @Accessors(chain = true)
 public class ChallengeSolution {
+    SupportedChallengeType type;
+
     /**
      * for http - path, for dns - relative path (e.g. "_acme-challenge")
      */
@@ -19,5 +22,5 @@ public class ChallengeSolution {
     /**
      * for http - server that serves files, for dns - rest of the dns name
      */
-    String host;
+    AcmeIdentifier identifier;
 }

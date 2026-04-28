@@ -1,8 +1,10 @@
 plugins {
     id 'spring-conventions'
     id 'java-library'
+    id 'maven-publish'
 }
 
+version = '0.0.1'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -16,4 +18,8 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.crypto.tink/tink
     implementation 'com.google.crypto.tink:tink:1.20.0'
     implementation 'commons-codec:commons-codec'
+    // https://mvnrepository.com/artifact/dnsjava/dnsjava
+    implementation 'dnsjava:dnsjava:3.6.4'
 }
+
+publishing.publications.create('maven', MavenPublication).from(components.java)
