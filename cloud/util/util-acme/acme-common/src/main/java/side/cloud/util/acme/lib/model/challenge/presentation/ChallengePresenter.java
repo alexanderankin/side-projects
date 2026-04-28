@@ -101,9 +101,9 @@ public interface ChallengePresenter {
             return Objects.equals(crud.read(solution.getKey()), solution.getValue());
         }
 
-        enum Type { http, dns }
+        public enum Type { http, dns }
 
-        interface Crud {
+        public interface Crud {
             static Crud of(Path folder) {
                 return new LocalFileSystemCrud(folder);
             }
