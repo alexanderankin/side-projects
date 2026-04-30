@@ -1,0 +1,117 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-initial-schema
+      author: author
+      changes:
+        - createTable:
+            tableName: note
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: updated
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: size
+                  type: INT
+
+        - createTable:
+            tableName: tag
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: updated
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+
+        - createTable:
+            tableName: block
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: updated
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: description
+                  type: TEXT
+
+              # relationship
+              - column:
+                  name: note_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+              # ordering + payload
+              - column:
+                  name: ordinal
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content
+                  type: TEXT
+
+        - addForeignKeyConstraint:
+            baseTableName: block
+            baseColumnNames: note_id
+            referencedTableName: note
+            referencedColumnNames: id
+            constraintName: fk_block_note
+            onDelete: CASCADE
+
+        # enforce "no duplicate ordinal per note"
+        - addUniqueConstraint:
+            tableName: block
+            columnNames: note_id, ordinal
+            constraintName: uq_block_note_ordinal
+
+        # your primary query pattern: range scan by note + ordinal
+        - createIndex:
+            tableName: block
+            indexName: idx_block_note_ordinal
+            columns:
+              - column:
+                  name: note_id
+              - column:
+                  name: ordinal

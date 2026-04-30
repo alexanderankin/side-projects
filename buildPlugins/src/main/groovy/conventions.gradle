@@ -80,6 +80,20 @@ dependencies {
 
     constraints {
         [
+                // Source: https://mvnrepository.com/artifact/org.mapstruct/mapstruct
+                ['org.mapstruct:mapstruct', '1.6.3'],
+                ['org.mapstruct:mapstruct-processor', '1.6.3'],
+        ].each { l ->
+            ['implementation', 'annotationProcessor'].each { String c ->
+                add(c, l.getFirst()) {
+                    version { strictly "[${l[1]},)" }
+                }
+            }
+        }
+    }
+
+    constraints {
+        [
                 ['org.projectlombok:lombok', '1.18.42'],
         ].each { l ->
             ['compileOnly', 'annotationProcessor'].each { String c ->
