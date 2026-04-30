@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.jspecify.annotations.NonNull;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.Assert;
@@ -21,7 +21,6 @@ import side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe.RequestKeyPairSig
 import side.cloud.util.acme.lib.model.AcmeRequests.AcmeResponse;
 import side.cloud.util.acme.lib.model.AcmeResources;
 import side.cloud.util.acme.lib.model.AcmeResources.Account.AccountStatus;
-import side.cloud.util.acme.lib.model.AcmeResources.Directory;
 import side.cloud.util.acme.server.nonce.NonceService;
 import side.cloud.util.acme.server.persistence.AcmeServerDao;
 
@@ -45,8 +44,9 @@ public class AcmeServer {
         var route = RouterFunctions.route();
         var d = config.getDirectory();
         route.GET(config.getDirectoryPath(), ignored -> ServerResponse.ok().body(d));
-        route.HEAD(d.getNewNonce().getPath(), ignored -> ServerResponse.ok().header(REPLAY_NONCE, nonceService.newNonce()).build());
-        route.add(RouterFunctions.nest(RequestPredicates.path(d.getNewAccount().getPath()), accountRoute()));
+        route.HEAD(d.getNewNonce(), ignored -> ServerResponse.ok().header(REPLAY_NONCE, nonceService.newNonce()).build());
+        route.add(RouterFunctions.nest(RequestPredicates.path(d.getNewAccount()), accountRoute()));
+        // route.add(RouterFunctions.nest(RequestPredicates.path(d.getNewOrder()), orderRoute()));
         return route.build();
     }
 
@@ -62,6 +62,7 @@ public class AcmeServer {
         return accountRouteBuilder.build();
     }
 
+    // todo figure out if this is needed, i think no since we can dynamically inject accountId in the url and have it live above
     private RouterFunction<ServerResponse> orderRoute() {
         var orderRouteBuilder = RouterFunctions.route();
         return orderRouteBuilder.build();
@@ -88,14 +89,14 @@ public class AcmeServer {
         if (accountInfo == null) {
             // create
             var accountId = nonceService.genNonce();
-            var accountUrl = UriComponentsBuilder.fromUri(config.directory.getNewAccount()).path(accountId).build().toUri();
+            var accountUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount()).path(accountId).build().toUri();
             var account = new AcmeResources.Account()
                     .setStatus(AccountStatus.valid)
                     .setContact(newAccount.getContact())
                     .setOrders(UriComponentsBuilder.fromUri(accountUrl).path("orders").build().toUri());
 
             // handle terms of service
-            if (config.directory.getMeta().getTermsOfService() != null) {
+            if (config.directory.toDirectory().getMeta().getTermsOfService() != null) {
                 if (!Boolean.TRUE.equals(newAccount.getTermsOfServiceAgreed()))
                     return typedPayload(userActionRequired.getProblemDetail().setDetail("TOS not agreed")).setCode(BAD_REQUEST);
                 account.setTermsOfServiceAgreed(true);
@@ -116,7 +117,7 @@ public class AcmeServer {
 
             // return
             var accountId = accountInfo.id();
-            var accountUrl = UriComponentsBuilder.fromUri(config.directory.getNewAccount()).path(accountId).build().toUri();
+            var accountUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount()).path(accountId).build().toUri();
             return typedPayload(account).setCode(OK).setLocation(accountUrl);
         }
     }
@@ -142,7 +143,7 @@ public class AcmeServer {
 
         var orderIds = dao.listOrdersForAccount(params.get("accountId"), query.getFirst("lastId"));
         var orderUrls = orderIds.stream()
-                .map(orderId -> UriComponentsBuilder.fromUri(config.directory.getNewOrder()).path(orderId).build().toUri())
+                .map(orderId -> UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewOrder()).path(orderId).build().toUri())
                 .toList();
 
         var next = orderUrls.isEmpty() ? null : UriComponentsBuilder.fromUri(de.request().getUrl())
@@ -256,7 +257,8 @@ public class AcmeServer {
     public static class Config {
         String directoryPath;
 
+        @NestedConfigurationProperty
         @NotNull
-        Directory directory;
+        BaseUrlDirectory directory;
     }
 }

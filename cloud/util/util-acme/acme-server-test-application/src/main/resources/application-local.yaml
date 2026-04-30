@@ -1,0 +1,8 @@
+acme-server:
+  config:
+    directory:
+      base-url: http://127.0.0.1:8080
+      new-nonce: /acme/nonce
+      new-account: /acme/account
+      new-order: /acme/order
+    directory-path: /acme/directory

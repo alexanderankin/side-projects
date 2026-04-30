@@ -1,8 +1,7 @@
 package side.cloud.util.acme.server;
 
-import lombok.Builder;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.springframework.web.util.UriComponentsBuilder;
 import side.cloud.util.acme.lib.model.AcmeResources.Directory;
@@ -14,7 +13,6 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-@Builder
 @Data
 @Accessors(chain = true)
 public class BaseUrlDirectory {
@@ -38,18 +36,19 @@ public class BaseUrlDirectory {
                                     .setTermsOfService(u))
             );
 
-    @NonNull
-    final URI baseUrl;
+    @NotNull
+    URI baseUrl;
     String keyChange;
     String newAccount;
     String newAuthz;
+    @NotNull
     String newNonce;
     String newOrder;
     String renewalInfo;
     String revokeCert;
     String metaTermsOfService;
 
-    public Directory baseUrlDirectory() {
+    public Directory toDirectory() {
         var urlBuilder = UriComponentsBuilder.fromUri(baseUrl);
         var directory = new Directory();
 
