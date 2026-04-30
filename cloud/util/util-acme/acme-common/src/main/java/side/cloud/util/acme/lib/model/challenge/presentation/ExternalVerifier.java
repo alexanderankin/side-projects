@@ -6,6 +6,7 @@ import org.springframework.web.client.RestClient;
 import org.xbill.DNS.*;
 import org.xbill.DNS.Record;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,12 +18,13 @@ public class ExternalVerifier {
      * e.g. 8.8.8.8
      */
     private final String dnsResolver;
+    private final int dnsResolverPort;
     private final RestClient restClient;
 
     @SneakyThrows
     List<String> queryTxt(String fqdn) {
         Lookup lookup = new Lookup(fqdn, Type.TXT);
-        lookup.setResolver(new SimpleResolver(dnsResolver));
+        lookup.setResolver(new SimpleResolver(InetSocketAddress.createUnresolved(dnsResolver, dnsResolverPort)));
 
         Record[] records = lookup.run();
         if (records == null) return List.of();

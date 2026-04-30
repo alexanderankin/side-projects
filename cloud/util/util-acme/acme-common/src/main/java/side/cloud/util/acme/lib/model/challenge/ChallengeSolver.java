@@ -1,10 +1,13 @@
 package side.cloud.util.acme.lib.model.challenge;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import side.cloud.util.acme.lib.model.challenge.persistence.ChallengeSolutionRepository;
 import side.cloud.util.acme.lib.model.challenge.presentation.ChallengePresenter;
+import side.cloud.util.acme.lib.model.challenge.presentation.ExternalVerifier;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -15,12 +18,10 @@ import static side.cloud.util.acme.lib.model.challenge.ChallengeCrypto.*;
 @Slf4j
 @RequiredArgsConstructor
 public class ChallengeSolver {
-    private final Duration defaultSolutionDuration;
-    private final String solutionCleanupThreadName;
-    private final Duration cleanInterval;
-    private final Duration challengePollInterval;
+    private final Config config;
     private final ChallengeSolutionRepository solutionRepository;
     private final ChallengePresenter challengePresenter;
+    private final ExternalVerifier externalVerifier;
     private volatile Thread cleanupThread;
 
     public ChallengeSolution solve(ChallengeInput challengeInput) {
@@ -28,7 +29,7 @@ public class ChallengeSolver {
         var solution = solution(challengeInput);
 
         var authExpiration = challengeInput.getAuthorization().getExpires();
-        Duration duration = authExpiration == null ? defaultSolutionDuration : Duration.between(now, authExpiration);
+        Duration duration = authExpiration == null ? config.defaultSolutionDuration : Duration.between(now, authExpiration);
         solutionRepository.add(solution, duration);
         challengePresenter.present(solution);
 
@@ -43,8 +44,10 @@ public class ChallengeSolver {
             if (challengePresenter.verify(solution)) {
                 return;
             }
+            if (externallyVerify(solution))
+                return;
             try {
-                Thread.sleep(challengePollInterval);
+                Thread.sleep(config.challengePollInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Interrupted while waiting", e);
@@ -54,6 +57,15 @@ public class ChallengeSolver {
         throw new RuntimeException("Timed out waiting for solution");
     }
 
+    private boolean externallyVerify(ChallengeSolution solution) {
+        return switch (solution.getType()) {
+            case ChallengeHTTP01 -> externalVerifier.verifyHttp(null, null);
+            case ChallengeDNS01 -> externalVerifier.verifyDns(null, null);
+            case ChallengeDNSAccount01 -> externalVerifier.verifyDns(null, null);
+            case ChallengeDNSPersist01 -> externalVerifier.verifyDns(null, null);
+            case null, default -> throw new UnsupportedOperationException();
+        };
+    }
 
     public void clean(ChallengeSolution solution) {
         challengePresenter.remove(solution);
@@ -72,7 +84,7 @@ public class ChallengeSolver {
                 return;
             }
 
-            cleanupThread = Thread.ofVirtual().name(solutionCleanupThreadName).start(this::loopCleanup);
+            cleanupThread = Thread.ofVirtual().name(config.solutionCleanupThreadName).start(this::loopCleanup);
             log.info("started cleanup thread: {}", cleanupThread.getName());
         }
     }
@@ -80,11 +92,11 @@ public class ChallengeSolver {
     private void loopCleanup() {
         while (true) {
             try {
-                log.trace("loopCleanup: waiting {}", cleanInterval);
-                Thread.sleep(cleanInterval);
+                log.trace("loopCleanup: waiting {}", config.cleanInterval);
+                Thread.sleep(config.cleanInterval);
 
                 var cleanedExpiredChallenges = solutionRepository.listExpired(Instant.now());
-                log.debug("loopCleanup: waited {}, cleaned {} expiredChallenges", cleanInterval, cleanedExpiredChallenges);
+                log.debug("loopCleanup: waited {}, cleaned {} expiredChallenges", config.cleanInterval, cleanedExpiredChallenges);
                 for (ChallengeSolution challenge : cleanedExpiredChallenges) {
                     var type = challenge.getType();
                     try {
@@ -111,7 +123,7 @@ public class ChallengeSolver {
         var challenge = challengeInput.getChallenge();
         var authorization = challengeInput.getAuthorization();
         var accountUrl = challengeInput.getAccountUrl();
-        var chType = SupportedChallengeType.valueOf(challenge.getType());
+        var chType = SupportedChallengeType.valueOfRfcName(challenge.getType());
         result.setType(chType);
         Map.Entry<String, String> kv = switch (chType) {
             case ChallengeHTTP01 -> Map.entry(
@@ -139,5 +151,14 @@ public class ChallengeSolver {
         result.setKey(kv.getKey());
         result.setValue(kv.getValue());
         return result;
+    }
+
+    @Data
+    @Accessors(chain = true)
+    public static class Config {
+        private Duration defaultSolutionDuration = Duration.ofDays(1);
+        private String solutionCleanupThreadName = "ChallengeSolver.cleanup";
+        private Duration cleanInterval = Duration.ofHours(1);
+        private Duration challengePollInterval = Duration.ofSeconds(30);
     }
 }

@@ -7,6 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpStatus;
 
 import java.net.URI;
 import java.util.Map;
@@ -40,12 +41,24 @@ public class AcmeRequests {
     @Data
     @Accessors(chain = true)
     public static class AcmeResponse {
+        Integer code;
+
         URI location;
 
         URI next;
 
         @Nullable
         Map<String, Object> payload;
+
+        public AcmeResponse setCode(HttpStatus code) {
+            this.code = code.value();
+            return this;
+        }
+
+        public AcmeResponse setCode(Integer code) {
+            this.code = code;
+            return this;
+        }
 
         @ToString(callSuper = true)
         @EqualsAndHashCode(callSuper = true)
@@ -54,6 +67,10 @@ public class AcmeRequests {
         @Accessors(chain = true)
         public static class TypedAcmeResponse<T> extends AcmeResponse {
             T typedPayload;
+
+            public static <T> TypedAcmeResponse<T> typedPayload(T typedPayload) {
+                return new TypedAcmeResponse<T>().setTypedPayload(typedPayload);
+            }
         }
     }
 }

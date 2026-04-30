@@ -1,0 +1,11 @@
+plugins {
+    id 'spring-conventions'
+}
+
+
+dependencies {
+    implementation project(':cloud:util:util-acme:acme-common')
+    implementation project(':cloud:util:util-acme:acme-server')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+}

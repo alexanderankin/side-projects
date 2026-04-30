@@ -43,6 +43,9 @@ configurations {
     // itests
     itestImplementation.extendsFrom testImplementation
     itestRuntimeOnly.extendsFrom testRuntimeOnly
+
+    // https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+    mockitoAgent
 }
 
 dependencies {
@@ -101,7 +104,8 @@ dependencies {
         }
     }
     testImplementation 'org.hamcrest:hamcrest'
-    testImplementation 'org.mockito:mockito-core:3+'
+    testImplementation 'org.mockito:mockito-core:5+'
+    mockitoAgent('org.mockito:mockito-core:5+') { transitive = false }
     testImplementation 'ch.qos.logback:logback-classic'
     testImplementation 'com.fasterxml.uuid:java-uuid-generator:4.3.0'
 }
@@ -126,6 +130,7 @@ check.dependsOn integrationTest
 
 // use junit for all tests
 tasks.withType(Test).configureEach { t -> t.useJUnitPlatform() }
+tasks.withType(Test).configureEach { t -> t.jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}" }
 
 // patch for java changes
 tasks.withType(JavaCompile).configureEach { options.compilerArgs.add '-parameters' }

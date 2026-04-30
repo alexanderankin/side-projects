@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.OctetKeyPair;
 import com.nimbusds.jose.jwk.RSAKey;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -71,7 +72,7 @@ public class AcmeRequestSerDe {
     }
 
     @SneakyThrows
-    public static RequestAndKeyPair deserialize(ServerRequest serverRequest) {
+    public static RequestKeyPairSignature deserialize(ServerRequest serverRequest) {
         var nonce = serverRequest.headers().firstHeader(REPLAY_NONCE);
         Assert.isTrue(nonce != null, REPLAY_NONCE + " must not be present");
 
@@ -106,10 +107,21 @@ public class AcmeRequestSerDe {
                         }, null)
                 );
 
-        return new RequestAndKeyPair(request, keyPair);
+        return new RequestKeyPairSignature(request, keyPair, json);
     }
 
     public record RequestAndKeyPair(AcmeRequests.AcmeRequest request, SupportedClientKeyPair keyPair) {
     }
 
+    @Slf4j
+    public record RequestKeyPairSignature(AcmeRequests.AcmeRequest request, SupportedClientKeyPair keyPair, JWSObjectJSON signature) {
+        public boolean verify() {
+            try {
+                return signature.getSignatures().getFirst().verify(keyPair.nimbusVerifier());
+            } catch (JOSEException e) {
+                log.debug(e.getMessage(), e);
+                return false;
+            }
+        }
+    }
 }

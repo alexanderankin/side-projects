@@ -7,7 +7,7 @@ jar.manifest.attributes 'Implementation-Version': version
 
 application.mainClass = 'side.capfetch.Capfetch'
 
-configurations.configureEach {
+configurations.named('implementation').configure {
     exclude group: 'ch.qos.logback', module: 'logback-classic'
     exclude group: 'info.picocli'
 }
