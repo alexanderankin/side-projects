@@ -10,14 +10,15 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.rnorth.ducttape.unreliables.Unreliables;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer;
+import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer.BuiltInConfig;
+import side.cloud.util.acme.lib.keys.ExternalAccountCredential;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPairAlgorithm;
 import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.AcmeResources.Account;
@@ -29,6 +30,7 @@ import side.cloud.util.acme.lib.model.AcmeResources.Order.OrderStatus;
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -155,5 +157,61 @@ public class AcmeClientITest {
                 .build();
 
         return new HttpComponentsClientHttpRequestFactory(httpClient);
+    }
+
+    @Nested
+    class ExternalAccountBindingTest {
+        static PebbleContainers containers;
+        AcmeClient.Config config;
+        AcmeClient client;
+
+        @BeforeAll
+        static void beforeAll() {
+            containers = new PebbleContainers();
+            containers.pebbleContainer.withBuiltInConfig(BuiltInConfig.PEBBLE_EXTERNAL_ACCOUNT_BINDINGS);
+            containers.start();
+        }
+
+        @AfterAll
+        static void afterAll() {
+            containers.stop();
+        }
+
+        @BeforeEach
+        void beforeEach() {
+            var restTemplate = new RestTemplateBuilder().requestFactory(AcmeClientITest.this::restTemplateTrustAll).build();
+            var keyId = PebbleAcmeServerTestContainer.DEFAULT_HMAC_KEYS.keySet().stream().sorted().findFirst().orElseThrow();
+            var keyValue = Base64.getUrlDecoder().decode(PebbleAcmeServerTestContainer.DEFAULT_HMAC_KEYS.get(keyId));
+
+            config = new AcmeClient.Config()
+                    .setDirectoryUrl(containers.getPebbleDirectoryUrl())
+                    // .setDirectoryUrl(URI.create("https://localhost:14000/dir"))
+                    .setKeyString(SupportedClientKeyPairAlgorithm.ES256.generate().serialize())
+                    .setNewAccount(new NewAccount()
+                            .setContact(List.of(URI.create("mailto:example@localhost.localhost")))
+                            .setTermsOfServiceAgreed(true))
+                    .setExternalAccountCredential(new ExternalAccountCredential()
+                            .setMacAlgorithm(MacAlgorithm.HS256)
+                            .setKeyId(keyId)
+                            .setMacKey(keyValue))
+                    .setRetry(pebbleRetry);
+            client = new AcmeClient(restTemplate, jsonMapper, retryRegistry, config);
+        }
+
+        @Test
+        void requestWithoutExternalAccountBindingFailsToCreateAccount() {
+            config.setExternalAccountCredential(null);
+            assertThat(assertThrows(Exception.class,
+                    () -> client.createAccount()).toString(), containsString("External account required but not configured"));
+        }
+
+        @Test
+        void test() {
+            client.createAccount();
+            var account = client.getAccount();
+            assertThat(account, is(notNullValue()));
+            assertThat(account.getExternalAccountBinding(), is(notNullValue()));
+            System.out.println(account.getExternalAccountBinding());
+        }
     }
 }

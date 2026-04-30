@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
+import side.cloud.util.acme.lib.keys.ExternalAccountCredential;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe;
 import side.cloud.util.acme.lib.model.AcmeRequests;
@@ -28,6 +29,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe.REPLAY_NONCE;
 
@@ -83,9 +85,21 @@ public class AcmeClient {
                 if (configuredAccountId != null) {
                     accountId = configuredAccountId;
                 } else if (accountId == null) {
+                    var eabRequired = Optional.of(directory())
+                            .map(Directory::getMeta).map(Directory.Meta::getExternalAccountRequired).orElse(false);
+
+                    if (eabRequired && config.externalAccountCredential == null) {
+                        throw new IllegalStateException("External account required but not configured");
+                    }
+
                     var configuredNewAccountParameters = config.getNewAccount();
                     var lookup = jsonMapper.convertValue(configuredNewAccountParameters, NewAccount.class);
                     lookup.setOnlyReturnExisting(onlyReturnExisting);
+
+                    if (eabRequired) {
+                        lookup.setExternalAccountBinding(
+                                config.externalAccountCredential.sign(supportedClientKeyPair(), directory().getNewAccount()));
+                    }
 
                     var retry = retryRegistry.retry(getClass().getSimpleName(), config.getRetry().asRetryConfig());
                     var entity = retry.executeCallable(() -> {
@@ -227,6 +241,9 @@ public class AcmeClient {
         @NotNull
         @Valid
         NewAccount newAccount;
+
+        @Valid
+        ExternalAccountCredential externalAccountCredential;
 
         Retry retry = new Retry();
 

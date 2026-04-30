@@ -119,11 +119,10 @@ public interface AcmeResources {
         @Data
         @Accessors(chain = true)
         public static class ExternalAccountBinding {
-            @NotNull
-            MacAlgorithm alg;
-            String kid;
-            @NotNull
-            URI url;
+            @JsonProperty("protected")
+            String protectedString;
+            String payload;
+            String signature;
         }
     }
 
@@ -143,6 +142,8 @@ public interface AcmeResources {
      * Thus, the object contains information about the requested
      * certificate, the authorizations that the server requires the client
      * to complete, and any certificates that have resulted from this order.
+     *
+     * @see <a href=https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.3>rfc8555: 7.1.3 Order Objects</a>
      */
     @Dto
     @Data

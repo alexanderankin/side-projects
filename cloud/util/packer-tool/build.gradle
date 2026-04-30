@@ -10,7 +10,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.github.mwiede/jsch // ssh
     implementation 'com.github.mwiede:jsch:2.27.7'
     // https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-retry
-    implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'
+    implementation 'io.github.resilience4j:resilience4j-retry'
     // https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
-    implementation 'org.bouncycastle:bcpkix-jdk18on:1.83'
+    implementation 'org.bouncycastle:bcpkix-jdk18on'
 }
