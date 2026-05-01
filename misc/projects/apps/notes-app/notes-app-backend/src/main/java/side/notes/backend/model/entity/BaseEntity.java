@@ -21,7 +21,6 @@ import java.util.UUID;
 @Accessors(chain = true)
 @MappedSuperclass
 abstract class BaseEntity {
-    @NotNull(groups = {ReferencedEntity.class})
     @Id
     @GeneratedValue
     @UuidGenerator(style = UuidGenerator.Style.TIME)

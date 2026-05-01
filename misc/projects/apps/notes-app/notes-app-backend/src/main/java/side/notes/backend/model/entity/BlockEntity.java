@@ -35,5 +35,5 @@ public class BlockEntity extends BaseEntity {
     @JoinTable(name = "block_tag",
             joinColumns = @JoinColumn(name = "block_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    SortedSet<@Valid TagEntity> tags;
+    SortedSet<@NotNull @HasId TagEntity> tags;
 }

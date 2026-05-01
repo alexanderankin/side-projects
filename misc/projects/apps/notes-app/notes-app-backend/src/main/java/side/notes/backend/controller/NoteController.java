@@ -74,7 +74,6 @@ public class NoteController {
         return noteRepository.findById(noteId).stream().peek(noteRepository::delete).findAny().orElse(null);
     }
 
-    @Validated({ReferencedEntity.class})
     @PostMapping(path = "/{noteId}/blocks")
     @ResponseStatus(HttpStatus.CREATED)
     BlockEntity createBlock(@PathVariable UUID noteId, @NotNull @Valid BlockEntity blockEntity) {
@@ -107,7 +106,6 @@ public class NoteController {
         ));
     }
 
-    @Validated({ReferencedEntity.class})
     @PutMapping(path = "/{noteId}/blocks/{blockId}")
     BlockEntity updateBlockEntity(@PathVariable UUID noteId, @PathVariable UUID blockId, @NotNull @Valid BlockEntity blockEntity) {
         blockEntity.setId(blockId);
