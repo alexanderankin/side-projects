@@ -21,7 +21,7 @@ import java.util.SortedSet;
 public class BlockEntity extends BaseEntity {
     @Column(nullable = false, updatable = false)
     @NaturalId
-    Integer ordinal;
+    String ordinal;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NaturalId

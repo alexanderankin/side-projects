@@ -1,9 +1,6 @@
 package side.notes.backend.model.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -21,5 +18,6 @@ public class TagEntity extends BaseEntity.NamedEntity {
     String description;
 
     @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
+    @Column(insertable = false, updatable = false)
     SortedSet<BlockEntity> notes;
 }

@@ -81,7 +81,24 @@ public class NoteController {
         var size = note.getSize();
         note.setSize(size + 1);
 
-        blockEntity.setOrdinal(size);
+        // blockEntity.setOrdinal(size);
+        blockEntity.setNote(note);
+        blockEntity.setTags(referencesForTags(blockEntity.getTags()));
+        entityManager.persist(blockEntity);
+        return blockEntity;
+    }
+
+    @PostMapping(path = "/{noteId}/blocks")
+    @ResponseStatus(HttpStatus.CREATED)
+    BlockEntity createBlock(@PathVariable UUID noteId,
+                            @RequestParam String afterOrdinal,
+                            @RequestParam String beforeOrdinal,
+                            @NotNull @Valid BlockEntity blockEntity) {
+        var note = noteRepository.findById(noteId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var size = note.getSize();
+        note.setSize(size + 1);
+
+        // blockEntity.setOrdinal(size);
         blockEntity.setNote(note);
         blockEntity.setTags(referencesForTags(blockEntity.getTags()));
         entityManager.persist(blockEntity);

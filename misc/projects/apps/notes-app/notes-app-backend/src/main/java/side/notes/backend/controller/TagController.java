@@ -12,9 +12,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import side.notes.backend.model.entity.TagEntity;
+import side.notes.backend.model.entity.TagMapper;
 import side.notes.backend.model.repository.TagRepository;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,6 +26,7 @@ import java.time.OffsetDateTime;
 public class TagController {
     private final EntityManager entityManager;
     private final TagRepository tagRepository;
+    private final TagMapper tagMapper;
 
     @PostMapping
     TagEntity create(@NotNull @Valid TagEntity tagEntity) {
@@ -50,5 +53,9 @@ public class TagController {
     }
 
     @PutMapping(path = "/{tagId}")
-    TagEntity putTagEntity()
+    TagEntity putTagEntity(@PathVariable UUID tagId, @NotNull @Valid TagEntity tagEntity) {
+        var managed = tagRepository.getReferenceById(tagId);
+        tagMapper.updateTagEntity(managed, tagEntity);
+        return tagRepository.save(tagEntity);
+    }
 }
