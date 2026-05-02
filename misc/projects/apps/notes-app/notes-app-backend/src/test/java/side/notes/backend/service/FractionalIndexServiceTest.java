@@ -1,14 +1,40 @@
 package side.notes.backend.service;
 
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FractionalIndexServiceTest {
     FractionalIndexService fractionalIndexService = new FractionalIndexService();
+
+    @Test
+    void usage() {
+        String first = fractionalIndexService.generateKeyBetween((String) null, null);
+        String second = fractionalIndexService.generateKeyBetween(first, null);
+        String afterAllThree = fractionalIndexService.generateKeyBetween(second, null);
+        String betweenFirstAndSecond = fractionalIndexService.generateKeyBetween(first, second);
+        String betweenFirstTwoAgain = fractionalIndexService.generateKeyBetween(first, betweenFirstAndSecond);
+
+        var ordered = List.of(
+                first,
+                betweenFirstTwoAgain,
+                betweenFirstAndSecond,
+                second,
+                afterAllThree
+        );
+
+        System.out.println(ordered);
+        assertEquals(List.of("a0", "a0G", "a0V", "a1", "a2"), ordered);
+        assertEquals(List.of("a0", "a0G", "a0V", "a1", "a2"),
+                Stream.of(first, second, afterAllThree, betweenFirstAndSecond, betweenFirstTwoAgain).sorted().toList());
+    }
 
     // test cases selected arbitrarily and expected values from node.js
     @ParameterizedTest
