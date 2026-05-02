@@ -1,7 +1,5 @@
 package side.notes.backend.service;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -13,198 +11,204 @@ import java.util.Arrays;
 public class FractionalIndexService {
     private static final byte[] BASE_62_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".getBytes();
 
-    /**
-     * @param a      may be empty string
-     * @param b      is null or non-empty string (`a < b` lexicographically if b is not null)
-     * @param digits characters in ascending character order
-     */
-    public String midpoint(@NonNull String a, @Nullable String b, byte @NonNull [] digits) {
+    byte[] midpoint(byte[] a, byte[] b, byte[] digits) {
         var zero = digits[0];
-        int aCompareToB;
-        if (b != null && (aCompareToB = a.compareTo(b)) >= 0) {
-            throw new IllegalArgumentException("a '" + a + "' cannot be greater than b '" + b + "', a.compareTo(b) returned: " + aCompareToB);
+        if (b != null && Utils.compareTo(a, b) >= 0) {
+            throw new IllegalArgumentException(new String(a) + " >= " + new String(b));
         }
-        if (a.charAt(a.length() - 1) == zero || (b != null && b.charAt(b.length() - 1) == zero)) {
-            throw new IllegalArgumentException("neither a '" + a + "' or b '" + b + "' can have trailing zeroes ('" + zero + "')");
+        if ((a.length > 0 && a[a.length - 1] == zero) || (b != null && b[b.length - 1] == zero)) {
+            throw new IllegalArgumentException("trailing zero");
         }
-        var aBytes = a.getBytes();
-        var bBytes = b == null ? null : b.getBytes();
-
         if (b != null) {
-            int n = 0;
-            while ((aBytes[n] | zero) == bBytes[n]) {
+            // remove longest common prefix.  pad `a` with 0s as we
+            // go.  note that we don't need to pad `b`, because it can't
+            // end before `a` while traversing the common prefix.
+            var n = 0;
+            while (((n >= a.length ? 0 : a[n]) | zero) == (n >= b.length ? 0 : b[n])) {
                 n++;
             }
             if (n > 0) {
-                return b.substring(0, n) + midpoint(a.substring(n), b.substring(n), digits);
+                return Utils.concat(
+                        Arrays.copyOf(b, n),
+                        midpoint(Arrays.copyOfRange(a, n, a.length), Arrays.copyOfRange(b, n, b.length), digits)
+                );
             }
         }
-
-        var aDigit = aBytes.length > 0 ? Arrays.binarySearch(digits, aBytes[0]) : 0;
-        var bDigit = bBytes != null ? Arrays.binarySearch(digits, bBytes[0]) : 0;
-        if (bDigit - aDigit > 1) {
-            var midDigit = round(0.5 * (aDigit + bDigit));
-            return String.valueOf((char) digits[midDigit]);
+        // first digits (or lack of digit) are different
+        int digitA = a.length > 0 ? Arrays.binarySearch(digits, a[0]) : 0;
+        int digitB = b != null ? Arrays.binarySearch(digits, b[0]) : digits.length;
+        if (digitB - digitA > 1) {
+            int midDigit = (int) Math.round(0.5 * (digitA + digitB));
+            return Arrays.copyOfRange(digits, midDigit, midDigit + 1);
         } else {
-            if (b != null && bBytes.length > 1) {
-                return new String(Arrays.copyOfRange(bBytes, 0, 1));
+            // first digits are consecutive
+            if (b != null && b.length > 1) {
+                return Arrays.copyOfRange(b, 0, 1);
             } else {
-                return (char) digits[aDigit] + midpoint(a.substring(1), null, digits);
+                // `b` is null or has length 1 (a single digit).
+                // the first digit of `a` is the previous digit to `b`,
+                // or 9 if `b` is null.
+                // given, for example, midpoint('49', '5'), return
+                // '4' + midpoint('9', null), which will become
+                // '4' + '9' + midpoint('', null), which is '495'
+                return Utils.concat(
+                        Arrays.copyOfRange(digits, digitA, digitA + 1),
+                        midpoint(Arrays.copyOfRange(a, a.length == 0 ? 0 : 1, a.length), null, digits)
+                );
             }
         }
     }
 
-    int round(double input) {
-        return Math.round((float) input);
-    }
-
-    public void validateInteger(String integer) {
-        if (integer.length() != getIntegerLength(integer.charAt(0))) {
-            throw new IllegalArgumentException("invalid integer part of order key: " + integer);
+    void validateInteger(byte[] input) {
+        if (input.length != getIntegerLength(input[0])) {
+            throw new IllegalArgumentException("invalid integer part of order key: " + new String(input));
         }
     }
 
-    public int getIntegerLength(char head) {
-        if (head >= 'a' && head <= 'z') {
-            return head - 'a' + 2;
-        } else if (head >= 'A' && head <= 'Z') {
-            return 'Z' - head + 2;
+    int getIntegerLength(byte head0) {
+        if (head0 >= 'a' && head0 <= 'z') {
+            return head0 - 'a' + 2;
+        } else if (head0 >= 'A' && head0 <= 'Z') {
+            return 'Z' - head0 + 2;
         }
-
-        throw new IllegalArgumentException("invalid order key head: " + head);
+        throw new IllegalArgumentException("invalid order key head: " + (char) head0);
     }
 
-    public String getIntegerPart(String key) {
-        var integerPartLength = getIntegerLength(key.charAt(0));
-        if (integerPartLength > key.length()) {
-            throw new IllegalArgumentException("invalid order key: " + key);
+    byte[] getIntegerPart(byte[] key) {
+        var integerPartLength = getIntegerLength(key[0]);
+        if (integerPartLength > key.length) {
+            throw new IllegalArgumentException("invalid order key: " + new String(key));
         }
-        return key.substring(0, integerPartLength);
+        return Arrays.copyOfRange(key, 0, integerPartLength);
     }
 
-    void validateOrderKey(String key, String digits) {
-        if (key.equals("A" + repeatTwentySixTimes(digits.charAt(0)))) {
-            throw new IllegalArgumentException("invalid order key: " + key);
+    void validateOrderKey(byte[] key, byte[] digits) {
+        // byte[] zeroes = new byte[26];
+        // Arrays.fill(zeroes, digits[0]);
+        // if (Utils.compareTo(key, Utils.concat(new byte[]{'A'}, zeroes)) == 0) {
+        //     throw new IllegalArgumentException("invalid order key: " + new String(key));
+        // }
+
+        boolean abovePart;
+        boolean canFail = key.length == 27 && key[0] == 'A';
+        if (canFail) {
+            boolean itWorks = true;
+            for (int i = 0; i < 26; i++) {
+                if (key[i + 1] != digits[i]) {
+                    itWorks = false;
+                    break;
+                }
+            }
+            abovePart = !itWorks;
+        } else {
+            abovePart = false;
         }
-        var i = getIntegerPart(key); // throws if first char bad
-        var f = key.substring(i.length());
-        if (f.substring(f.length() - 2).equals(digits.substring(0, 1))) {
-            throw new IllegalArgumentException("invalid order key: " + key);
+        if (abovePart)
+            throw new IllegalArgumentException("invalid order key: " + new String(key));
+
+        var i = getIntegerPart(key);
+        if (i.length < key.length && key[key.length - 1] == digits[0]) {
+            throw new IllegalArgumentException("invalid order key: " + new String(key));
         }
     }
 
-    private String repeatTwentySixTimes(char c) {
-        var sb = new StringBuilder();
-        for (var i = 0; i < 26; i++) {
-            sb.append(c);
-        }
-        return sb.toString();
-    }
-
-    private String incrementInteger(String x, String digits) {
+    byte[] incrementInteger(byte[] x, byte[] digits) {
         validateInteger(x);
-
-        var digitsBytes = digits.getBytes();
-
-        var xBytes = x.getBytes();
-        var head = xBytes[0];
-        var digs = Arrays.copyOfRange(xBytes, 1, xBytes.length);
+        var head = x[0];
+        var digs = Arrays.copyOfRange(x, 1, x.length);
         var carry = true;
-        for (var i = digs.length - 1; i >= 0; i--) {
-            var d = Arrays.binarySearch(digitsBytes, digs[i]) + 1;
-            if (d == digits.length()) {
-                digs[i] = digitsBytes[0];
+        for (int i = digs.length - 1; carry && i >= 0; i--) {
+            var d = Arrays.binarySearch(digits, digs[i]) + 1;
+            if (d == digits.length) {
+                digs[i] = digits[0];
             } else {
-                digs[i] = digitsBytes[d];
+                digs[i] = digits[d];
                 carry = false;
             }
         }
         if (carry) {
             if (head == 'Z') {
-                return "a" + digitsBytes[0];
+                return new byte[]{'a', digits[0]};
             }
             if (head == 'z') {
                 return null;
             }
-            var h = String.valueOf(head);
-            if (h.compareTo("a") > 0) {
+            var h = (byte) (head + 1);
+            if (h > 'a') {
                 digs = Arrays.copyOf(digs, digs.length + 1);
-                digs[digs.length - 1] = digitsBytes[0];
+                digs[digs.length - 1] = digits[0];
             } else {
                 digs = Arrays.copyOf(digs, digs.length - 1);
             }
-            return h + new String(digs);
+            return Utils.concat(new byte[]{h}, digs);
         }
-        return head + new String(digs);
+        return Utils.concat(new byte[]{head}, digs);
     }
 
-    @Nullable
-    private String decrementInteger(String x, String digits) {
+    byte[] decrementInteger(byte[] x, byte[] digits) {
         validateInteger(x);
-
-        var digitsBytes = digits.getBytes();
-        var xBytes = x.getBytes();
-
-        char head = (char) xBytes[0];
-        byte[] digs = Arrays.copyOfRange(xBytes, 1, xBytes.length);
-
-        boolean borrow = true;
-        for (int i = digs.length - 1; i >= 0 && borrow; i--) {
-            int d = Arrays.binarySearch(digitsBytes, digs[i]) - 1;
+        var head = x[0];
+        var digs = Arrays.copyOfRange(x, 1, x.length);
+        var borrow = true;
+        for (int i = digs.length - 1; borrow && i >= 0; i--) {
+            var d = Arrays.binarySearch(digits, digs[i]) - 1;
             if (d == -1) {
-                digs[i] = digitsBytes[digitsBytes.length - 1];
+                digs[i] = digits[digits.length - 1];
             } else {
-                digs[i] = digitsBytes[d];
+                digs[i] = digits[d];
                 borrow = false;
             }
         }
-
         if (borrow) {
             if (head == 'a') {
-                return "Z" + (char) digitsBytes[digitsBytes.length - 1];
+                return new byte[]{'Z', digits[digits.length - 1]};
             }
             if (head == 'A') {
                 return null;
             }
-
-            char h = (char) (head - 1);
+            var h = (byte) (head - 1);
             if (h < 'Z') {
                 digs = Arrays.copyOf(digs, digs.length + 1);
-                digs[digs.length - 1] = digitsBytes[digitsBytes.length - 1];
+                digs[digs.length - 1] = digits[digits.length - 1];
             } else {
                 digs = Arrays.copyOf(digs, digs.length - 1);
             }
-            return h + new String(digs);
+            return Utils.concat(new byte[]{h}, digs);
         }
-
-        return head + new String(digs);
+        return Utils.concat(new byte[]{head}, digs);
     }
 
-    public String generateKeyBetween(@Nullable String a, @Nullable String b, String digits) {
+    public byte[] generateKeyBetween(byte[] a, byte[] b) {
+        return generateKeyBetween(a, b, BASE_62_DIGITS);
+    }
+
+    public byte[] generateKeyBetween(byte[] a, byte[] b, byte[] digits) {
         if (a != null) validateOrderKey(a, digits);
         if (b != null) validateOrderKey(b, digits);
 
-        if (a != null && b != null && a.compareTo(b) >= 0) {
-            throw new IllegalArgumentException(a + " >= " + b);
+        if (a != null && b != null && Utils.compareTo(a, b) >= 0) {
+            throw new IllegalArgumentException(new String(a) + " >= " + new String(b));
         }
 
         if (a == null) {
             if (b == null) {
-                return "a" + digits.charAt(0);
+                return new byte[]{'a', digits[0]};
             }
 
-            String ib = getIntegerPart(b);
-            String fb = b.substring(ib.length());
+            byte[] ib = getIntegerPart(b);
+            byte[] fb = Arrays.copyOfRange(b, ib.length, b.length);
+            byte[] smallest = Utils.concat(new byte[]{'A'}, new byte[26]);
+            Arrays.fill(smallest, 1, smallest.length, digits[0]);
 
-            if (ib.equals("A" + repeatTwentySixTimes(digits.charAt(0)))) {
-                return ib + midpoint("", fb, digits.getBytes());
+            if (Utils.compareTo(ib, smallest) == 0) {
+                return Utils.concat(ib, midpoint(new byte[0], fb, digits));
             }
 
-            if (ib.compareTo(b) < 0) {
+            if (Utils.compareTo(ib, b) < 0) {
                 return ib;
             }
 
-            String res = decrementInteger(ib, digits);
+            byte[] res = decrementInteger(ib, digits);
             if (res == null) {
                 throw new IllegalArgumentException("cannot decrement any more");
             }
@@ -212,89 +216,153 @@ public class FractionalIndexService {
         }
 
         if (b == null) {
-            String ia = getIntegerPart(a);
-            String fa = a.substring(ia.length());
-
-            String i = incrementInteger(ia, digits);
-            return i == null ? ia + midpoint(fa, null, digits.getBytes()) : i;
+            byte[] ia = getIntegerPart(a);
+            byte[] fa = Arrays.copyOfRange(a, ia.length, a.length);
+            byte[] i = incrementInteger(ia, digits);
+            return i == null ? Utils.concat(ia, midpoint(fa, null, digits)) : i;
         }
 
-        String ia = getIntegerPart(a);
-        String fa = a.substring(ia.length());
-        String ib = getIntegerPart(b);
-        String fb = b.substring(ib.length());
+        byte[] ia = getIntegerPart(a);
+        byte[] fa = Arrays.copyOfRange(a, ia.length, a.length);
+        byte[] ib = getIntegerPart(b);
+        byte[] fb = Arrays.copyOfRange(b, ib.length, b.length);
 
-        if (ia.equals(ib)) {
-            return ia + midpoint(fa, fb, digits.getBytes());
+        if (Utils.compareTo(ia, ib) == 0) {
+            return Utils.concat(ia, midpoint(fa, fb, digits));
         }
 
-        String i = incrementInteger(ia, digits);
+        byte[] i = incrementInteger(ia, digits);
         if (i == null) {
             throw new IllegalArgumentException("cannot increment any more");
         }
 
-        if (i.compareTo(b) < 0) {
+        if (Utils.compareTo(i, b) < 0) {
             return i;
         }
 
-        return ia + midpoint(fa, null, digits.getBytes());
+        return Utils.concat(ia, midpoint(fa, null, digits));
     }
 
-    public String[] generateNKeysBetween(@Nullable String a, @Nullable String b, int n, String digits) {
-        if (n == 0) return new String[0];
+    public byte[][] generateNKeysBetween(byte[] a, byte[] b, int n) {
+        return generateNKeysBetween(a, b, n, BASE_62_DIGITS);
+    }
+
+    public byte[][] generateNKeysBetween(byte[] a, byte[] b, int n, byte[] digits) {
+        if (n == 0) {
+            return new byte[0][];
+        }
 
         if (n == 1) {
-            return new String[]{generateKeyBetween(a, b, digits)};
+            return new byte[][]{generateKeyBetween(a, b, digits)};
         }
 
         if (b == null) {
-            String[] result = new String[n];
-            String c = generateKeyBetween(a, b, digits);
+            byte[][] result = new byte[n][];
+            byte[] c = generateKeyBetween(a, null, digits);
             result[0] = c;
-
             for (int i = 1; i < n; i++) {
-                c = generateKeyBetween(c, b, digits);
+                c = generateKeyBetween(c, null, digits);
                 result[i] = c;
             }
             return result;
         }
 
         if (a == null) {
-            String[] result = new String[n];
-            String c = generateKeyBetween(a, b, digits);
+            byte[][] result = new byte[n][];
+            byte[] c = generateKeyBetween(null, b, digits);
             result[0] = c;
-
             for (int i = 1; i < n; i++) {
-                c = generateKeyBetween(a, c, digits);
+                c = generateKeyBetween(null, c, digits);
                 result[i] = c;
             }
-
-            // reverse
             for (int i = 0; i < n / 2; i++) {
-                String tmp = result[i];
+                byte[] tmp = result[i];
                 result[i] = result[n - 1 - i];
                 result[n - 1 - i] = tmp;
             }
-
             return result;
         }
 
         int mid = n / 2;
-        String c = generateKeyBetween(a, b, digits);
-
-        String[] left = generateNKeysBetween(a, c, mid, digits);
-        String[] right = generateNKeysBetween(c, b, n - mid - 1, digits);
-
-        String[] result = new String[n];
+        byte[] c = generateKeyBetween(a, b, digits);
+        byte[][] left = generateNKeysBetween(a, c, mid, digits);
+        byte[][] right = generateNKeysBetween(c, b, n - mid - 1, digits);
+        byte[][] result = new byte[n][];
         System.arraycopy(left, 0, result, 0, left.length);
         result[left.length] = c;
         System.arraycopy(right, 0, result, left.length + 1, right.length);
-
         return result;
     }
 
     public String generateKeyBetween(String a, String b) {
-        return generateKeyBetween(a, b, new String(BASE_62_DIGITS));
+        return new String(
+                generateKeyBetween(
+                        a == null ? null : a.getBytes(),
+                        b == null ? null : b.getBytes()
+                )
+        );
+    }
+
+    public String generateKeyBetween(String a, String b, String digits) {
+        return new String(
+                generateKeyBetween(
+                        a == null ? null : a.getBytes(),
+                        b == null ? null : b.getBytes(),
+                        digits.getBytes()
+                )
+        );
+    }
+
+    public String[] generateNKeysBetween(String a, String b, int n) {
+        byte[][] results = generateNKeysBetween(
+                a == null ? null : a.getBytes(),
+                b == null ? null : b.getBytes(),
+                n
+        );
+        String[] result = new String[results.length];
+        for (int i = 0; i < results.length; i++) {
+            result[i] = new String(results[i]);
+        }
+        return result;
+    }
+
+    public String[] generateNKeysBetween(String a, String b, int n, String digits) {
+        byte[][] results = generateNKeysBetween(
+                a == null ? null : a.getBytes(),
+                b == null ? null : b.getBytes(),
+                n,
+                digits.getBytes()
+        );
+        String[] result = new String[results.length];
+        for (int i = 0; i < results.length; i++) {
+            result[i] = new String(results[i]);
+        }
+        return result;
+    }
+
+    static class Utils {
+        public static int compareTo(byte[] value, byte[] other) {
+            return compareTo(value, other, value.length, other.length);
+        }
+
+        public static int compareTo(byte[] value, byte[] other, int len1, int len2) {
+            int k = Arrays.mismatch(value, 0, len1, other, 0, len2);
+            if (k < 0 || k == len1 || k == len2) {
+                return len1 - len2;
+            }
+            return getChar(value, k) - getChar(other, k);
+        }
+
+        static char getChar(byte[] val, int index) {
+            return (char) (val[index] & 0xff);
+        }
+
+        static byte[] concat(byte[] b0n, byte[] midpointResult) {
+            byte[] result = new byte[b0n.length + midpointResult.length];
+            System.arraycopy(b0n, 0, result, 0, b0n.length);
+            System.arraycopy(midpointResult, 0, result, b0n.length, midpointResult.length);
+            return result;
+        }
     }
 }
 
