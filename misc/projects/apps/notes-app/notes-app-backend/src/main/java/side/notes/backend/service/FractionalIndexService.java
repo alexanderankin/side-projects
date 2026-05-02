@@ -2,6 +2,7 @@ package side.notes.backend.service;
 
 import org.springframework.stereotype.Service;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
@@ -11,11 +12,14 @@ import java.util.Arrays;
 public class FractionalIndexService {
     private static final byte[] BASE_62_DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".getBytes();
 
+    // byte[] midpoint(byte[] a, ByteBuffer b, byte[] digits) {
     byte[] midpoint(byte[] a, byte[] b, byte[] digits) {
         var zero = digits[0];
         if (b != null && Utils.compareTo(a, b) >= 0) {
             throw new IllegalArgumentException(new String(a) + " >= " + new String(b));
+            // throw new IllegalArgumentException(new String(a) + " >= " + b.asCharBuffer());
         }
+        // if ((a.length > 0 && a[a.length - 1] == zero) || (b != null && b.get(b.limit() - 1) == zero)) {
         if ((a.length > 0 && a[a.length - 1] == zero) || (b != null && b[b.length - 1] == zero)) {
             throw new IllegalArgumentException("trailing zero");
         }
@@ -24,13 +28,16 @@ public class FractionalIndexService {
             // go.  note that we don't need to pad `b`, because it can't
             // end before `a` while traversing the common prefix.
             var n = 0;
+            // while (((n >= a.length ? 0 : a[n]) | zero) == (n >= b.limit() ? 0 : b[n])) {
             while (((n >= a.length ? 0 : a[n]) | zero) == (n >= b.length ? 0 : b[n])) {
                 n++;
             }
             if (n > 0) {
                 return Utils.concat(
                         Arrays.copyOf(b, n),
+                        // b.slice(0, n),
                         midpoint(Arrays.copyOfRange(a, n, a.length), Arrays.copyOfRange(b, n, b.length), digits)
+                        // midpoint(Arrays.copyOfRange(a, n, a.length), Arrays.copyOfRange(b, n, b.limit()), digits)
                 );
             }
         }
@@ -42,6 +49,7 @@ public class FractionalIndexService {
             return Arrays.copyOfRange(digits, midDigit, midDigit + 1);
         } else {
             // first digits are consecutive
+            // if (b != null && b.limit() > 1) {
             if (b != null && b.length > 1) {
                 return Arrays.copyOfRange(b, 0, 1);
             } else {
@@ -89,21 +97,22 @@ public class FractionalIndexService {
         //     throw new IllegalArgumentException("invalid order key: " + new String(key));
         // }
 
-        boolean abovePart;
-        boolean canFail = key.length == 27 && key[0] == 'A';
-        if (canFail) {
-            boolean itWorks = true;
-            for (int i = 0; i < 26; i++) {
-                if (key[i + 1] != digits[i]) {
-                    itWorks = false;
-                    break;
+        boolean keyIsNotSmallest;
+        {
+            if (!(key.length == 27 && key[0] == 'A')) {
+                keyIsNotSmallest = false;
+            } else {
+                boolean allZero = true;
+                for (int i = 0; i < 26; i++) {
+                    if (key[i + 1] != digits[0]) {
+                        allZero = false;
+                        break;
+                    }
                 }
+                keyIsNotSmallest = allZero;
             }
-            abovePart = !itWorks;
-        } else {
-            abovePart = false;
         }
-        if (abovePart)
+        if (keyIsNotSmallest)
             throw new IllegalArgumentException("invalid order key: " + new String(key));
 
         var i = getIntegerPart(key);
@@ -115,14 +124,19 @@ public class FractionalIndexService {
     byte[] incrementInteger(byte[] x, byte[] digits) {
         validateInteger(x);
         var head = x[0];
-        var digs = Arrays.copyOfRange(x, 1, x.length);
+        var output = Arrays.copyOf(x, x.length);
+        // var digs = Arrays.copyOfRange(x, 1, x.length);
         var carry = true;
-        for (int i = digs.length - 1; carry && i >= 0; i--) {
-            var d = Arrays.binarySearch(digits, digs[i]) + 1;
+        // for (int i = digs.length - 1; carry && i >= 0; i--) {
+        for (int i = output.length - 2; carry && i >= 0; i--) {
+            // var dOld = Arrays.binarySearch(digits, digs[i]) + 1;
+            var d = Arrays.binarySearch(digits, output[i + 1]) + 1;
             if (d == digits.length) {
-                digs[i] = digits[0];
+                // digs[i] = digits[0];
+                output[i + 1] = digits[0];
             } else {
-                digs[i] = digits[d];
+                // digs[i] = digits[d];
+                output[i + 1] = digits[d];
                 carry = false;
             }
         }
@@ -135,14 +149,20 @@ public class FractionalIndexService {
             }
             var h = (byte) (head + 1);
             if (h > 'a') {
-                digs = Arrays.copyOf(digs, digs.length + 1);
-                digs[digs.length - 1] = digits[0];
+                // digs = Arrays.copyOf(digs, digs.length + 1);
+                // digs[digs.length - 1] = digits[0];
+                output = Arrays.copyOf(output, output.length + 1);
+                output[output.length - 1] = digits[0];
             } else {
-                digs = Arrays.copyOf(digs, digs.length - 1);
+                // digs = Arrays.copyOf(digs, digs.length - 1);
             }
-            return Utils.concat(new byte[]{h}, digs);
+            // return Utils.concat(new byte[]{h}, digs);
+            output[0] = h;
+            return output;
         }
-        return Utils.concat(new byte[]{head}, digs);
+        // return Utils.concat(new byte[]{head}, digs);
+        output[0] = head;
+        return output;
     }
 
     byte[] decrementInteger(byte[] x, byte[] digits) {
@@ -196,11 +216,28 @@ public class FractionalIndexService {
             }
 
             byte[] ib = getIntegerPart(b);
-            byte[] fb = Arrays.copyOfRange(b, ib.length, b.length);
-            byte[] smallest = Utils.concat(new byte[]{'A'}, new byte[26]);
-            Arrays.fill(smallest, 1, smallest.length, digits[0]);
+            var fb = Arrays.copyOfRange(b, ib.length, b.length);
+            // var fb = ByteBuffer.wrap(b, ib.length, b.length);
+            // byte[] smallest = Utils.concat(new byte[]{'A'}, new byte[26]);
+            // Arrays.fill(smallest, 1, smallest.length, digits[0]);
+            // var ibIsSmallest = Utils.compareTo(ib, smallest) == 0;
+            boolean ibIsSmallest;
+            {
+                if (!(ib.length == 27 && ib[0] == 'A')) {
+                    ibIsSmallest = false;
+                } else {
+                    boolean allZero = true;
+                    for (int i = 0; i < 26; i++) {
+                        if (ib[i + 1] != digits[0]) {
+                            allZero = false;
+                            break;
+                        }
+                    }
+                    ibIsSmallest = allZero;
+                }
+            }
 
-            if (Utils.compareTo(ib, smallest) == 0) {
+            if (ibIsSmallest) {
                 return Utils.concat(ib, midpoint(new byte[0], fb, digits));
             }
 
@@ -357,11 +394,35 @@ public class FractionalIndexService {
             return (char) (val[index] & 0xff);
         }
 
+        static char getChar(byte val) {
+            return (char) (val & 0xff);
+        }
+
         static byte[] concat(byte[] b0n, byte[] midpointResult) {
             byte[] result = new byte[b0n.length + midpointResult.length];
             System.arraycopy(b0n, 0, result, 0, b0n.length);
             System.arraycopy(midpointResult, 0, result, b0n.length, midpointResult.length);
             return result;
+        }
+
+        static int compareTo(byte[] a, ByteBuffer b) {
+            int k = mismatch(a, b);
+            if (k < 0 || k == a.length || k == b.remaining()) {
+                return a.length - b.remaining();
+            }
+            return getChar(a, k) - getChar(b.get(k));
+        }
+
+        static int mismatch(byte[] a, ByteBuffer b) {
+            var aLength = a.length;
+            var bLength = b.remaining();
+            var min = Math.min(aLength, bLength);
+            for (int i = 0; i < min; i++) {
+                if (a[i] != b.get(i)) {
+                    return i;
+                }
+            }
+            return aLength == bLength ? -1 : min;
         }
     }
 }
