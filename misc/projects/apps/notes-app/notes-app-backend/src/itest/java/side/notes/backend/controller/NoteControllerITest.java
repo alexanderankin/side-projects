@@ -6,9 +6,11 @@ import side.notes.backend.NotesBackendITest;
 import side.notes.backend.model.PagedModelDto;
 import side.notes.backend.model.entity.BlockEntity;
 import side.notes.backend.model.entity.NoteEntity;
+import side.notes.backend.model.entity.TagEntity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -76,5 +78,161 @@ class NoteControllerITest extends NotesBackendITest {
         ));
         assertThat(blocks.getContent(), everyItem(hasProperty("tags", is(notNullValue()))));
         assertThat(blocks.getContent(), everyItem(hasProperty("tags", is(empty()))));
+    }
+
+    @Test
+    void getBlocksSupportsOrdinalCursor() {
+        var prefix = "getBlocksSupportsOrdinalCursor-";
+        var noteId = webTestClient.post().uri("/api/notes")
+                .bodyValue(new NoteEntity().setName(prefix + "-note"))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(NoteEntity.class)
+                .returnResult()
+                .getResponseBody()
+                .getId();
+        var firstBlock = webTestClient.post()
+                .uri("/api/notes/{noteId}/blocks", noteId)
+                .bodyValue(new BlockEntity().setContent(prefix + "-1"))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+        var secondBlock = webTestClient.post()
+                .uri("/api/notes/{noteId}/blocks", noteId)
+                .bodyValue(new BlockEntity().setContent(prefix + "-2"))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+        webTestClient.post()
+                .uri("/api/notes/{noteId}/blocks", noteId)
+                .bodyValue(new BlockEntity().setContent(prefix + "-3"))
+                .exchange()
+                .expectStatus().isCreated();
+
+        var firstPage = webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/notes/{noteId}/blocks")
+                        .queryParam("size", 2)
+                        .build(noteId))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<PagedModelDto<BlockEntity>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+        assertThat(firstPage, is(notNullValue()));
+        assertThat(firstPage.getContent(), hasSize(2));
+        assertThat(firstPage.getContent(), contains(
+                hasProperty("content", is(prefix + "-1")),
+                hasProperty("content", is(prefix + "-2"))
+        ));
+
+        var secondPage = webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/notes/{noteId}/blocks")
+                        .queryParam("size", 2)
+                        .queryParam("lastOrdinal", secondBlock.getOrdinal())
+                        .build(noteId))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<PagedModelDto<BlockEntity>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+        assertThat(secondPage, is(notNullValue()));
+        assertThat(secondPage.getContent(), hasSize(1));
+        assertThat(secondPage.getContent(), contains(hasProperty("content", is(prefix + "-3"))));
+        assertThat(firstBlock.getOrdinal(), is(notNullValue()));
+        assertThat(secondBlock.getOrdinal(), is(notNullValue()));
+    }
+
+    @Test
+    void getNotesSupportsNameCursorAndRejectsUnsupportedSort() {
+        var prefix = "getNotesSupportsNameCursor-";
+        var firstName = prefix + "-a";
+        var secondName = prefix + "-b";
+
+        webTestClient.post().uri("/api/notes")
+                .bodyValue(new NoteEntity().setName(firstName))
+                .exchange()
+                .expectStatus().isCreated();
+        webTestClient.post().uri("/api/notes")
+                .bodyValue(new NoteEntity().setName(secondName))
+                .exchange()
+                .expectStatus().isCreated();
+
+        var page = webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/notes")
+                        .queryParam("sort", "name,asc")
+                        .queryParam("size", 1)
+                        .queryParam("lastId", firstName)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<PagedModelDto<NoteEntity>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(page, is(notNullValue()));
+        assertThat(page.getContent(), hasSize(1));
+        assertThat(page.getContent(), contains(hasProperty("name", is(secondName))));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/notes")
+                        .queryParam("sort", "description,asc")
+                        .queryParam("lastId", firstName)
+                        .build())
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void getTagsSupportsDescriptionCursorAndRejectsUnsupportedSort() {
+        var prefix = "getTagsSupportsDescriptionCursor-";
+        var firstDescription = prefix + "-a";
+        var secondDescription = prefix + "-b";
+        var firstTag = new TagEntity();
+        firstTag.setName(prefix + "-tag-a");
+        firstTag.setDescription(firstDescription);
+        var secondTag = new TagEntity();
+        secondTag.setName(prefix + "-tag-b");
+        secondTag.setDescription(secondDescription);
+
+        webTestClient.post().uri("/api/tags")
+                .bodyValue(firstTag)
+                .exchange()
+                .expectStatus().isOk();
+        webTestClient.post().uri("/api/tags")
+                .bodyValue(secondTag)
+                .exchange()
+                .expectStatus().isOk();
+
+        var page = webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/tags")
+                        .queryParam("sort", "description,asc")
+                        .queryParam("size", 1)
+                        .queryParam("lastId", firstDescription)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<PagedModelDto<TagEntity>>() {
+                })
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(page, is(notNullValue()));
+        assertThat(page.getContent(), hasSize(1));
+        assertThat(page.getContent(), contains(hasProperty("description", is(secondDescription))));
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/tags")
+                        .queryParam("sort", "id,asc")
+                        .queryParam("lastId", firstDescription)
+                        .build())
+                .exchange()
+                .expectStatus().isBadRequest();
     }
 }
