@@ -1,0 +1,7 @@
+logging:
+  level:
+    sql: debug
+
+server:
+  error:
+    include-message: always

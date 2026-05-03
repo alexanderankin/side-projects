@@ -8,16 +8,20 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: UUID
+                  type: java.util.UUID
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
                   name: created
-                  type: TIMESTAMP WITH TIME ZONE
+                  type: java.sql.types.timestamp_with_timezone
+                  constraints:
+                    nullable: false
               - column:
                   name: updated
-                  type: TIMESTAMP WITH TIME ZONE
+                  type: java.sql.types.timestamp_with_timezone
+                  constraints:
+                    nullable: false
               - column:
                   name: name
                   type: VARCHAR(255)
@@ -27,25 +31,24 @@ databaseChangeLog:
               - column:
                   name: description
                   type: TEXT
-              - column:
-                  name: size
-                  type: INT
 
         - createTable:
             tableName: tag
             columns:
               - column:
                   name: id
-                  type: UUID
+                  type: java.util.UUID
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
                   name: created
-                  type: TIMESTAMP WITH TIME ZONE
+                  type: java.sql.types.timestamp_with_timezone
               - column:
                   name: updated
-                  type: TIMESTAMP WITH TIME ZONE
+                  type: java.sql.types.timestamp_with_timezone
+                  constraints:
+                    nullable: false
               - column:
                   name: name
                   type: VARCHAR(255)
@@ -61,36 +64,51 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: UUID
+                  type: java.util.UUID
                   constraints:
                     primaryKey: true
                     nullable: false
               - column:
                   name: created
-                  type: TIMESTAMP WITH TIME ZONE
+                  type: java.sql.types.timestamp_with_timezone
+                  constraints:
+                    nullable: false
               - column:
                   name: updated
-                  type: TIMESTAMP WITH TIME ZONE
-              - column:
-                  name: description
-                  type: TEXT
+                  type: java.sql.types.timestamp_with_timezone
+                  constraints:
+                    nullable: false
 
               # relationship
               - column:
                   name: note_id
-                  type: UUID
+                  type: java.util.UUID
                   constraints:
                     nullable: false
 
               # ordering + payload
               - column:
                   name: ordinal
-                  type: INT
+                  type: varchar(50)
                   constraints:
                     nullable: false
               - column:
                   name: content
                   type: TEXT
+
+        - createTable:
+            tableName: block_tag
+            columns:
+              - column:
+                  name: block_id
+                  type: java.util.UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tag_id
+                  type: java.util.UUID
+                  constraints:
+                    nullable: false
 
         - addForeignKeyConstraint:
             baseTableName: block
@@ -115,3 +133,8 @@ databaseChangeLog:
                   name: note_id
               - column:
                   name: ordinal
+
+        - addUniqueConstraint:
+            tableName: block_tag
+            columnNames: block_id, tag_id
+            constraintName: uq_block_tag_block_tag

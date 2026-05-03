@@ -1,0 +1,7 @@
+spring:
+  jpa:
+    properties:
+      hibernate.dialect_resolvers: side.notes.backend.config.DbConfig$UuidDialectResolver
+
+# # if mysql
+# spring.jpa.properties.hibernate.type.preferred_uuid_jdbc_type: UUID

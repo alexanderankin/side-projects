@@ -203,6 +203,8 @@ public class FractionalIndexService {
     }
 
     public byte[] generateKeyBetween(byte[] a, byte[] b, byte[] digits) {
+        if (a != null && a.length == 0) a = null;
+        if (b != null && b.length == 0) b = null;
         if (a != null) validateOrderKey(a, digits);
         if (b != null) validateOrderKey(b, digits);
 

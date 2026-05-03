@@ -1,5 +1,6 @@
 package side.notes.backend.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
@@ -16,7 +17,6 @@ import org.hibernate.annotations.DynamicUpdate;
 @Table(name = "note")
 @DynamicUpdate
 public class NoteEntity extends BaseEntity.NamedEntity {
-    int size;
-
+    @JsonView(Views.Default.Partial.class)
     String description;
 }
