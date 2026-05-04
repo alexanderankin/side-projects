@@ -10,15 +10,18 @@ import lombok.experimental.Accessors;
 import org.hibernate.annotations.NaturalId;
 import side.notes.backend.model.validation.HasId;
 
+import java.util.Comparator;
 import java.util.SortedSet;
 
 @ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 @Data
 @Accessors(chain = true)
 @Entity
 @Table(name = "block")
-public class BlockEntity extends BaseEntity {
+public class BlockEntity extends BaseEntity implements Comparable<BlockEntity> {
+    private static final Comparator<BlockEntity> blockEntityComparator = Comparator.nullsFirst(Comparator.comparing(BlockEntity::getOrdinal));
+
     @JsonView(Views.Default.class)
     @Column(nullable = false, updatable = false)
     @NaturalId
@@ -41,4 +44,9 @@ public class BlockEntity extends BaseEntity {
             joinColumns = @JoinColumn(name = "block_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     SortedSet<@NotNull @HasId TagEntity> tags;
+
+    @Override
+    public int compareTo(BlockEntity o) {
+        return blockEntityComparator.compare(this, o);
+    }
 }

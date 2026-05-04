@@ -31,6 +31,7 @@ public abstract class BaseEntity {
 
     @JsonView(Views.Default.class)
     @CreatedDate
+    @Column(updatable = false)
     LocalDateTime created;
 
     @JsonView(Views.Default.class)
@@ -42,7 +43,7 @@ public abstract class BaseEntity {
     @Data
     @Accessors(chain = true)
     @MappedSuperclass
-    static abstract class NamedEntity extends BaseEntity {
+    public static abstract class NamedEntity extends BaseEntity {
         @JsonView(Views.Default.class)
         @NotNull
         @EqualsAndHashCode.Include

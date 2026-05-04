@@ -1,6 +1,8 @@
 package side.notes.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import side.notes.backend.NotesBackendITest;
 import side.notes.backend.model.PagedModelDto;
@@ -10,12 +12,15 @@ import side.notes.backend.model.entity.TagEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.TreeSet;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 class NoteControllerITest extends NotesBackendITest {
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Test
     void createNote() {
         var prefix = "createNote";
@@ -149,6 +154,97 @@ class NoteControllerITest extends NotesBackendITest {
     }
 
     @Test
+    void putBlockAddsAndRemovesTags() {
+        var prefix = "putBlockAddsAndRemovesTags-";
+        var noteId = webTestClient.post().uri("/api/notes")
+                .bodyValue(new NoteEntity().setName(prefix + "note"))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(NoteEntity.class)
+                .returnResult()
+                .getResponseBody()
+                .getId();
+        var createdBlock = webTestClient.post()
+                .uri("/api/notes/{noteId}/blocks", noteId)
+                .bodyValue(new BlockEntity().setContent(prefix + "block"))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(createdBlock, is(notNullValue()));
+        var tagToCreate = (TagEntity) new TagEntity()
+                .setDescription(prefix + "description")
+                .setName(prefix + "tag");
+        var createdTag = webTestClient.post().uri("/api/tags")
+                .bodyValue(tagToCreate)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(TagEntity.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(createdTag, is(notNullValue()));
+
+        var updateWithTag = objectMapper.convertValue(createdBlock, BlockEntity.class);
+        updateWithTag.setTags(new TreeSet<>(List.of((TagEntity) new TagEntity().setName(createdTag.getName()).setId(createdTag.getId()))));
+
+        var updatedWithTag = webTestClient.put()
+                .uri("/api/notes/{noteId}/blocks/{blockId}", noteId, createdBlock.getId())
+                .bodyValue(updateWithTag)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(updatedWithTag, is(notNullValue()));
+        assertThat(updatedWithTag.getId(), is(createdBlock.getId()));
+        assertThat(updatedWithTag.getContent(), is(createdBlock.getContent()));
+        assertThat(updatedWithTag.getTags(), hasSize(1));
+        assertThat(updatedWithTag.getTags(), contains(hasProperty("id", is(createdTag.getId()))));
+        assertThat(updatedWithTag.getTags(), contains(hasProperty("name", is(createdTag.getName()))));
+
+        var persistedWithTag = webTestClient.get()
+                .uri("/api/notes/{noteId}/blocks/{blockId}", noteId, createdBlock.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(persistedWithTag, is(notNullValue()));
+        assertThat(persistedWithTag.getTags(), hasSize(1));
+        assertThat(persistedWithTag.getTags(), contains(hasProperty("id", is(createdTag.getId()))));
+
+        var updateWithoutTags = new BlockEntity();
+        updateWithoutTags.setOrdinal(createdBlock.getOrdinal());
+        updateWithoutTags.setContent(prefix + "block cleared");
+        updateWithoutTags.setTags(new TreeSet<>());
+
+        var updatedWithoutTags = webTestClient.put()
+                .uri("/api/notes/{noteId}/blocks/{blockId}", noteId, createdBlock.getId())
+                .bodyValue(updateWithoutTags)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+
+        assertThat(updatedWithoutTags, is(notNullValue()));
+        assertThat(updatedWithoutTags.getContent(), is(prefix + "block cleared"));
+        assertThat(updatedWithoutTags.getTags(), is(empty()));
+
+        var persistedWithoutTags = webTestClient.get()
+                .uri("/api/notes/{noteId}/blocks/{blockId}", noteId, createdBlock.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(BlockEntity.class)
+                .returnResult()
+                .getResponseBody();
+        assertThat(persistedWithoutTags, is(notNullValue()));
+        assertThat(persistedWithoutTags.getTags(), is(empty()));
+    }
+
+    @Test
     void getNotesSupportsNameCursorAndRejectsUnsupportedSort() {
         var prefix = "getNotesSupportsNameCursor-";
         var firstName = prefix + "-a";
@@ -204,11 +300,11 @@ class NoteControllerITest extends NotesBackendITest {
         webTestClient.post().uri("/api/tags")
                 .bodyValue(firstTag)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isCreated();
         webTestClient.post().uri("/api/tags")
                 .bodyValue(secondTag)
                 .exchange()
-                .expectStatus().isOk();
+                .expectStatus().isCreated();
 
         var page = webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/api/tags")

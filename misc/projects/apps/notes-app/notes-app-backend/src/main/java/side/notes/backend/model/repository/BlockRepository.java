@@ -1,5 +1,6 @@
 package side.notes.backend.model.repository;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -20,4 +21,9 @@ public interface BlockRepository extends JpaRepository<BlockEntity, UUID> {
     Optional<BlockEntity> findTop1ByNote_IdOrderByOrdinalDesc(UUID noteId);
 
     int deleteByNote_IdAndId(UUID noteId, UUID id);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = "tags")
+    @NonNull
+    @Override
+    Optional<BlockEntity> findById(@NonNull UUID id);
 }

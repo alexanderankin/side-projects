@@ -29,6 +29,7 @@ public class TagController {
     private final TagMapper tagMapper;
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     TagEntity create(@NotNull @Valid @RequestBody TagEntity tagEntity) {
         entityManager.persist(tagEntity);
         return tagEntity;

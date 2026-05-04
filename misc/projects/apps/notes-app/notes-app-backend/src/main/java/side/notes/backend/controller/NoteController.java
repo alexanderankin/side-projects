@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
@@ -17,7 +16,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import side.notes.backend.model.UpToOneSort;
-import side.notes.backend.model.entity.*;
+import side.notes.backend.model.entity.BlockEntity;
+import side.notes.backend.model.entity.NoteEntity;
+import side.notes.backend.model.entity.TagEntity;
+import side.notes.backend.model.entity.Views;
+import side.notes.backend.model.mapper.BlockMapper;
 import side.notes.backend.model.mapper.NoteMapper;
 import side.notes.backend.model.repository.BlockRepository;
 import side.notes.backend.model.repository.NoteRepository;
@@ -27,9 +30,7 @@ import side.notes.backend.service.FractionalIndexService;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
@@ -43,6 +44,7 @@ public class NoteController {
     private final BlockRepository blockRepository;
     private final TagRepository tagRepository;
     private final FractionalIndexService fractionalIndexService;
+    private final BlockMapper blockMapper;
 
     @JsonView(Views.Default.class)
     @PostMapping
@@ -120,10 +122,10 @@ public class NoteController {
     }
 
     private SortedSet<TagEntity> referencesForTags(SortedSet<TagEntity> tags) {
-        return CollectionUtils.emptyIfNull(tags).stream()
-                .map(TagEntity::getId)
-                .map(tagRepository::getReferenceById)
-                .collect(Collectors.toCollection(TreeSet::new));
+        return tags;
+        // return CollectionUtils.emptyIfNull(tags).stream()
+        //         .map(t -> (TagEntity) tagRepository.getReferenceById(t.getId()).setName(t.getName()))
+        //         .collect(Collectors.toCollection(TreeSet::new));
     }
 
     @JsonView(Views.Default.Partial.class)
@@ -138,15 +140,21 @@ public class NoteController {
         return new PagedModel<>(result);
     }
 
+    @JsonView(Views.Default.Partial.class)
     @PutMapping(path = "/{noteId}/blocks/{blockId}")
     BlockEntity updateBlockEntity(@PathVariable UUID noteId, @PathVariable UUID blockId, @NotNull @Valid @RequestBody BlockEntity blockEntity) {
+        // var block = blockRepository.getReferenceById(blockId);
+        // blockMapper.updateBlockEntity(block, blockEntity);
+        // block.setTags(referencesForTags(blockEntity.getTags()));
+        // return block;
+        var block = blockRepository.findById(blockId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         blockEntity.setId(blockId);
-        blockEntity.setNote(noteRepository.getReferenceById(noteId));
-        blockEntity.setTags(referencesForTags(blockEntity.getTags()));
-        return blockRepository.save(blockEntity);
+        blockMapper.updateBlockEntity(block, blockEntity);
+        block.setTags(referencesForTags(blockEntity.getTags()));
+        return block;
     }
 
-    @JsonView(Views.Default.class)
+    @JsonView(Views.Default.Partial.class)
     @GetMapping(path = "/{noteId}/blocks/{blockId}")
     BlockEntity getBlockEntity(@PathVariable UUID noteId, @PathVariable UUID blockId) {
         return blockRepository.findById(blockId)
