@@ -1,9 +1,14 @@
 plugins {
     id 'spring-conventions'
     id 'java-library'
+    id 'maven-publish'
 }
+
+version = '0.0.1'
 
 dependencies {
     implementation 'org.springframework:spring-web'
     api 'org.testcontainers:testcontainers'
 }
+
+publishing.publications.create('maven', MavenPublication).from(components.java)

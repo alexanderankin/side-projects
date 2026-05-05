@@ -1,8 +1,10 @@
 plugins {
     id 'spring-conventions'
     id 'java-library'
+    id 'maven-publish'
 }
 
+version = '0.0.1'
 
 dependencies {
     implementation project(':cloud:util:util-acme:acme-common')
@@ -24,3 +26,5 @@ dependencies {
 
     testImplementation project(':cloud:util:util-acme:pebble-testcontainers')
 }
+
+publishing.publications.create('maven', MavenPublication).from(components.java)
