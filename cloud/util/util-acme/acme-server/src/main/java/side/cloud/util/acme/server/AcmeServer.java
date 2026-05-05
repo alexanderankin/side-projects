@@ -304,7 +304,7 @@ public class AcmeServer {
         if (problemResponse != null)
             return problemResponse;
 
-        var orderIds = dao.listOrdersForAccount(params.get("accountId"), query.getFirst("lastId"));
+        var orderIds = dao.listOrdersForAccount(params.get("accountId"), 20, query.getFirst("lastId"));
         var orderUrls = orderIds.stream()
                 .map(orderId -> UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount())
                         .pathSegment("{accountId}", "orders", "{orderId}")

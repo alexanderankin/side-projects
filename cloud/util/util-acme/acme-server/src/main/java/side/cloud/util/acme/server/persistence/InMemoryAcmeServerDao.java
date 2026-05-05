@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 public class InMemoryAcmeServerDao implements AcmeServerDao {
     final Map<String, ServerAccountEntity> accountByKeyHash = new ConcurrentHashMap<>();
@@ -29,8 +30,15 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     }
 
     @Override
-    public List<String> listOrdersForAccount(String accountId, String lastId) {
-        return ordersByAccountId.get(accountId);
+    public List<String> listOrdersForAccount(String accountId, int pageSize, String lastId) {
+        if (lastId == null) {
+            return ordersByAccountId.get(accountId).stream().limit(pageSize).toList();
+        }
+        return ordersByAccountId.get(accountId).stream()
+                .dropWhile(Predicate.not(Predicate.isEqual(lastId))) // drop before it
+                .dropWhile(Predicate.isEqual(lastId)) // drop it too
+                .limit(pageSize)
+                .toList();
     }
 
     @Override

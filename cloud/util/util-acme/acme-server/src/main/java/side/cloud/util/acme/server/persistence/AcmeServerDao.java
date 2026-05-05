@@ -15,7 +15,7 @@ public interface AcmeServerDao {
 
     void saveAccount(ServerAccountEntity serverAccountEntity);
 
-    List<String> listOrdersForAccount(String accountId, String lastId);
+    List<String> listOrdersForAccount(String accountId, int pageSize, String lastId);
 
     void saveOrder(ServerOrderEntity orderEntity);
 
