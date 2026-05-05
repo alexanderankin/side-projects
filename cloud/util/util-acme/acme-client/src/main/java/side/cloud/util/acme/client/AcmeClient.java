@@ -19,6 +19,7 @@ import org.springframework.hateoas.Links;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MimeType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
@@ -263,8 +264,15 @@ public class AcmeClient {
                                                 @Nullable HttpHeaders headers,
                                                 byte @Nullable [] responseBody,
                                                 @Nullable Charset responseCharset) {
-            super(message, statusCode, statusText, headers, responseBody, responseCharset);
+            super(message, statusCode, statusText, headers, responseBody, charset(headers, responseCharset));
             this.delay = delay;
+        }
+
+        @Nullable
+        private static Charset charset(@Nullable HttpHeaders headers, @Nullable Charset responseCharset) {
+            return Optional.ofNullable(responseCharset)
+                    .or(() -> Optional.ofNullable(headers).map(HttpHeaders::getContentType).map(MimeType::getCharset))
+                    .orElse(null);
         }
 
         public static DelayRestClientResponseException of(RestClientResponseException e) {

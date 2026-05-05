@@ -13,6 +13,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -134,7 +135,33 @@ public class AcmeServer {
             }
 
             if (config.getExternalAccountBinding().isEnabled()) {
-                log.warn("eab enabled but not implemented");
+                var eab = newAccount.getExternalAccountBinding();
+                if (eab == null)
+                    return typedPayload(externalAccountRequired.getProblemDetail()).setCode(UNAUTHORIZED);
+
+                // requirements:
+                // eab payload is jwk public key
+                // eab using HS256/HS384/HS512
+                // eab has keyId of credential id
+                // eab has url of newAccount
+                // eab signed with credential secret as MAC key
+
+                var parser = ExternalAccountBindings.parse(eab);
+                var ea = dao.getExternalAccountById(parser.kid());
+                if (ea == null)
+                    // eab has keyId of credential id
+                    return typedPayload(externalAccountRequired.getProblemDetail()).setCode(UNAUTHORIZED);
+
+                boolean verified = ExternalAccountBindings.verify(parser, ea.decodeMac())
+                        .setUrl(config.getDirectory().toDirectory().getNewAccount())
+                        .setEnabledAlgorithms(config.getExternalAccountBinding().getMacAlgorithms())
+                        .setKeyPair(de.keyPair())
+                        .verify();
+
+                if (!verified)
+                    return typedPayload(externalAccountRequired.getProblemDetail()).setCode(FORBIDDEN);
+
+                account.setExternalAccountBinding(eab);
             }
 
             // save
@@ -470,6 +497,9 @@ public class AcmeServer {
         @Accessors(chain = true)
         public static class ExternalAccountBinding {
             boolean enabled;
+
+            @NotEmpty
+            Set<MacAlgorithm> macAlgorithms = Set.of(MacAlgorithm.HS256, MacAlgorithm.HS384, MacAlgorithm.HS512);
         }
     }
 

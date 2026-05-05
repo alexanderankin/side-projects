@@ -1,5 +1,6 @@
 package side.cloud.util.acme.lib.keys;
 
+import com.nimbusds.jose.jwk.JWK;
 import lombok.SneakyThrows;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import side.cloud.util.acme.lib.config.AcmeLibProperties;
@@ -78,4 +79,16 @@ public enum SupportedClientKeyPairAlgorithm {
         };
     }
 
+    @SneakyThrows
+    public PublicKey extractPublic(JWK payload) {
+        return switch (this) {
+            case RS256, RS384, RS512 -> payload.toRSAKey().toPublicKey();
+            case ES256, ES384, ES512 -> payload.toECKey().toPublicKey();
+            case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException();
+                yield payload.toOctetKeyPair().toPublicKey();
+            }
+        };
+    }
 }
