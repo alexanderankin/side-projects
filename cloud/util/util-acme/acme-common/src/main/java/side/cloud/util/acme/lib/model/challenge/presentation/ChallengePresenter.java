@@ -95,7 +95,11 @@ public interface ChallengePresenter {
 
         @Override
         public boolean verify(ChallengeSolution solution) {
-            return Objects.equals(crud.read(solution.getKey()), solution.getValue());
+            try {
+                return Objects.equals(crud.read(solution.getKey()), solution.getValue());
+            } catch (UnsupportedOperationException e) {
+                return true;
+            }
         }
 
         public enum Type { http, dns }
@@ -107,7 +111,9 @@ public interface ChallengePresenter {
 
             void create(String key, String value);
 
-            String read(String key);
+            default String read(String key) {
+                throw new UnsupportedOperationException();
+            }
 
             void delete(String key);
 

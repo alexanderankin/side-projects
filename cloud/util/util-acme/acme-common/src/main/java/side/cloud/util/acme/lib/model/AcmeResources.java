@@ -366,6 +366,9 @@ public interface AcmeResources {
         URI newAuthz;
         URI newNonce;
         URI newOrder;
+        /**
+         * @see <a href=https://datatracker.ietf.org/doc/html/rfc9773>rfc9773: ACME Renewal Information (ARI) Extension</a>
+         */
         URI renewalInfo;
         URI revokeCert;
 

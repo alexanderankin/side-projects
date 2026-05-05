@@ -34,6 +34,10 @@ import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.ContentVerifier;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
 import org.springframework.util.Assert;
 import side.cloud.util.acme.lib.config.AcmeLibProperties;
 import side.cloud.util.acme.lib.keys.AcmeJwsObject.AcmeJwsHeader.JwkAcmeJwsHeader;
@@ -91,7 +95,7 @@ public class SupportedClientKeyPair {
     }
 
     /**
-     * @see org.bouncycastle.asn1.pkcs.PrivateKeyInfo#toASN1Primitive()
+     * @see PrivateKeyInfo#toASN1Primitive()
      */
     @SneakyThrows
     public static byte[] extractPrivateKeyOctets(byte[] encoded) {
@@ -335,6 +339,34 @@ public class SupportedClientKeyPair {
     @SneakyThrows
     public String jwkPublicKeySha256Thumbprint() {
         return asJwk().toPublicJWK().computeThumbprint("SHA-256").toString();
+    }
+
+    @SneakyThrows
+    public ContentSigner contentSigner() {
+        return new JcaContentSignerBuilder(switch (algorithm) {
+            case RS256 -> "SHA256WithRSA";
+            case RS384 -> "SHA384WithRSA";
+            case RS512 -> "SHA512WithRSA";
+            case ES256 -> "SHA256WithECDSA";
+            case ES384 -> "SHA384WithECDSA";
+            case ES512 -> "SHA512WithECDSA";
+            case EdDSA -> {
+                if (AcmeLibProperties.FIPS_MODE.read())
+                    throw new UnsupportedOperationException("Ed25519 not supported");
+                yield "Ed25519";
+            }
+        }).build(keyPair.getPrivate());
+    }
+
+    @SneakyThrows
+    public ContentVerifier contentVerifier() {
+        if (algorithm == SupportedClientKeyPairAlgorithm.EdDSA)
+            if (AcmeLibProperties.FIPS_MODE.read())
+                throw new UnsupportedOperationException("Ed25519 not supported");
+        var provider = new JcaContentVerifierProviderBuilder().build(keyPair.getPublic());
+        var pubKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
+        var algorithm = pubKeyInfo.getAlgorithm();
+        return provider.get(algorithm);
     }
 
     public enum Mode {

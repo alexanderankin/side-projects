@@ -1,6 +1,9 @@
 package side.cloud.util.acme.lib.model;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public enum ProblemDetailAcmeTypes {
     accountDoesNotExist("The request specified an account that does not exist"),
@@ -28,6 +31,8 @@ public enum ProblemDetailAcmeTypes {
     unsupportedIdentifier("An identifier is of an unsupported type"),
     userActionRequired("Visit the \"instance\" URL and take actions specified there"),
     ;
+
+    public static final Set<String> NAMES = Arrays.stream(values()).map(Enum::name).collect(Collectors.toUnmodifiableSet());
 
     private final ProblemDetail problemDetail;
 

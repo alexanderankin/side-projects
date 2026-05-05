@@ -21,6 +21,20 @@ public class ExternalVerifier {
     private final int dnsResolverPort;
     private final RestClient restClient;
 
+    public static ExternalVerifier noOp() {
+        return new ExternalVerifier(null, -1, null) {
+            @Override
+            public boolean verifyDns(String fqdn, String value) {
+                return true;
+            }
+
+            @Override
+            public boolean verifyHttp(URI uri, String value) {
+                return true;
+            }
+        };
+    }
+
     @SneakyThrows
     List<String> queryTxt(String fqdn) {
         Lookup lookup = new Lookup(fqdn, Type.TXT);

@@ -2,12 +2,14 @@ package side.cloud.util.acme.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.github.resilience4j.core.functions.Either;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
@@ -15,18 +17,29 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Links;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import side.cloud.util.acme.lib.keys.CsrBuilder;
 import side.cloud.util.acme.lib.keys.ExternalAccountCredential;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe;
+import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.AcmeRequests;
 import side.cloud.util.acme.lib.model.AcmeRequests.AcmeResponse.TypedAcmeResponse;
 import side.cloud.util.acme.lib.model.AcmeResources.*;
+import side.cloud.util.acme.lib.retry.DelayAware;
+import side.cloud.util.acme.lib.retry.RetryAfterDelayIntervalFunction;
 
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -110,7 +123,13 @@ public class AcmeClient {
                                         .setPayload(jsonMapper.convertValue(lookup, MAP_TYPE_REFERENCE)),
                                 supportedClientKeyPair()
                         ));
-                        return restTemplate.exchange(req, Account.class);
+                        try {
+                            return restTemplate.exchange(req, Account.class);
+                        } catch (RestClientResponseException e) {
+                            RuntimeException r;
+                            if ((r = DelayRestClientResponseException.of(e)) != null) throw r;
+                            throw e;
+                        }
                     });
                     accountId = entity.getHeaders().getLocation();
                 }
@@ -150,19 +169,25 @@ public class AcmeClient {
     }
 
     private ResponseEntity<String> doPost(URI uri, Object body) {
-        return restTemplate.exchange(
-                AcmeRequestSerDe.serialize(
-                        new AcmeRequestSerDe.RequestAndKeyPair(
-                                new AcmeRequests.AcmeRequest()
-                                        .setUrl(uri)
-                                        .setNonce(nonce())
-                                        .setAccountId(accountId(true))
-                                        .setPayload(body == null ? null : jsonMapper.convertValue(body, MAP_TYPE_REFERENCE)),
-                                supportedClientKeyPair()
-                        )
-                ),
-                String.class
-        );
+        try {
+            return restTemplate.exchange(
+                    AcmeRequestSerDe.serialize(
+                            new AcmeRequestSerDe.RequestAndKeyPair(
+                                    new AcmeRequests.AcmeRequest()
+                                            .setUrl(uri)
+                                            .setNonce(nonce())
+                                            .setAccountId(accountId(true))
+                                            .setPayload(body == null ? null : jsonMapper.convertValue(body, MAP_TYPE_REFERENCE)),
+                                    supportedClientKeyPair()
+                            )
+                    ),
+                    String.class
+            );
+        } catch (RestClientResponseException e) {
+            RuntimeException r;
+            if ((r = DelayRestClientResponseException.of(e)) != null) throw r;
+            throw e;
+        }
     }
 
     public TypedAcmeResponse<Order> order(NewOrder order) {
@@ -191,6 +216,10 @@ public class AcmeClient {
         return get(uri, Authorization.class).getTypedPayload();
     }
 
+    public List<Authorization> getAuthorizations(Order order) {
+        return order.getAuthorizations().stream().map(this::getAuthorization).toList();
+    }
+
     public Challenge respondToChallenge(URI challengeUri) {
         return post(challengeUri, Map.of(), Challenge.class).getTypedPayload();
     }
@@ -203,18 +232,66 @@ public class AcmeClient {
         return getChallenge(uri).getStatus();
     }
 
-    public Order finalizeOrder(Order order) {
+    public Order finalizeOrder(Order order, CsrBuilder.Csr csr) {
         var finalizeUrl = order.getFinalize();
-        return post(finalizeUrl, Map.of("csr", ""), Order.class).getTypedPayload();
+        return post(finalizeUrl, Map.of("csr", csr.asCsrValue()), Order.class).getTypedPayload();
     }
 
-    public String downloadCertificate(Order order) {
+    public String downloadCertificate(Order order, AcmeIdentifier identifier) {
         var certificateUrl = order.getCertificate();
         if (certificateUrl == null) {
             return null;
         }
         var certResponse = postWithRetry(certificateUrl, null);
         return certResponse.getBody();
+    }
+
+    private static class DelayRestClientResponseException extends RestClientResponseException implements DelayAware {
+        @Getter
+        @Accessors(fluent = true)
+        private final Duration delay;
+
+        public DelayRestClientResponseException(Duration delay, RestClientResponseException e) {
+            this(delay, e.getMessage(), e.getStatusCode(), e.getStatusText(), e.getResponseHeaders(), e.getResponseBodyAsByteArray(), StandardCharsets.UTF_8);
+            initCause(e);
+        }
+
+        public DelayRestClientResponseException(Duration delay,
+                                                String message,
+                                                HttpStatusCode statusCode,
+                                                String statusText,
+                                                @Nullable HttpHeaders headers,
+                                                byte @Nullable [] responseBody,
+                                                @Nullable Charset responseCharset) {
+            super(message, statusCode, statusText, headers, responseBody, responseCharset);
+            this.delay = delay;
+        }
+
+        public static DelayRestClientResponseException of(RestClientResponseException e) {
+            Duration delay = delayOf(e);
+            if (delay != null) {
+                return new DelayRestClientResponseException(delay, e);
+            }
+            return null;
+        }
+
+        public static Duration delayOf(RestClientResponseException e) {
+            var responseHeaders = e.getResponseHeaders();
+            if (responseHeaders == null)
+                return null;
+            var retryAfter = responseHeaders.getFirst(HttpHeaders.RETRY_AFTER);
+            if (retryAfter == null)
+                return null;
+            if (retryAfter.matches("^\\d{1,20}$")) {
+                return Duration.ofSeconds(Integer.parseInt(retryAfter));
+            }
+            try {
+                ZonedDateTime zdt = ZonedDateTime.parse(retryAfter, DateTimeFormatter.RFC_1123_DATE_TIME);
+                return Duration.between(Instant.now(), zdt);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
     }
 
     @Data
@@ -265,9 +342,13 @@ public class AcmeClient {
             Duration interval = Duration.ofSeconds(5);
 
             RetryConfig asRetryConfig() {
-                return RetryConfig.custom()
+                var retryConfig = RetryConfig.custom()
                         .maxAttempts(attempts)
                         .waitDuration(interval)
+                        .build();
+
+                return RetryConfig.from(retryConfig)
+                        .intervalBiFunction(new RetryAfterDelayIntervalFunction<>(Either.right(retryConfig.getIntervalBiFunction())))
                         .build();
             }
         }

@@ -2,7 +2,9 @@ package side.cloud.util.acme.client;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.github.resilience4j.retry.internal.InMemoryRetryRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -16,29 +18,39 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.web.client.RestClient;
 import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer;
 import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer.BuiltInConfig;
+import side.cloud.util.acme.lib.keys.CsrBuilder;
 import side.cloud.util.acme.lib.keys.ExternalAccountCredential;
+import side.cloud.util.acme.lib.keys.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPairAlgorithm;
 import side.cloud.util.acme.lib.model.AcmeIdentifier;
+import side.cloud.util.acme.lib.model.AcmeResources;
 import side.cloud.util.acme.lib.model.AcmeResources.Account;
+import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge.ChallengeStatus;
 import side.cloud.util.acme.lib.model.AcmeResources.NewAccount;
 import side.cloud.util.acme.lib.model.AcmeResources.NewOrder;
 import side.cloud.util.acme.lib.model.AcmeResources.Order.OrderStatus;
+import side.cloud.util.acme.lib.model.challenge.ChallengeInput;
+import side.cloud.util.acme.lib.model.challenge.ChallengeSolver;
+import side.cloud.util.acme.lib.model.challenge.SupportedChallengeType;
+import side.cloud.util.acme.lib.model.challenge.persistence.ChallengeSolutionRepository;
+import side.cloud.util.acme.lib.model.challenge.presentation.ChallengePresenter;
+import side.cloud.util.acme.lib.model.challenge.presentation.ExternalVerifier;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Base64;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
 public class AcmeClientITest {
     static JsonMapper jsonMapper = JsonMapper.builder().findAndAddModules().build();
     static InMemoryRetryRegistry retryRegistry = new InMemoryRetryRegistry();
@@ -127,14 +139,84 @@ public class AcmeClientITest {
 
         var challenge = client.respondToChallenge(http01Challenge.getUrl());
 
-        // wait until terminal state
-        Unreliables.retryUntilTrue(10, TimeUnit.SECONDS,
-                () -> Set.of(ChallengeStatus.invalid, ChallengeStatus.valid)
-                        .contains(client.getChallenge(challenge.getUrl()).getStatus()));
+        waitUntilTerminalState(challenge);
 
         // assert specific terminal state
         assertThat(client.getChallenge(challenge.getUrl()).getStatus(), is(ChallengeStatus.invalid));
         assertThat(client.getOrder(order.getLocation()).getStatus(), is(OrderStatus.invalid));
+    }
+
+    @SneakyThrows
+    @Test
+    void authorizationsAndChallengesSuccess() {
+        client.createAccount();
+        var order = client.order(new NewOrder().setIdentifiers(List.of(new AcmeIdentifier().setType(AcmeIdentifier.AcmeIdentifierType.dns).setValue("challenges-success.localhost"))));
+        var authorization = client.getAuthorizations(order.getTypedPayload()).getFirst();
+        var challenge = authorization.getChallenges().stream().filter(t -> t.getType().equals(SupportedChallengeType.ChallengeHTTP01.getRfcName())).findAny().orElseThrow();
+
+        var challengeSolver = new ChallengeSolver(
+                new ChallengeSolver.Config(),
+                ChallengeSolutionRepository.inMemory(),
+                new PebbleChallengeServerPresenter(authorization, containers.challengeServerContainer.baseUrl()),
+                ExternalVerifier.noOp());
+
+        log.info("solving challenge");
+        var challengeSolution = challengeSolver.solve(new ChallengeInput()
+                .setKeyPair(client.supportedClientKeyPair())
+                .setAccountUrl(client.accountId(true))
+                .setAuthorization(authorization)
+                .setChallenge(challenge)
+        );
+        try {
+            log.info("responding to challenge");
+            client.respondToChallenge(challenge.getUrl());
+            log.info("waiting for challenge status");
+            waitUntilTerminalState(challenge);
+            assertThat(client.getChallenge(challenge.getUrl()).getStatus(), is(ChallengeStatus.valid));
+        } finally {
+            log.info("cleaning challenge");
+            challengeSolver.clean(challengeSolution);
+        }
+        log.info("waiting order ready");
+        waitUntilReadyStateOfOrder(order.getLocation());
+        assertThat(client.getOrder(order.getLocation()).getStatus(), is(OrderStatus.ready));
+        log.info("finalizing order");
+        var csrKeyPair = SupportedClientKeyPairAlgorithm.RS256.generate();
+        client.finalizeOrder(
+                order.getTypedPayload(),
+                new CsrBuilder()
+                        .setOrder(order.getTypedPayload())
+                        .build(csrKeyPair)
+        );
+        log.info("waiting for order status");
+        waitUntilTerminalStateOfOrder(order.getLocation());
+        assertThat(client.getOrder(order.getLocation()).getStatus(), is(OrderStatus.valid));
+        log.info("downloading certificate");
+        var certificate = client.downloadCertificate(client.getOrder(order.getLocation()), authorization.getIdentifier());
+        log.info("downloaded certificate: {}", certificate);
+    }
+
+    private void waitUntilTerminalState(Challenge challenge) {
+        Unreliables.retryUntilTrue(10, TimeUnit.SECONDS,
+                () -> Set.of(ChallengeStatus.invalid, ChallengeStatus.valid)
+                        .contains(client.getChallenge(challenge.getUrl()).getStatus()));
+    }
+
+    @SneakyThrows
+    private void waitUntilReadyStateOfOrder(URI orderId) {
+        try {
+            Unreliables.retryUntilTrue(10, TimeUnit.SECONDS,
+                    () -> Objects.equals(OrderStatus.ready, client.getOrder(orderId).getStatus()));
+        } catch (Exception e) {
+            log.error("current order status: {}", client.getOrder(orderId), e);
+            throw e;
+        }
+    }
+
+    private void waitUntilTerminalStateOfOrder(URI orderId) {
+        Unreliables.retryUntilTrue(10, TimeUnit.SECONDS,
+                () -> Set.of(OrderStatus.invalid, OrderStatus.valid)
+                        .contains(client.getOrder(orderId).getStatus()));
     }
 
     @SneakyThrows
@@ -157,6 +239,31 @@ public class AcmeClientITest {
                 .build();
 
         return new HttpComponentsClientHttpRequestFactory(httpClient);
+    }
+
+    private static class PebbleChallengeServerPresenter extends ChallengePresenter.SingleHostCrudPresenter {
+        public PebbleChallengeServerPresenter(AcmeResources.Authorization authorization, URI pebbleChallengeServerBaseUrl) {
+            super(authorization.getIdentifier().getValue(),
+                    new PebbleChallengeServerCrud(pebbleChallengeServerBaseUrl),
+                    ChallengePresenter.SingleHostCrudPresenter.Type.http);
+        }
+
+        @RequiredArgsConstructor
+        private static class PebbleChallengeServerCrud implements Crud {
+            private final URI pebbleChallengeServerBaseUrl;
+
+            @Override
+            public void create(String key, String value) {
+                RestClient.create(pebbleChallengeServerBaseUrl).post().uri("/add-http01").body(Map.of("token", key, "content", value))
+                        .retrieve().toBodilessEntity();
+            }
+
+            @Override
+            public void delete(String key) {
+                RestClient.create(pebbleChallengeServerBaseUrl).post().uri("/del-http01").body(Map.of("token", key))
+                        .retrieve().toBodilessEntity();
+            }
+        }
     }
 
     @Nested

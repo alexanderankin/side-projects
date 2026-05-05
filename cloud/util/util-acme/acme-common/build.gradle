@@ -20,6 +20,7 @@ dependencies {
     implementation 'commons-codec:commons-codec'
     // https://mvnrepository.com/artifact/dnsjava/dnsjava
     implementation 'dnsjava:dnsjava:3.6.4'
+    implementation 'io.github.resilience4j:resilience4j-retry'
 }
 
 publishing.publications.create('maven', MavenPublication).from(components.java)
