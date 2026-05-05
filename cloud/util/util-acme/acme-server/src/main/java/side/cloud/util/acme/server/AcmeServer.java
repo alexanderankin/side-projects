@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.hateoas.Link;
@@ -50,6 +51,7 @@ import static side.cloud.util.acme.lib.keys.requests.AcmeRequestSerDe.REPLAY_NON
 import static side.cloud.util.acme.lib.model.AcmeRequests.AcmeResponse.TypedAcmeResponse.typedPayload;
 import static side.cloud.util.acme.lib.model.ProblemDetailAcmeTypes.*;
 
+@Slf4j
 @RequiredArgsConstructor
 public class AcmeServer {
     private final NonceService nonceService;
@@ -59,11 +61,19 @@ public class AcmeServer {
 
     public RouterFunction<ServerResponse> handler() {
         var route = RouterFunctions.route();
-        var d = config.getDirectory();
-        route.GET(config.getDirectoryPath(), ignored -> ServerResponse.ok().body(d));
-        route.HEAD(d.getNewNonce(), ignored -> ServerResponse.ok().header(REPLAY_NONCE, nonceService.newNonce()).build());
-        if (d.getNewAccount() != null) route.add(nest(path(d.getNewAccount()), accountRoute()));
-        if (d.getNewOrder() != null) route.add(nest(path(d.getNewOrder()), orderRoute()));
+
+        route.GET(config.getDirectoryPath(),
+                ignored -> ServerResponse.ok().body(config.getDirectory().toDirectory()));
+
+        route.HEAD(config.getDirectory().getNewNonce(),
+                ignored -> ServerResponse.ok().header(REPLAY_NONCE, nonceService.newNonce()).build());
+
+        if (config.getDirectory().getNewAccount() != null)
+            route.add(nest(path(config.getDirectory().getNewAccount()), accountRoute()));
+
+        if (config.getDirectory().getNewOrder() != null)
+            route.add(nest(path(config.getDirectory().getNewOrder()), orderRoute()));
+
         return route.build();
     }
 
@@ -109,21 +119,22 @@ public class AcmeServer {
         if (accountInfo == null) {
             // create
             var accountId = nonceService.genNonce();
-            var accountUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount()).pathSegment(accountId).build().toUri();
+            var accountUrl = UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount()).pathSegment(accountId).build().toUri();
             var account = new AcmeResources.Account()
                     .setStatus(AccountStatus.valid)
                     .setContact(newAccount.getContact())
                     .setOrders(UriComponentsBuilder.fromUri(accountUrl).pathSegment("orders").build().toUri());
 
             // handle terms of service
-            if (config.directory.toDirectory().getMeta().getTermsOfService() != null) {
+            var meta = config.getDirectory().toDirectory().getMeta();
+            if (meta != null && meta.getTermsOfService() != null) {
                 if (!Boolean.TRUE.equals(newAccount.getTermsOfServiceAgreed()))
                     return typedPayload(userActionRequired.getProblemDetail().setDetail("TOS not agreed")).setCode(BAD_REQUEST);
                 account.setTermsOfServiceAgreed(true);
             }
 
-            if (config.externalAccountBinding.enabled) {
-                newAccount.getExternalAccountBinding();
+            if (config.getExternalAccountBinding().isEnabled()) {
+                log.warn("eab enabled but not implemented");
             }
 
             // save
@@ -145,7 +156,7 @@ public class AcmeServer {
 
             // return
             var accountId = accountInfo.getId();
-            var accountUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount()).path(accountId).build().toUri();
+            var accountUrl = UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount()).path(accountId).build().toUri();
             return typedPayload(account).setCode(OK).setLocation(accountUrl);
         }
     }
@@ -165,11 +176,14 @@ public class AcmeServer {
     public AcmeResponse createOrder(RequestKeyPairSignature de) {
         if (validateNonce(de))
             return typedPayload(badNonce.getProblemDetail()).setCode(BAD_REQUEST);
-        var accountByKeyHash = dao.getAccountByKeyHash(keyHash(de.keyPair()));
-        if (accountByKeyHash == null)
-            return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        // var accountByKeyHash = dao.getAccountByKeyHash(keyHash(de.keyPair()));
+        // if (accountByKeyHash == null)
+        //     return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        var accountById = dao.getAccountById(de.signature().getSignatures().getFirst().getHeader().getKeyID().substring(
+                de.signature().getSignatures().getFirst().getHeader().getKeyID().lastIndexOf('/') + 1
+        ));
 
-        de.signature().getSignatures().getFirst().verify(accountByKeyHash.getKeyPair().nimbusVerifier());
+        de.signature().getSignatures().getFirst().verify(accountById.getKeyPair().nimbusVerifier());
 
         var now = Instant.now();
         var newOrder = jsonMapper.convertValue(de.request().getPayload(), AcmeResources.NewOrder.class);
@@ -177,17 +191,17 @@ public class AcmeServer {
         var validationProblem = validateNewOrder(newOrder, now);
         if (validationProblem != null) return validationProblem;
 
-        if (newOrder.getNotAfter() == null)
-            newOrder.setNotAfter(now.plus(config.orderMaxLifetime));
+        if (newOrder.getNotAfter() == null && config.getOrderMaxLifetime() != null)
+            newOrder.setNotAfter(now.plus(config.getOrderMaxLifetime()));
 
         var orderId = nonceService.genNonce();
-        var orderUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount()).pathSegment("{accountId}", "orders", "{orderId}").build(accountByKeyHash.getId(), orderId);
+        var orderUrl = UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount()).pathSegment("{accountId}", "orders", "{orderId}").build(accountById.getId(), orderId);
         // if (authorizations.isEmpty())
         //     return
 
         var order = new AcmeResources.Order()
                 .setStatus(OrderStatus.pending)
-                .setExpires(now.plus(config.orderDefaultExpiration))
+                .setExpires(now.plus(config.getOrderDefaultExpiration()))
                 .setIdentifiers(newOrder.getIdentifiers())
                 .setNotBefore(newOrder.getNotBefore())
                 .setNotAfter(newOrder.getNotAfter())
@@ -196,7 +210,7 @@ public class AcmeServer {
 
         var orderEntity = new AcmeServerDao.ServerOrderEntity()
                 .setId(orderId)
-                .setAccountId(accountByKeyHash.getId())
+                .setAccountId(accountById.getId())
                 .setOrder(order);
         order.setAuthorizations(genAuthorizations(orderEntity, now, orderUrl));
         dao.saveOrder(orderEntity);
@@ -204,17 +218,17 @@ public class AcmeServer {
     }
 
     private AcmeResponse validateNewOrder(AcmeResources.NewOrder newOrder, Instant now) {
-        if (newOrder.getNotBefore() != null && config.orderMaxNbfSkew != null) {
-            if (newOrder.getNotBefore().isBefore(now.minus(config.orderMaxNbfSkew)))
+        if (newOrder.getNotBefore() != null && config.getOrderMaxNbfSkew() != null) {
+            if (newOrder.getNotBefore().isBefore(now.minus(config.getOrderMaxNbfSkew())))
                 return typedPayload(malformed.getProblemDetail().setDetail("new order not before is in the past")).setCode(BAD_REQUEST);
         }
 
-        if (newOrder.getNotAfter() != null && config.orderMaxLifetime != null) {
-            if (newOrder.getNotAfter().isAfter(now.plus(config.orderMaxLifetime)))
+        if (newOrder.getNotAfter() != null && config.getOrderMaxLifetime() != null) {
+            if (newOrder.getNotAfter().isAfter(now.plus(config.getOrderMaxLifetime())))
                 return typedPayload(malformed.getProblemDetail().setDetail("new order has too long duration")).setCode(BAD_REQUEST);
         }
 
-        if (!newOrder.getIdentifiers().stream().allMatch(i -> config.orderSupportedIdentifierTypes.contains(i.getType())))
+        if (!newOrder.getIdentifiers().stream().allMatch(i -> config.getOrderSupportedIdentifierTypes().contains(i.getType())))
             return typedPayload(unsupportedIdentifier).setCode(BAD_REQUEST);
 
         // todo query challenge management object to see what identifiers it can support for verification
@@ -242,7 +256,7 @@ public class AcmeServer {
                 return List.of();
             }
 
-            var supportedTypes = types.stream().filter(config.challengeSupportedTypes::contains).toList();
+            var supportedTypes = types.stream().filter(config.getChallengeSupportedTypes()::contains).toList();
 
             List<Tuple2<String, Challenge>> challenges = new ArrayList<>();
             for (var type : supportedTypes) {
@@ -292,16 +306,18 @@ public class AcmeServer {
 
         var orderIds = dao.listOrdersForAccount(params.get("accountId"), query.getFirst("lastId"));
         var orderUrls = orderIds.stream()
-                .map(orderId -> UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewOrder()).path(orderId).build().toUri())
+                .map(orderId -> UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount())
+                        .pathSegment("{accountId}", "orders", "{orderId}")
+                        .build(params.get("accountId"), orderId))
                 .toList();
 
-        var ordersUrl = UriComponentsBuilder.fromUri(config.directory.toDirectory().getNewAccount())
+        var ordersUrl = UriComponentsBuilder.fromUri(config.getDirectory().toDirectory().getNewAccount())
                 .pathSegment("{accountId}", "orders")
                 .build(params.get("accountId"));
         var next = orderUrls.isEmpty() ? null : UriComponentsBuilder.fromUri(ordersUrl)
                 .replaceQueryParam("lastId", orderUrls.getLast())
                 .build().toUri();
-        return typedPayload(orderUrls).setCode(OK).setNext(next);
+        return typedPayload(new AcmeResources.Orders().setOrders(orderUrls)).setCode(OK).setNext(next);
     }
 
     public AcmeResponse getOrder(RequestKeyPairSignature de, Map<String, String> params) {
@@ -312,7 +328,10 @@ public class AcmeServer {
         if (problemResponse != null)
             return problemResponse;
 
-        throw new UnsupportedOperationException();
+        var orderEntity = dao.getOrderById(params.get("orderId"));
+        if (orderEntity == null)
+            return typedPayload(malformed).setCode(BAD_REQUEST);
+        return typedPayload(orderEntity.getOrder());
     }
 
     public AcmeResponse getAuthorization(RequestKeyPairSignature de) {
@@ -353,30 +372,37 @@ public class AcmeServer {
     private AcmeResponse validateAccount(RequestKeyPairSignature de, String accountId) {
         // exists
         var accountById = dao.getAccountById(accountId);
-        var accountByKeyHash = dao.getAccountByKeyHash(keyHash(de.keyPair()));
-        if (accountById == null && accountByKeyHash == null)
+        // var accountByKeyHash = dao.getAccountByKeyHash(keyHash(de.keyPair()));
+        if (accountById == null/* && accountByKeyHash == null*/)
             return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
 
-        if (accountById == null || accountByKeyHash == null) {
-            if (accountByKeyHash == null)
-                return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
-
-            // key is right, account is gone
-            return typedPayload(accountDoesNotExist.getProblemDetail()
-                    .setDetail(accountDoesNotExist.getProblemDetail().getDetail() + " (account has been deleted)")).setCode(NOT_FOUND);
-        }
+        // if (accountById == null || accountByKeyHash == null) {
+        //     if (accountByKeyHash == null)
+        //         return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        //
+        //     // key is right, account is gone
+        //     return typedPayload(accountDoesNotExist.getProblemDetail()
+        //             .setDetail(accountDoesNotExist.getProblemDetail().getDetail() + " (account has been deleted)")).setCode(NOT_FOUND);
+        // }
 
         // valid
         if (!accountById.getAccount().getStatus().equals(AccountStatus.valid))
             return typedPayload(malformed.getProblemDetail().setDetail("this account is not valid")).setCode(FORBIDDEN);
 
         // key used is known
-        var actualKeyHash = keyHash(de.keyPair());
-        var expectedKeyHash = accountById.getKeyHash();
-        if (constantTimeStringEquals(actualKeyHash, expectedKeyHash))
-            return null;
+        // var actualKeyHash = keyHash(de.keyPair());
+        // var expectedKeyHash = accountById.getKeyHash();
+        // if (!constantTimeStringEquals(actualKeyHash, expectedKeyHash))
+        //     return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
 
-        return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        try {
+            if (!de.withKeyPair(accountById.getKeyPair()).verify())
+                return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        } catch (Exception e) {
+            return typedPayload(unauthorized.getProblemDetail()).setCode(UNAUTHORIZED);
+        }
+
+        return null;
     }
 
     RequestKeyPairSignature de(ServerRequest request) {

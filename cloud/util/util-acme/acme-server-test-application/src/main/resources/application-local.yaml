@@ -6,3 +6,5 @@ acme-server:
       new-account: /acme/account
       new-order: /acme/order
     directory-path: /acme/directory
+    external-account-binding:
+      enabled: false

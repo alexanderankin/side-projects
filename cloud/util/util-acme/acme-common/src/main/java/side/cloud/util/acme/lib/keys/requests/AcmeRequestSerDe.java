@@ -73,15 +73,14 @@ public class AcmeRequestSerDe {
 
     @SneakyThrows
     public static RequestKeyPairSignature deserialize(ServerRequest serverRequest) {
-        var nonce = serverRequest.headers().firstHeader(REPLAY_NONCE);
-        Assert.isTrue(nonce != null, REPLAY_NONCE + " must not be present");
-
         var body = serverRequest.body(String.class);
         var json = JWSObjectJSON.parse(body);
         Assert.isTrue(json.getSignatures().size() == 1, "must have exactly one signature");
         var signature = json.getSignatures().getFirst();
 
-        var keyId = signature.getUnprotectedHeader().getKeyID();
+        Assert.isTrue(signature.getUnprotectedHeader() == null, "must not have unprotected header");
+        Assert.isTrue(signature.getHeader() != null, "must have header");
+        var keyId = signature.getHeader().getKeyID();
         var keyIdNotNull = keyId != null;
         var jwk = signature.getHeader().getJWK();
         var jwkNotNull = jwk != null;
@@ -89,6 +88,9 @@ public class AcmeRequestSerDe {
 
         var payload = json.getPayload();
         var payloadObject = (payload == null || payload.toString().isEmpty()) ? null : payload.toJSONObject();
+
+        var nonce = signature.getHeader().getCustomParam("nonce") instanceof String nonceString ? nonceString : null;
+        Assert.isTrue(nonce != null, REPLAY_NONCE + " must not be present");
 
         var request = new AcmeRequests.AcmeRequest()
                 .setUrl(serverRequest.uri())
@@ -122,6 +124,10 @@ public class AcmeRequestSerDe {
                 log.debug(e.getMessage(), e);
                 return false;
             }
+        }
+
+        public RequestKeyPairSignature withKeyPair(SupportedClientKeyPair keyPair) {
+            return new RequestKeyPairSignature(request, keyPair, signature);
         }
     }
 }

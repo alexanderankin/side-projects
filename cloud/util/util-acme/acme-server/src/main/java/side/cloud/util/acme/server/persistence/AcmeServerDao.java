@@ -19,6 +19,8 @@ public interface AcmeServerDao {
 
     void saveOrder(ServerOrderEntity orderEntity);
 
+    ServerOrderEntity getOrderById(String orderId);
+
     @Data
     @Accessors(chain = true)
     class ServerAccountEntity {

@@ -75,6 +75,7 @@ public class AcmeClientITest {
         var restTemplate = new RestTemplateBuilder().requestFactory(this::restTemplateTrustAll).build();
         config = new AcmeClient.Config()
                 .setDirectoryUrl(containers.getPebbleDirectoryUrl())
+                // .setDirectoryUrl(URI.create("http://127.0.0.1:8080/acme/directory"))
                 .setKeyString(SupportedClientKeyPairAlgorithm.ES256.generate().serialize())
                 .setNewAccount(new NewAccount()
                         .setContact(List.of(URI.create("mailto:example@localhost.localhost")))

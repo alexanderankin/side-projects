@@ -80,7 +80,8 @@ public interface ChallengePresenter {
             if (!supportedType)
                 return false;
             var idValue = solution.getIdentifier().getValue();
-            return idValue.equals(host) || idValue.equals("*." + host);
+            var hostPart = idValue.startsWith("*.") ? idValue.substring(2) : idValue;
+            return host.equals(hostPart);
         }
 
         @Override

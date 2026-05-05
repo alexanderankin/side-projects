@@ -1,5 +1,6 @@
 package side.cloud.util.acme.server.persistence;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +25,7 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     public void saveAccount(ServerAccountEntity serverAccountEntity) {
         accountByKeyHash.put(serverAccountEntity.getKeyHash(), serverAccountEntity);
         accountById.put(serverAccountEntity.getId(), serverAccountEntity);
+        ordersByAccountId.put(serverAccountEntity.getId(), new ArrayList<>());
     }
 
     @Override
@@ -34,5 +36,11 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     @Override
     public void saveOrder(ServerOrderEntity orderEntity) {
         orderById.put(orderEntity.getId(), orderEntity);
+        ordersByAccountId.get(orderEntity.getAccountId()).add(orderEntity.getId());
+    }
+
+    @Override
+    public ServerOrderEntity getOrderById(String orderId) {
+        return orderById.get(orderId);
     }
 }
