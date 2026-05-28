@@ -1,11 +1,11 @@
-build/noble-server-cloudimg-arm64.img_: build/.check_wget
-	$(shell cd build; wget -N https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img)
+build/resolute-server-cloudimg-arm64.img_: build/.check_wget
+	$(shell cd build; wget -N https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-arm64.img)
 	touch $@
 
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_arm64.img
-build/vm_arm64.img: build/noble-server-cloudimg-arm64.img_
-	qemu-img create -f qcow2 -b noble-server-cloudimg-arm64.img -F qcow2 build/vm_arm64.img 20G
+build/vm_arm64.img: build/resolute-server-cloudimg-arm64.img_
+	qemu-img create -f qcow2 -b resolute-server-cloudimg-arm64.img -F qcow2 build/vm_arm64.img 20G
 
 .PHONY: clean_vm_arm64
 clean_vm_arm64:
