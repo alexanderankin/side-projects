@@ -17,12 +17,12 @@ start_vm_riscv64: clean_vm build/vm_riscv64.img build/seed.iso build/.check_qemu
 	qemu-system-riscv64 \
 	  -machine virt \
 	  -cpu rv64 \
-	  -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_jump.elf \
+	  -bios /usr/lib/riscv64-linux-gnu/opensbi/generic/fw_dynamic.bin \
 	  -kernel /usr/lib/u-boot/qemu-riscv64_smode/uboot.elf \
 	  -m 3072 \
 	  -smp 2 \
 	  -drive file=build/vm_riscv64.img,format=qcow2,if=virtio \
-	  -drive file=build/seed.iso,format=raw,if=virtio \
+	  -drive file=build/seed.iso,format=raw,if=virtio,file.locking=off \
 	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)

@@ -34,7 +34,7 @@ build/.check-package_%:
 	@echo "$* found"
 	@touch $@
 
-build/user-data: build/.check_openssl build/.check_cloud-localds
+build/user-data: build/.check_openssl build/.check_cloud-localds ./create-user-data.sh
 	./create-user-data.sh > $@
 
 build/seed.iso: build/user-data
@@ -49,13 +49,30 @@ ifndef NAME
 	$(error NAME must be defined for clean_vm)
 endif
 ifneq ($(wildcard build/$(NAME)),)
-	kill "$$(cat build/$(NAME))"
-	rm -f "build/$(NAME)"
+	pid="$$(cat build/$(NAME))" && kill $$pid && { wait $$pid || echo "no need to wait"; } && rm -f build/$(NAME)
 else
 	@:
 endif
 
 include vm_*.mk
+
+start_all:
+	if [ -f build/amd64 ]; then :; else UI_MODE='headless' NAME=amd64 SSH_PORT=2022 $(MAKE) start_vm_amd64_best; fi
+	if [ -f build/arm64 ]; then :; else UI_MODE='headless' NAME=arm64 SSH_PORT=2023 $(MAKE) start_vm_arm64_best; fi
+	if [ -f build/arm ]; then :; else UI_MODE='headless' NAME=arm SSH_PORT=2024 $(MAKE) start_vm_arm; fi
+	if [ -f build/riscv64 ]; then :; else UI_MODE='headless' NAME=riscv64 SSH_PORT=2025 $(MAKE) start_vm_riscv64; fi
+
+restart_all:
+	UI_MODE='headless' NAME=amd64 SSH_PORT=2022 $(MAKE) start_vm_amd64_virtual
+	UI_MODE='headless' NAME=arm64 SSH_PORT=2023 $(MAKE) start_vm_arm64_virtual
+	UI_MODE='headless' NAME=arm SSH_PORT=2024 $(MAKE) start_vm_arm
+	UI_MODE='headless' NAME=riscv64 SSH_PORT=2025 $(MAKE) start_vm_riscv64
+
+clean_all:
+	if [ -f build/amd64 ]; then pid=$$(cat build/amd64); kill $$pid && { wait $$pid || echo "wait exited"; }; fi
+	if [ -f build/arm64 ]; then pid=$$(cat build/arm64); kill $$pid && { wait $$pid || echo "wait exited"; }; fi
+	if [ -f build/arm ]; then pid=$$(cat build/arm); kill $$pid && { wait $$pid || echo "wait exited"; }; fi
+	if [ -f build/riscv64 ]; then pid=$$(cat build/riscv64); kill $$pid && { wait $$pid || echo "wait exited"; }; fi
 
 #	  # from vagrant:
 #	  -netdev tap,fd=33,vhost=true,vhostfd=35,id=hostua-net-0 \

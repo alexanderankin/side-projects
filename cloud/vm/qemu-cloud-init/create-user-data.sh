@@ -34,6 +34,13 @@ users:
       | sed -e '/^$/d' -e 's/^/"/' -e 's/$/"/' \
       | jq -sc)
 
+write_files:
+  - path: /home/ubuntu/.hushlogin
+    owner: ubuntu:ubuntu
+    permissions: '0644'
+    content: ""
+    defer: true
+
 ssh_pwauth: true
 disable_root: true
 

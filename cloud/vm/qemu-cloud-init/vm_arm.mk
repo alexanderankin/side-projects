@@ -21,7 +21,7 @@ start_vm_arm: clean_vm build/vm_arm.img build/seed.iso build/.check_qemu-system-
 	  -m 3072 \
 	  -smp 2 \
 	  -drive file=build/vm_arm.img,format=qcow2,if=virtio \
-	  -cdrom build/seed.iso \
+	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
 	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
@@ -37,7 +37,7 @@ start_vm_arm_brew: clean_vm build/vm_arm.img build/seed.iso build/.check_qemu-sy
 	  -m 3072 \
 	  -smp 2 \
 	  -drive file=build/vm_arm.img,format=qcow2,if=virtio \
-	  -cdrom build/seed.iso \
+	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
 	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)

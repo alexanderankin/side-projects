@@ -19,7 +19,7 @@ start_vm_amd64: clean_vm build/vm_amd64.img build/seed.iso build/.check-package_
 	  -smp 2 \
 	  -enable-kvm \
 	  -drive file=build/vm_amd64.img,format=qcow2,if=virtio \
-	  -cdrom build/seed.iso \
+	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
 	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
@@ -30,7 +30,13 @@ start_vm_amd64_virtual: clean_vm build/vm_amd64.img build/seed.iso build/.check_
 	  -m 4096 \
 	  -smp 2 \
 	  -drive file=build/vm_amd64.img,format=qcow2,if=virtio \
-	  -cdrom build/seed.iso \
+	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
 	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
+
+ifeq ($(shell uname -m), x86_64)
+start_vm_amd64_best: start_vm_amd64
+else
+start_vm_amd64_best: start_vm_amd64_virtual
+endif
