@@ -1,5 +1,5 @@
 build/resolute-server-cloudimg-arm64.img_: build/.check_wget
-	$(shell cd build; wget -N https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-arm64.img)
+	$(shell cd build; wget -N $(IMG_BASE_URL)-arm64.img)
 	touch $@
 
 # this must happen every time if you want a clean vm
@@ -12,7 +12,7 @@ clean_vm_arm64:
 	rm -f build/vm_arm64.img
 
 # "Ctrl+a, x" exits the vm
-start_vm_arm64: build/vm_arm64.img build/seed.iso build/.check_qemu-system-aarch64
+start_vm_arm64: clean_vm build/vm_arm64.img build/seed.iso build/.check_qemu-system-aarch64
 	qemu-system-aarch64 \
 	  -machine virt,highmem=on \
 	  -accel hvf \
@@ -22,15 +22,14 @@ start_vm_arm64: build/vm_arm64.img build/seed.iso build/.check_qemu-system-aarch
 	  -bios /opt/homebrew/share/qemu/edk2-aarch64-code.fd \
 	  -drive file=build/vm_arm64.img,format=qcow2,if=virtio \
 	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
-	  -display none \
-	  -serial mon:stdio
+	  $(UI_OPTIONS)
 
 # cpu max is slow because exposes difficult to emulate features
 # options: cortex-a57, cortex-a72, cortex-a76, neoverse-n1
 
-start_vm_arm64_virtual: build/vm_arm64.img build/seed.iso build/.check-package_qemu-system-arm build/.check-package_qemu-efi-aarch64
+start_vm_arm64_virtual: clean_vm build/vm_arm64.img build/seed.iso build/.check-package_qemu-system-arm build/.check-package_qemu-efi-aarch64
 	qemu-system-aarch64 \
 	  -machine virt,highmem=on \
 	  -cpu neoverse-n1 \
@@ -39,7 +38,6 @@ start_vm_arm64_virtual: build/vm_arm64.img build/seed.iso build/.check-package_q
 	  -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
 	  -drive file=build/vm_arm64.img,format=qcow2,if=virtio \
 	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
-	  -display none \
-	  -serial mon:stdio
+	  $(UI_OPTIONS)

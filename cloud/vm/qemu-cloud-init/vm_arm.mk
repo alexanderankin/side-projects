@@ -1,5 +1,5 @@
 build/resolute-server-cloudimg-armhf.img_: build/.check_wget
-	$(shell cd build; wget -N https://cloud-images.ubuntu.com/resolute/current/resolute-server-cloudimg-armhf.img)
+	$(shell cd build; wget -N $(IMG_BASE_URL)-armhf.img)
 	touch $@
 
 # this must happen every time if you want a clean vm
@@ -13,7 +13,7 @@ clean_vm_arm:
 
 # "Ctrl+a, x" exits the vm
 # todo homebrew path version of this
-start_vm_arm: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm build/.check-package_qemu-efi-arm
+start_vm_arm: clean_vm build/vm_arm.img build/seed.iso build/.check_qemu-system-arm build/.check-package_qemu-efi-arm
 	qemu-system-arm \
 	  -machine virt \
 	  -cpu cortex-a15 \
@@ -22,12 +22,11 @@ start_vm_arm: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm build
 	  -smp 2 \
 	  -drive file=build/vm_arm.img,format=qcow2,if=virtio \
 	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
-	  -display none \
-	  -serial mon:stdio
+	  $(UI_OPTIONS)
 
-start_vm_arm_brew: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm
+start_vm_arm_brew: clean_vm build/vm_arm.img build/seed.iso build/.check_qemu-system-arm
 	rm -f build/edk2-arm-vars.fd
 	cp /opt/homebrew/share/qemu/edk2-arm-vars.fd build/edk2-arm-vars.fd
 	qemu-system-arm \
@@ -39,7 +38,6 @@ start_vm_arm_brew: build/vm_arm.img build/seed.iso build/.check_qemu-system-arm
 	  -smp 2 \
 	  -drive file=build/vm_arm.img,format=qcow2,if=virtio \
 	  -cdrom build/seed.iso \
-	  -netdev user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
 	  -device virtio-net-pci,netdev=net0 \
-	  -display none \
-	  -serial mon:stdio
+	  $(UI_OPTIONS)
