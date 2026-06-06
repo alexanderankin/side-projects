@@ -1,0 +1,12 @@
+server:
+  address: ":8080"
+
+healthcheck:
+  path: "/healthz"
+
+testRequest:
+  path: "/healthz/proxy"
+  url: "https://jsonplaceholder.typicode.com/todos/1"
+
+logging:
+  level: "info"
