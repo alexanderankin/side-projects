@@ -1,6 +1,12 @@
 on:
   workflow_dispatch:
-    # inputs:
+    inputs:
+      SRC_USERNAME:
+        required: true
+        description: username to use for pulling base image
+      SRC_PASSWORD:
+        required: true
+        description: password to use for pulling base image
 
 permissions:
   contents: read

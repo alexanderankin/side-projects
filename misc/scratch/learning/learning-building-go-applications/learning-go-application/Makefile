@@ -50,8 +50,8 @@ GHCR_USER ?= $(shell gh api user --jq .login)
 GHCR_PAT  ?= $(shell gh auth token)
 
 docker-images: build/static-amd64 build/static-arm64 build/.jib-installed
-	jib build --build-file jib.yaml --parameter arch=amd64 --target $(IMAGE):$(TAG)-amd64 --to-username $(GHCR_USER) --to-password "$(GHCR_PAT)" \
-	  && jib build --build-file jib.yaml --parameter arch=arm64 --target $(IMAGE):$(TAG)-arm64 --to-username $(GHCR_USER) --to-password "$(GHCR_PAT)" \
+	jib build --build-file jib.yaml --parameter arch=amd64 --target $(IMAGE):$(TAG)-amd64 --to-username $(GHCR_USER) --to-password "$(GHCR_PAT)"  $$(if [ -n $$SRC_USERNAME ]; then echo "--from-username $$SRC_USERNAME --from-password $$SRC_PASSWORD"; fi;) \
+	  && jib build --build-file jib.yaml --parameter arch=arm64 --target $(IMAGE):$(TAG)-arm64 --to-username $(GHCR_USER) --to-password "$(GHCR_PAT)"  $$(if [ -n $$SRC_USERNAME ]; then echo "--from-username $$SRC_USERNAME --from-password $$SRC_PASSWORD"; fi;) \
 	  && :;
 
 build/docker-login:
