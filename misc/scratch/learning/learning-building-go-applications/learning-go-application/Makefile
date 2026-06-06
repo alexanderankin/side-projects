@@ -35,14 +35,14 @@ build/.jib-version:
 	@mkdir -p build
 	@echo $(JIB_VERSION) > $@
 build/.jib-installed: build/.jib-version
-	true \
-	  && { [[ "$$PATH" =~ .*:"$$HOME/.local/bin":.* ]] || { echo "error: can't find ~/.local/bin in PATH, exiting"; exit 1; }; } \
-	  && (cd build && wget -N https://github.com/GoogleContainerTools/jib/releases/download/v$$(cat .jib-version)-cli/jib-jre-$$(cat .jib-version).zip) \
-	  && (cd build && unzip -n jib-jre-$$(cat .jib-version).zip) \
-	  && ln -fs $$PWD/build/jib-$$(cat build/.jib-version)/bin/jib $$HOME/.local/bin/jib \
+	bash -c -eu "true \
+	  && { [[ \"\$$PATH\" =~ .*:\"\$$HOME/.local/bin\":.* ]] || { echo \"error: can't find ~/.local/bin in PATH, exiting\"; exit 1; }; } \
+	  && (cd build && wget -N https://github.com/GoogleContainerTools/jib/releases/download/v\$$(cat .jib-version)-cli/jib-jre-\$$(cat .jib-version).zip) \
+	  && (cd build && unzip -n jib-jre-\$$(cat .jib-version).zip) \
+	  && ln -fs \$$PWD/build/jib-\$$(cat build/.jib-version)/bin/jib \$$HOME/.local/bin/jib \
 	  && jib --version \
 	  && touch $@ \
-	  && :;
+	  && :;"
 
 # ensure scopes:
 # gh auth refresh -h github.com -s write:packages,read:packages
