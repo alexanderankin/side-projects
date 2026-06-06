@@ -11,6 +11,7 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     final Map<String, ServerAccountEntity> accountById = new ConcurrentHashMap<>();
     final Map<String, List<String>> ordersByAccountId = new ConcurrentHashMap<>();
     final Map<String, ServerOrderEntity> orderById = new ConcurrentHashMap<>();
+    final Map<String, ServerOrderEntity> orderById = new ConcurrentHashMap<>();
 
     @Override
     public ServerAccountEntity getAccountById(String id) {
@@ -20,6 +21,11 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     @Override
     public ServerAccountEntity getAccountByKeyHash(String keyHash) {
         return accountByKeyHash.get(keyHash);
+    }
+
+    @Override
+    public ServerExternalAccountEntity getExternalAccountById(String id) {
+        return null;
     }
 
     @Override

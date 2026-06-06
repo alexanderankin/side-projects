@@ -1,4 +1,4 @@
-package side.cloud.util.acme.server.nonce;
+package side.cloud.util.acme.server.persistence.nonce;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

@@ -36,7 +36,7 @@ import side.cloud.util.acme.lib.model.AcmeResources.Challenge;
 import side.cloud.util.acme.lib.model.AcmeResources.Challenge.ChallengeStatus;
 import side.cloud.util.acme.lib.model.AcmeResources.Order.OrderStatus;
 import side.cloud.util.acme.lib.model.challenge.SupportedChallengeType;
-import side.cloud.util.acme.server.nonce.NonceService;
+import side.cloud.util.acme.server.persistence.nonce.NonceService;
 import side.cloud.util.acme.server.persistence.AcmeServerDao;
 
 import java.net.URI;

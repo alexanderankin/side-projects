@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 import side.cloud.util.acme.server.AcmeServer;
-import side.cloud.util.acme.server.nonce.InMemoryNonceRepository;
-import side.cloud.util.acme.server.nonce.NonceService;
+import side.cloud.util.acme.server.persistence.nonce.InMemoryNonceRepository;
+import side.cloud.util.acme.server.persistence.nonce.NonceService;
 import side.cloud.util.acme.server.persistence.InMemoryAcmeServerDao;
 
 import java.security.SecureRandom;
