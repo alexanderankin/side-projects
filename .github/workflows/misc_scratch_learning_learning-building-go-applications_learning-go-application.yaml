@@ -27,4 +27,10 @@ jobs:
           cd misc/scratch/learning/learning-building-go-applications/learning-go-application
           mkdir build
           touch build/docker-login # skip it
+
+          # local bin
+          local_bin="${HOME}/.local/bin"
+          mkdir -p "${local_bin}"
+          export PATH="${PATH}:${local_bin}"
+
           make docker-multiarch
