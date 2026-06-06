@@ -37,4 +37,5 @@ jobs:
           mkdir -p "${local_bin}"
           export PATH="${PATH}:${local_bin}"
 
-          make docker-multiarch
+          GHCR_USER=${{ github.actor }} GHCR_PAT=${{ secrets.GITHUB_TOKEN }} \
+            make docker-multiarch
