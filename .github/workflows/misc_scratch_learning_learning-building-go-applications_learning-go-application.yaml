@@ -41,9 +41,6 @@ jobs:
           mkdir build
           touch build/docker-login # skip it
 
-          touch build/static-amd64 # 
-          touch build/static-arm64 # temporarily skip it
-
           # local bin
           local_bin="${HOME}/.local/bin"
           mkdir -p "${local_bin}"

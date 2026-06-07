@@ -17,3 +17,7 @@ docker run --rm -it --name lga-armmd64 --platform linux/amd64 ghcr.io/alexandera
 docker run --rm -it --name lga-arm64 --platform linux/arm64 ghcr.io/alexanderankin/side-projects-learning-build-go-application:0.0.1-snapshot
 docker run --rm -it --name lga-armmd64 --platform linux/amd64 ghcr.io/alexanderankin/side-projects-learning-build-go-application:0.0.1-snapshot
 ```
+
+## notes
+
+the package has a settings page and this repository must be given access
