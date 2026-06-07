@@ -16,6 +16,9 @@ permissions:
 env:
   GH_TOKEN: ${{ github.token }}
 
+  SRC_USERNAME: ${{ inputs.SRC_USERNAME }}
+  SRC_PASSWORD: ${{ inputs.SRC_PASSWORD }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
