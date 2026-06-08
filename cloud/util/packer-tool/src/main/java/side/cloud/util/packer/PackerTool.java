@@ -1,6 +1,6 @@
 package side.cloud.util.packer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;

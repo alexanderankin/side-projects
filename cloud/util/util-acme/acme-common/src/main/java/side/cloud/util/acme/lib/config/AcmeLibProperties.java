@@ -1,6 +1,6 @@
 package side.cloud.util.acme.lib.config;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public class AcmeLibProperties {
     private static final JsonMapper MAPPER = JsonMapper.builder().findAndAddModules().build();

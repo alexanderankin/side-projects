@@ -1,6 +1,6 @@
 package org.cloud.logging.proxy.sb.netty;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -108,7 +108,7 @@ class AsyncLoggingProxyApp {
         public Mono<Void> filter(@NonNull ServerWebExchange exchange,
                                  @NonNull WebFilterChain ignored) {
 
-            var target = UriComponentsBuilder.fromHttpUrl(loggedRoutes.getDefaultRoute().getBaseUrl())
+            var target = UriComponentsBuilder.fromUriString(loggedRoutes.getDefaultRoute().getBaseUrl())
                     .path(exchange.getRequest().getURI().getPath())
                     .query(exchange.getRequest().getURI().getQuery())
                     .toUriString();
@@ -131,8 +131,7 @@ class AsyncLoggingProxyApp {
                     .uri(target)
                     .body(bufferedBody, DataBuffer.class)
                     .headers(h -> h.addAll(exchange.getRequest().getHeaders()))
-                    .exchange()
-                    .flatMap(clientResponse ->
+                    .exchangeToMono(clientResponse ->
                             this.handleUpstreamResponse(clientResponse,
                                     bufferedResponse.wrap(clientResponse.body(BodyExtractors.toDataBuffers()))))
                     .then(log()/* .contextWrite(context) */)

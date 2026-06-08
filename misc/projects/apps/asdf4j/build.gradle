@@ -10,6 +10,6 @@ application.mainClass = 'asdf.AsdfCli'
 jar.manifest.attributes 'Implementation-Version': version // todo make library friendly?
 
 dependencies {
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'tools.jackson.core:jackson-databind'
     // implementation 'org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r'
 }

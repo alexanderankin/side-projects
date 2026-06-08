@@ -1,19 +1,18 @@
 package asdf.model;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 public interface SerDe {
-    class PathSerializer extends JsonSerializer<Path> {
+    class PathSerializer extends ValueSerializer<Path> {
         @Override
-        public void serialize(Path value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        public void serialize(Path value, JsonGenerator gen, SerializationContext serializers) {
             if (value == null)
                 gen.writeNull();
             else
@@ -21,9 +20,9 @@ public interface SerDe {
         }
     }
 
-    class PathDeserializer extends JsonDeserializer<Path> {
+    class PathDeserializer extends ValueDeserializer<Path> {
         @Override
-        public Path deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        public Path deserialize(JsonParser p, DeserializationContext ctxt) {
             var value = p.getValueAsString();
             return value == null ? null : Path.of(value);
         }

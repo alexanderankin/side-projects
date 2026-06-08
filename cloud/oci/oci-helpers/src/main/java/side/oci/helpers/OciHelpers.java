@@ -1,12 +1,13 @@
 package side.oci.helpers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.ini4j.Ini;
 import side.oci.helpers.model.*;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 @Slf4j
 public class OciHelpers {
     @Setter(AccessLevel.NONE)
-    ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+    ObjectMapper mapper = JsonMapper.builder().findAndAddModules().build();
     @Setter(AccessLevel.NONE)
     OciHelpersConfig cliConfig = new OciHelpersConfig();
 

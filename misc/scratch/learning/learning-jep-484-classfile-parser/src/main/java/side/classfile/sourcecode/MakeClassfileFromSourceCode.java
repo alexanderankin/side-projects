@@ -1,6 +1,6 @@
 package side.classfile.sourcecode;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import groovy.lang.GroovyClassLoader;
 import lombok.Data;
 import lombok.SneakyThrows;

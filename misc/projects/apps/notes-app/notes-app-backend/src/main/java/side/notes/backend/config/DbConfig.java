@@ -10,7 +10,7 @@ import org.hibernate.engine.jdbc.dialect.spi.DialectResolver;
 import org.hibernate.service.ServiceRegistry;
 import org.hibernate.type.SqlTypes;
 import org.hibernate.type.descriptor.jdbc.CharJdbcType;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -23,10 +23,10 @@ import java.util.List;
 @Configuration
 public class DbConfig {
     @Bean
-    Jackson2ObjectMapperBuilderCustomizer objectMapperDefVICustomizer() {
+    JsonMapperBuilderCustomizer objectMapperDefVICustomizer() {
         return jacksonObjectMapperBuilder -> {
-            jacksonObjectMapperBuilder.mixIn(PagedModel.class, PagedModelMixin.class);
-            jacksonObjectMapperBuilder.mixIn(PagedModel.PageMetadata.class, PagedModelMixin.PageMetadataMixin.class);
+            jacksonObjectMapperBuilder.addMixIn(PagedModel.class, PagedModelMixin.class);
+            jacksonObjectMapperBuilder.addMixIn(PagedModel.PageMetadata.class, PagedModelMixin.PageMetadataMixin.class);
         };
     }
 

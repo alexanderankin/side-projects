@@ -1,6 +1,6 @@
 package side.classfile.sourcecode;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 import side.classfile.JsonClassfilePrinter;
 

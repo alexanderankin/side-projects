@@ -6,6 +6,6 @@ dependencies {
     implementation('org.springframework:spring-webflux')
     implementation('io.projectreactor.netty:reactor-netty')
     implementation('com.fasterxml.jackson.core:jackson-annotations')
-    implementation('com.fasterxml.jackson.core:jackson-databind')
+    implementation('tools.jackson.core:jackson-databind')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 }

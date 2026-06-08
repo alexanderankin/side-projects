@@ -55,7 +55,7 @@ class MockServerRequest extends HttpServletRequestWrapper {
 
     @Override
     public Enumeration<String> getHeaderNames() {
-        return Collections.enumeration(requestEntity.getHeaders().keySet());
+        return Collections.enumeration(requestEntity.getHeaders().headerNames());
     }
 
     @Override

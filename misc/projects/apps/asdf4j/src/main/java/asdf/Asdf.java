@@ -4,7 +4,7 @@ import asdf.model.AsdfConfig;
 import asdf.model.AsdfConfig.AsdfConfigReader;
 import asdf.model.AsdfInfo;
 import asdf.model.AsdfVersionProvider;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

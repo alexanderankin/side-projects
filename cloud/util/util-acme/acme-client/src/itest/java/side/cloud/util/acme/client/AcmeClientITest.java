@@ -1,6 +1,6 @@
 package side.cloud.util.acme.client;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import io.github.resilience4j.retry.internal.InMemoryRetryRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;

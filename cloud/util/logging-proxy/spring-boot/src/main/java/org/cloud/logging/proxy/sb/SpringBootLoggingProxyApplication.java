@@ -1,6 +1,6 @@
 package org.cloud.logging.proxy.sb;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -122,7 +122,7 @@ class SpringBootLoggingProxyApplication {
 
             var reqUrl = servletRequest.getRequestURI();
             var baseUrl = loggedRoutes.defaultRoute.getBaseUrl();
-            var target = UriComponentsBuilder.fromHttpUrl(baseUrl)
+            var target = UriComponentsBuilder.fromUriString(baseUrl)
                     .path(reqUrl)
                     .query(servletRequest.getQueryString())
                     .toUriString();

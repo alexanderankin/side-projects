@@ -1,10 +1,10 @@
 package tf.ideas.idea1;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.BooleanNode;
+import tools.jackson.databind.node.DoubleNode;
+import tools.jackson.databind.node.IntNode;
+import tools.jackson.databind.node.StringNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -88,7 +88,7 @@ public class Configuration {
         String name;
 
         public static Property stringProperty(String name, String s) {
-            return new ScalarProperty().setValue(TextNode.valueOf(s)).setName(name);
+            return new ScalarProperty().setValue(StringNode.valueOf(s)).setName(name);
         }
 
         public static Property numberProperty(String name, Integer n) {

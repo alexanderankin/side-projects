@@ -1,7 +1,7 @@
 package side;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -13,6 +13,7 @@ import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.pkcs.RSAPrivateKey;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +46,7 @@ public class CopyToken {
         String header = new String(Base64.getDecoder().decode(parts.getFirst()), StandardCharsets.UTF_8);
         String body = new String(Base64.getDecoder().decode(parts.get(1)), StandardCharsets.UTF_8);
 
-        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
         LinkedHashMap<String, Object> headerMap = objectMapper.readValue(header, new TypeReference<>() {
         });
         LinkedHashMap<String, Object> bodyMap = objectMapper.readValue(body, new TypeReference<>() {

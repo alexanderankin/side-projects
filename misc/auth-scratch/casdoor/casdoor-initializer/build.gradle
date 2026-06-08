@@ -6,7 +6,7 @@ plugins {
 application.mainClass = 'side.casdoor.init.CasdoorInitApplication'
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     // // https://mvnrepository.com/artifact/org.casbin/casdoor-java-sdk
     // implementation 'org.casbin:casdoor-java-sdk:1.38.0'
 

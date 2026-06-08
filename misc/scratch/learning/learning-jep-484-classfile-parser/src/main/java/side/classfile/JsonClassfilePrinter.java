@@ -1,7 +1,7 @@
 package side.classfile;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 
 import java.io.IOException;

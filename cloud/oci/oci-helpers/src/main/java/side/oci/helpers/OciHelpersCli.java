@@ -1,6 +1,5 @@
 package side.oci.helpers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.SneakyThrows;
@@ -161,7 +160,7 @@ class OciHelpersCli implements Runnable {
             return session;
         }
 
-        private void printSession(SessionItem session, int port, String host) throws JsonProcessingException {
+        private void printSession(SessionItem session, int port, String host) {
             System.err.println(INSTANCE.mapper.writeValueAsString(session.getSshMetadata()));
             System.err.flush();
             System.out.println("ssh -N -L 127.0.0.1:" + port + ":" + host + ":" + port + " -p 22 " + session.getId() + "@host.bastion." + INSTANCE.getOrLoadDefailtProfile().getRegion() + ".oci.oraclecloud.com");

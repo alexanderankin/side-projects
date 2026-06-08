@@ -5,7 +5,7 @@ plugins {
 dependencies {
     // generally this is a big no-no but for testing it is fine it it works
     implementation project(':cloud:util:logging-proxy:logged-application')
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     itestImplementation 'org.testcontainers:testcontainers'

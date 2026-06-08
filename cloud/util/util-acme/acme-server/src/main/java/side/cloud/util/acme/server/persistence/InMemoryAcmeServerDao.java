@@ -23,6 +23,11 @@ public class InMemoryAcmeServerDao implements AcmeServerDao {
     }
 
     @Override
+    public ServerExternalAccountEntity getExternalAccountById(String id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void saveAccount(ServerAccountEntity serverAccountEntity) {
         accountByKeyHash.put(serverAccountEntity.getKeyHash(), serverAccountEntity);
         accountById.put(serverAccountEntity.getId(), serverAccountEntity);

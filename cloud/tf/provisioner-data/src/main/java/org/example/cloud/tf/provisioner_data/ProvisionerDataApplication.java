@@ -41,7 +41,7 @@ class ProvisionerDataApplication {
         OncePerRequestFilter readerForRequestLoggingFilter() {
             return new DelegatingOncePerRequestFilter(
                     (request, response, filterChain) -> {
-                        request = new org.springframework.web.util.ContentCachingRequestWrapper(request);
+                        request = new org.springframework.web.util.ContentCachingRequestWrapper(request, 500_000);
                         request.getInputStream().readAllBytes();
                         filterChain.doFilter(request, response);
                     }

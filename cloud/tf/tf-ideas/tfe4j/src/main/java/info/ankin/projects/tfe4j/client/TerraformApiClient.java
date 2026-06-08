@@ -1,8 +1,5 @@
 package info.ankin.projects.tfe4j.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import info.ankin.projects.tfe4j.client.model.JsonApiErrors;
 import info.ankin.projects.tfe4j.client.model.Models;
 import info.ankin.projects.tfe4j.client.model.TerraformClientResponseException;
@@ -16,6 +13,9 @@ import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Map;

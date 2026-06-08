@@ -1,6 +1,6 @@
 package side.ufw.web;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import side.ufw.web.UfwRule.PortRange;

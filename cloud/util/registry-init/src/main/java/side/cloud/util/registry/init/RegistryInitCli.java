@@ -1,6 +1,5 @@
 package side.cloud.util.registry.init;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -14,6 +13,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import side.picocli.LogbackVerbosityMixin;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
