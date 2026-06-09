@@ -1,0 +1,27 @@
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print GitHub OIDC claims
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          AUDIENCE="Test"
+
+          RESPONSE="$(
+            curl -sS \
+              -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${AUDIENCE}"
+          )"
+
+          JWT="$(jq -r '.value' <<< "$RESPONSE")"
+
+          echo "token: $(echo $JWT | base64 -w 0)"
