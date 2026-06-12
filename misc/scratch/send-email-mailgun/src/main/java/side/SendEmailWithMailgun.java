@@ -13,6 +13,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.util.MultiValueMapAdapter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import picocli.AutoComplete;
 import picocli.CommandLine;
 
 import java.nio.charset.StandardCharsets;
@@ -23,7 +24,9 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 
 @Slf4j
-@CommandLine.Command(name = "SendEmailWithMailgun", mixinStandardHelpOptions = true, scope = CommandLine.ScopeType.INHERIT, sortOptions = false)
+@CommandLine.Command(name = "SendEmailWithMailgun", mixinStandardHelpOptions = true, scope = CommandLine.ScopeType.INHERIT, sortOptions = false, subcommands = {
+        AutoComplete.GenerateCompletion.class,
+})
 class SendEmailWithMailgun {
     public static void main(String[] args) {
         System.exit(new CommandLine(new SendEmailWithMailgun()).execute(args));
