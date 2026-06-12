@@ -63,12 +63,13 @@ class SendEmailWithMailgun {
         j.setPort(auth.getPort());
         j.setUsername(auth.getUser());
         j.setPassword(auth.getPass());
-        j.setProtocol("smtps");
+        j.setProtocol("smtp");
 
         Properties p = j.getJavaMailProperties();
         p.setProperty("mail.transport.protocol", "smtps");
         p.setProperty("mail.smtp.auth", "true");
         p.setProperty("mail.smtp.starttls.enable", "true");
+        p.setProperty("mail.smtp.starttls.required", "true");
         // p.setProperty("mail.debug", "true");
         LogManager.getLogManager().getLogger("").setLevel(Level.CONFIG);
 
