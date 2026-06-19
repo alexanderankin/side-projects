@@ -4,7 +4,8 @@ plugins {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation 'org.springframework.boot:spring-boot-starter-jackson'
+    implementation 'tools.jackson.dataformat:jackson-dataformat-xml'
     implementation 'org.apache.httpcomponents.client5:httpclient5'
     implementation 'software.amazon.awssdk:s3'
 

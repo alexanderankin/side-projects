@@ -1,3 +1,4 @@
+/*
 package org.example;
 
 import lombok.Data;
@@ -109,3 +110,4 @@ public class EmulatorS3Client {
         String secretAccessKey;
     }
 }
+*/

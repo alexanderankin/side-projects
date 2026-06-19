@@ -1,29 +1,53 @@
 package org.example;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.net.URI;
 
+@Slf4j
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class EmulatorS3ClientTest {
+
+    @LocalServerPort
+    Integer localServerPort;
 
     @Test
     void test() {
-        EmulatorS3Client emulatorS3Client = new EmulatorS3Client(new EmulatorS3Client.Config(), RestClient.builder());
+        @SuppressWarnings("resource")
+        S3Client s3Client = S3Client.builder()
+                .credentialsProvider(AnonymousCredentialsProvider.create())
+                .forcePathStyle(true)
+                .endpointOverride(URI.create("http://127.0.0.1:" + localServerPort))
+                .region(Region.US_EAST_1)
+                .build();
 
-//        emulatorS3Client.list
-    }
+        ListBucketsResponse listBucketsResponse = s3Client.listBuckets(ListBucketsRequest.builder().build());
+        System.out.println(listBucketsResponse);
 
-    @Test
-    void test_X_AmzDate() {
+        CreateBucketResponse createBucketResponse = s3Client.createBucket(CreateBucketRequest.builder()
+                .bucket("test-bucket")
+                .build());
+        System.out.println(createBucketResponse);
+        System.out.println(createBucketResponse.location());
+        System.out.println(createBucketResponse.bucketArn());
 
-        Instant now = Instant.now();
-        LocalDateTime l = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
-
-        String format = EmulatorS3Client.DTF.format(l);
-
-        System.out.println(format);
+        System.out.println(s3Client.listBuckets(ListBucketsRequest.builder().build()).buckets());
+        try {
+            System.out.println(s3Client.listObjects(ListObjectsRequest.builder().bucket("test-bucket").build()));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        try {
+            System.out.println(s3Client.listObjectsV2(ListObjectsV2Request.builder().bucket("test-bucket").build()));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 }
