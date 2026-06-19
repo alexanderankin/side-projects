@@ -7,6 +7,8 @@ dependencies {
     implementation platform('org.springframework.boot:spring-boot-dependencies:4.0.6')
     implementation platform('org.springframework.cloud:spring-cloud-dependencies:2025.1.1')
 
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:4.0.2')
+
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     // todo remove me when spring boot 4

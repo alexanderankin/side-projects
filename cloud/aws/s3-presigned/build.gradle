@@ -3,7 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:4.0.2')
     implementation 'ch.qos.logback:logback-classic'
     implementation 'software.amazon.awssdk:s3'
 }
