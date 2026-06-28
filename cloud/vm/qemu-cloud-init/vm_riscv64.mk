@@ -1,11 +1,11 @@
-build/resolute-server-cloudimg-riscv64.img_: build/.check_wget
+build/$(UBUNTU_CODENAME)-server-cloudimg-riscv64.img_: build/.check_wget
 	$(shell cd build; wget -N $(IMG_BASE_URL)-riscv64.img)
 	touch $@
 
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_riscv64.img
-build/vm_riscv64.img: build/resolute-server-cloudimg-riscv64.img_
-	qemu-img create -f qcow2 -b resolute-server-cloudimg-riscv64.img -F qcow2 build/vm_riscv64.img 20G
+build/vm_riscv64.img: build/$(UBUNTU_CODENAME)-server-cloudimg-riscv64.img_
+	qemu-img create -f qcow2 -b $(UBUNTU_CODENAME)-server-cloudimg-riscv64.img -F qcow2 build/vm_riscv64.img 20G
 
 .PHONY: clean_vm_riscv64
 clean_vm_riscv64:

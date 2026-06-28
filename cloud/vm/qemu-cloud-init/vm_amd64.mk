@@ -1,11 +1,11 @@
-build/resolute-server-cloudimg-amd64.img_: build/.check_wget
+build/$(UBUNTU_CODENAME)-server-cloudimg-amd64.img_: build/.check_wget
 	$(shell cd build; wget -N $(IMG_BASE_URL)-amd64.img)
 	touch $@
 
 # this must happen every time if you want a clean vm
 .PHONY: build/vm_amd64.img
-build/vm_amd64.img: build/resolute-server-cloudimg-amd64.img_
-	qemu-img create -f qcow2 -b resolute-server-cloudimg-amd64.img -F qcow2 build/vm_amd64.img 20G
+build/vm_amd64.img: build/$(UBUNTU_CODENAME)-server-cloudimg-amd64.img_
+	qemu-img create -f qcow2 -b $(UBUNTU_CODENAME)-server-cloudimg-amd64.img -F qcow2 build/vm_amd64.img 20G
 
 .PHONY: clean_vm_amd64
 clean_vm_amd64:
