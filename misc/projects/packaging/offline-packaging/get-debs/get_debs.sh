@@ -47,7 +47,7 @@ docker exec get-debs bash -c '
     openjdk-21-jdk openjdk-21-dbg openjdk-21-doc \
     $(if [[ ${version_number} != 22.04 ]]; then echo " openjdk-25-jdk openjdk-25-dbg openjdk-25-doc "; fi) \
     $(if [[ ${version_number} == 22.04 ]]; then echo " postgresql-14 "; fi) \
-    $(if [[ ${version_number} == 24.04 ]]; then echo " postgresql-16 "; fi) \
+    $(if [[ ${version_number} == 24.04 ]]; then echo " postgresql-16 postgresql-16-pgvector "; fi) \
     build-essential >/dev/null 2>&1 && status_base=true || status_base=false;
   echo "[$(date --iso=s)] Installed base packages and utilities: ${status_base}"
   if ! [[ ${status_base} == "true" ]]; then echo "not successful: base"; exit 1; fi;
