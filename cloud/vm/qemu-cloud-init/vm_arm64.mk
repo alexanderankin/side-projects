@@ -21,8 +21,7 @@ clean_vm_arm64:
 start_vm_arm64: clean_vm build/vm_arm64_$(NAME).img build/seed.iso build/.check_qemu-system-aarch64
 	qemu-system-aarch64 \
 	  -machine virt,highmem=on \
-	  -accel hvf \
-	  -cpu host \
+	  $$(if [ $(ACCELERATION) != '' ]; then echo '-accel hvf -cpu host'; else echo '-cpu max'; fi) \
 	  -m 4096 \
 	  -smp 2 \
 	  -bios /opt/homebrew/share/qemu/edk2-aarch64-code.fd \

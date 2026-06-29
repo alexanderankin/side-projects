@@ -1,7 +1,7 @@
 .PHONY: all
 all: build/seed.iso
 
-#https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
+ACCELERATION ?= 1
 
 LINUX_DISTRIBUTION ?= ubuntu
 
@@ -12,7 +12,7 @@ ARCH_NAMING_TYPE ?= deb
 else ifeq ($(LINUX_DISTRIBUTION),rockylinux)
 ROCKY_VERSION    ?= 10
 IMG_URL_TEMPLATE ?= https://dl.rockylinux.org/pub/rocky/$(ROCKY_VERSION)/images/__ARCH__/Rocky-$(ROCKY_VERSION)-GenericCloud.latest.__ARCH__.qcow2
-ARCH_NAMING_TYPE ?= deb
+ARCH_NAMING_TYPE ?= rpm
 else
 $(error unsupported LINUX_DISTRIBUTION: $(LINUX_DISTRIBUTION))
 endif

@@ -1,5 +1,5 @@
 VM_ARM_TYPE_NAME = $($(ARCH_NAMING_TYPE)_arch_arm)
-ifneq ($VM_ARM_TYPE_NAME,)
+ifneq ($(VM_ARM_TYPE_NAME),)
 
 VM_ARM_IMAGE = $(subst __ARCH__,$(VM_ARM_TYPE_NAME),$(IMG_URL_TEMPLATE))
 VM_ARM_IMAGE_FILE = $(lastword $(subst /, ,$(VM_ARM_IMAGE)))
