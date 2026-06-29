@@ -1,8 +1,34 @@
 .PHONY: all
 all: build/seed.iso
 
-UBUNTU_CODENAME ?= resolute
-IMG_BASE_URL    ?= https://cloud-images.ubuntu.com/$(UBUNTU_CODENAME)/current/$(UBUNTU_CODENAME)-server-cloudimg
+#https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud.latest.x86_64.qcow2
+
+LINUX_DISTRIBUTION ?= ubuntu
+
+ifeq ($(LINUX_DISTRIBUTION),ubuntu)
+UBUNTU_CODENAME  ?= resolute
+IMG_URL_TEMPLATE ?= https://cloud-images.ubuntu.com/$(UBUNTU_CODENAME)/current/$(UBUNTU_CODENAME)-server-cloudimg-__ARCH__.img
+ARCH_NAMING_TYPE ?= deb
+else ifeq ($(LINUX_DISTRIBUTION),rockylinux)
+ROCKY_VERSION    ?= 10
+IMG_URL_TEMPLATE ?= https://dl.rockylinux.org/pub/rocky/$(ROCKY_VERSION)/images/__ARCH__/Rocky-$(ROCKY_VERSION)-GenericCloud.latest.__ARCH__.qcow2
+ARCH_NAMING_TYPE ?= deb
+else
+$(error unsupported LINUX_DISTRIBUTION: $(LINUX_DISTRIBUTION))
+endif
+
+ifeq ($(ARCH_NAMING_TYPE),deb)
+deb_arch_amd64 = amd64
+deb_arch_arm64 = arm64
+deb_arch_arm = armhf
+deb_arch_riscv64 = riscv64
+else ifeq ($(ARCH_NAMING_TYPE),rpm)
+rpm_arch_amd64 = x86_64
+rpm_arch_arm64 = aarch64
+else
+$(error unsupported ARCH_NAMING_TYPE: $(ARCH_NAMING_TYPE))
+endif
+
 SSH_PORT        ?= 2222
 UI_MODE         ?= serial
 
