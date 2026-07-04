@@ -1,0 +1,11 @@
+services:
+  netboot:
+    image: ghcr.io/netbootxyz/netbootxyz:0.7.6-nbxyz23
+    ports:
+      - "0.0.0.0:69:69/udp"       # tftp
+      - "0.0.0.0:8080:80/tcp"     # nginx
+      - "127.0.0.1:3000:3000/tcp" # ui
+    restart: always
+    volumes:
+      - ./assets:/assets
+      - ./config:/config
