@@ -1,0 +1,25 @@
+plugins {
+    id 'conventions'
+    id 'application'
+    id 'edu.sc.seis.launch4j' version '4.0.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.jmonkeyengine:jme3-core:3.10.0-beta1'
+    implementation 'org.jmonkeyengine:jme3-desktop:3.10.0-beta1'
+    implementation 'org.jmonkeyengine:jme3-lwjgl3:3.10.0-beta1'
+}
+
+application {
+    mainClass = 'game.sidescroller.SideScrollerGame'
+}
+
+tasks.withType(JavaExec).configureEach {
+    if (System.getProperty('os.name').toLowerCase().contains('mac')) {
+        jvmArgs += ['-XstartOnFirstThread']
+    }
+}
