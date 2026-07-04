@@ -10,7 +10,7 @@ dependencies {
     // // https://mvnrepository.com/artifact/org.casbin/casdoor-java-sdk
     // implementation 'org.casbin:casdoor-java-sdk:1.38.0'
 
-    itestImplementation 'org.testcontainers:mysql'
+    itestImplementation 'org.testcontainers:testcontainers-mysql'
     itestImplementation 'com.mysql:mysql-connector-j'
 }
 
