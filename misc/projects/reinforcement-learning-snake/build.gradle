@@ -1,12 +1,13 @@
 plugins {
     id 'spring-conventions'
+    id 'picocli-conventions'
 }
 
 dependencies {
-    implementation "org.jmonkeyengine:jme3-core:$jmeVersion"
-    implementation "org.jmonkeyengine:jme3-desktop:$jmeVersion"
-    implementation "org.jmonkeyengine:jme3-lwjgl:$jmeVersion"
+    implementation "org.jmonkeyengine:jme3-core:${jme3Version}"
+    implementation "org.jmonkeyengine:jme3-desktop:${jme3Version}"
+    implementation "org.jmonkeyengine:jme3-lwjgl:${jme3Version}"
 
-    implementation "info.picocli:picocli:$picocliVersion"
-    annotationProcessor "info.picocli:picocli-codegen:$picocliVersion"
+    implementation 'info.picocli:picocli'
+    annotationProcessor 'info.picocli:picocli-codegen'
 }
