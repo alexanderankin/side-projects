@@ -9,6 +9,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
     itestImplementation 'org.testcontainers:testcontainers'
     itestImplementation 'org.testcontainers:testcontainers-jdbc'
     itestImplementation 'org.testcontainers:testcontainers-localstack'

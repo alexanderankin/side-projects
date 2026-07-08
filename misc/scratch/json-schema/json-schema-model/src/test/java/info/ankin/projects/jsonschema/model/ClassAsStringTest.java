@@ -1,7 +1,7 @@
 package info.ankin.projects.jsonschema.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import tools.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -26,7 +26,7 @@ public class ClassAsStringTest {
     @SneakyThrows
     @Test
     void test_noJsonCreator() {
-        assertThrows(JsonProcessingException.class,
+        assertThrows(JacksonException.class,
                 () -> objectMapper.readValue("\"abc\"", WithOutCreator.class));
 
     }

@@ -1,8 +1,0 @@
-plugins {
-    id 'picocli-conventions'
-    id 'java-library'
-}
-
-version = '0.0.1'
-
-application.mainClass.set 'java.util.prefs.Base64'

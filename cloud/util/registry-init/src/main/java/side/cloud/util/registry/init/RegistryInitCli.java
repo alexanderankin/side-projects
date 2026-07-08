@@ -1,5 +1,6 @@
 package side.cloud.util.registry.init;
 
+import info.ankin.projects.picocli.logback.verbosity.LogbackVerbosityMixin;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -12,7 +13,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import side.picocli.LogbackVerbosityMixin;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Files;

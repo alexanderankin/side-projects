@@ -27,7 +27,8 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.xerial:sqlite-jdbc'
 
-    itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
     itestImplementation 'org.springframework.boot:spring-boot-starter-hateoas'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'

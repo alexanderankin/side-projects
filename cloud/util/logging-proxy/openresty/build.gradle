@@ -9,6 +9,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     itestImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     itestImplementation 'org.testcontainers:testcontainers'
+    itestImplementation 'commons-io:commons-io'
 }
 
 configurations.create('la').with {

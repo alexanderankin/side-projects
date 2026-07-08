@@ -1,6 +1,7 @@
 package org.cloud.logging.proxy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.io.IOUtils;
 import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -17,8 +18,8 @@ import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.images.builder.Transferable;
-import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 import org.testcontainers.utility.MountableFile;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -69,7 +70,7 @@ class LoggingProxyTest {
             //
             ;
 
-    static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().findAndRegisterModules();
+    static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().findAndAddModules().build();
 
     /**
      * this is the scheme, host, and port, of the proxy (e.g., {@code http://localhost:8080})

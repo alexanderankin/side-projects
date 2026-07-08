@@ -7,4 +7,5 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // implementation 'io.micrometer:micrometer-tracing'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-micrometer-metrics-test'
 }

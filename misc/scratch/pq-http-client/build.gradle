@@ -37,7 +37,7 @@ dependencies {
     // conventions
     implementation 'org.bouncycastle:bcpkix-jdk18on'
 
-    implementation project(':lib:picocli-lib')
+    implementation 'info.ankin.projects:picocli-logback-level-mixin:0.0.2'
 
     // waiting for spring boot 3.6.x?
     // https://github.com/spring-projects/spring-boot/commit/8077a0dfc3b0fc7a3470df05b7f3373903d7acad

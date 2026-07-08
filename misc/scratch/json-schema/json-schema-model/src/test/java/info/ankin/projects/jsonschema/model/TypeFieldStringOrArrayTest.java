@@ -3,19 +3,19 @@ package info.ankin.projects.jsonschema.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import tools.jackson.core.JsonParser;
-import tools.jackson.core.TreeNode;
-import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.JsonDeserializer;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.module.SimpleModule;
-import tools.jackson.databind.node.TextNode;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
+import tools.jackson.databind.node.StringNode;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,20 +31,19 @@ public class TypeFieldStringOrArrayTest {
      */
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper().registerModule(new SimpleModule()
-                .addDeserializer(Representation.class, new JsonDeserializer<>() {
+        objectMapper = JsonMapper.builder().addModule(new SimpleModule()
+                .addDeserializer(Representation.class, new ValueDeserializer<>() {
                     @Override
-                    public Representation deserialize(JsonParser p, DeserializationContext c)
-                            throws IOException {
-                        TreeNode treeNode = p.getCodec().readTree(p);
+                    public Representation deserialize(JsonParser p, DeserializationContext c) {
+                        JsonNode treeNode = p.readValueAsTree();
 
                         // if we are a string, then it's the only one, otherwise it is an array
-                        if (treeNode instanceof TextNode)
+                        if (treeNode instanceof StringNode)
                             return objectMapper.treeToValue(treeNode, Representation1.class);
                         else
                             return objectMapper.treeToValue(treeNode, Representation2.class);
                     }
-                }));
+                })).build();
     }
 
     /**

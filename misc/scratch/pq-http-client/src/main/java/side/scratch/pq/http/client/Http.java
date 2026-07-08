@@ -1,5 +1,6 @@
 package side.scratch.pq.http.client;
 
+import info.ankin.projects.picocli.logback.verbosity.LogbackVerbosityMixin;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import picocli.AutoComplete;
 import picocli.CommandLine;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-import side.picocli.LogbackVerbosityMixin;
 
 import java.net.URI;
 import java.util.List;

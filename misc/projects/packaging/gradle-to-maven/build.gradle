@@ -12,4 +12,5 @@ application.mainClass.set('side.pkg.gradle2maven.GradleToMavenCli')
 
 dependencies {
     implementation 'commons-codec:commons-codec'
+    implementation 'info.ankin.projects:picocli-logback-level-mixin:0.0.2'
 }

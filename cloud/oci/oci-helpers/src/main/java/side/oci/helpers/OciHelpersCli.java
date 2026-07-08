@@ -1,5 +1,6 @@
 package side.oci.helpers;
 
+import info.ankin.projects.picocli.logback.verbosity.LogbackVerbosityMixin;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import lombok.SneakyThrows;
@@ -12,7 +13,6 @@ import side.oci.helpers.model.BastionListItem;
 import side.oci.helpers.model.MysqlClusterListItem;
 import side.oci.helpers.model.OkeClusterListItem;
 import side.oci.helpers.model.SessionItem;
-import side.picocli.LogbackVerbosityMixin;
 
 import java.nio.file.Paths;
 import java.time.Duration;

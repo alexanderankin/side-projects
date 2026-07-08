@@ -12,6 +12,7 @@ dependencies {
     implementation 'commons-io:commons-io:2.15.1'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    itestImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
     itestImplementation 'org.testcontainers:testcontainers'
     itestImplementation 'org.apache.commons:commons-collections4:4.4'
 }

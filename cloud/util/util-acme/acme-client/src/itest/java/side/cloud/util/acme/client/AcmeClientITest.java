@@ -1,6 +1,5 @@
 package side.cloud.util.acme.client;
 
-import tools.jackson.databind.json.JsonMapper;
 import io.github.resilience4j.retry.internal.InMemoryRetryRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -14,7 +13,7 @@ import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.ssl.TrustStrategy;
 import org.junit.jupiter.api.*;
 import org.rnorth.ducttape.unreliables.Unreliables;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -23,7 +22,6 @@ import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer;
 import side.cloud.util.acme.lib.containers.pebble.PebbleAcmeServerTestContainer.BuiltInConfig;
 import side.cloud.util.acme.lib.keys.CsrBuilder;
 import side.cloud.util.acme.lib.keys.ExternalAccountCredential;
-import side.cloud.util.acme.lib.keys.SupportedClientKeyPair;
 import side.cloud.util.acme.lib.keys.SupportedClientKeyPairAlgorithm;
 import side.cloud.util.acme.lib.model.AcmeIdentifier;
 import side.cloud.util.acme.lib.model.AcmeResources;
@@ -39,6 +37,7 @@ import side.cloud.util.acme.lib.model.challenge.SupportedChallengeType;
 import side.cloud.util.acme.lib.model.challenge.persistence.ChallengeSolutionRepository;
 import side.cloud.util.acme.lib.model.challenge.presentation.ChallengePresenter;
 import side.cloud.util.acme.lib.model.challenge.presentation.ExternalVerifier;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;

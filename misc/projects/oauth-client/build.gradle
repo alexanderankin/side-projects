@@ -12,7 +12,8 @@ dependencies {
     implementation 'org.apache.httpcomponents.client5:httpclient5'
     implementation 'io.projectreactor.netty:reactor-netty'
 
-    implementation project(':lib:picocli-lib')
+    implementation 'info.ankin.projects:picocli-logback-level-mixin:0.0.2'
+    // implementation 'info.ankin.projects:picocli-logback-level-mixin:0.0.3-SNAPSHOT'
 
     // Source: https://mvnrepository.com/artifact/net.java.dev.jna/jna
     implementation 'net.java.dev.jna:jna:5.19.0'

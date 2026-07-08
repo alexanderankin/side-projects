@@ -1,5 +1,6 @@
 package side.oauthcli;
 
+import info.ankin.projects.picocli.logback.verbosity.LogbackVerbosityMixin;
 import lombok.Data;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -7,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestClient;
 import picocli.AutoComplete;
 import picocli.CommandLine;
-import side.picocli.LogbackVerbosityMixin;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class OAuthClientCli {
     static final RestClient REST_CLIENT = RestClient.builder().build();
 
     static {
-        LogbackVerbosityMixin.logToStderr();
+        // LogbackVerbosityMixin.logToStderr();
     }
 
     @CommandLine.Mixin

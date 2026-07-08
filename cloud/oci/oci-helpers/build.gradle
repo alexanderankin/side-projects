@@ -15,7 +15,7 @@ application.mainClass.set('side.oci.helpers.OciHelpersCli')
 dependencies {
     // implementation 'commons-codec:commons-codec'
 
-    implementation project(':lib:picocli-lib')
+    implementation 'info.ankin.projects:picocli-logback-level-mixin:0.0.2'
 
     // https://mvnrepository.com/artifact/org.ini4j/ini4j
     implementation 'org.ini4j:ini4j:0.5.4'

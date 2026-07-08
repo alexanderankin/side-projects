@@ -24,7 +24,7 @@ class NoteControllerITest extends NotesBackendITest {
     @Test
     void createNote() {
         var prefix = "createNote";
-        var result = webTestClient.post().uri("/api/notes").bodyValue(new NoteEntity().setName(prefix)).exchange().expectStatus().isCreated().expectBody(NoteEntity.class).value(notNullValue()).returnResult();
+        var result = webTestClient.post().uri("/api/notes").bodyValue(new NoteEntity().setName(prefix)).exchange().expectStatus().isCreated().expectBody(NoteEntity.class).value(e -> assertThat(e, notNullValue())).returnResult();
         assertThat(result.getResponseBody(), is(notNullValue()));
         assertThat(result.getResponseBody().getId(), is(notNullValue()));
         assertThat(result.getResponseBody().getCreated(), is(notNullValue()));
