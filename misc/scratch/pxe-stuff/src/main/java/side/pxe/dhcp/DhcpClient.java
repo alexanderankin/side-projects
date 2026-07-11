@@ -1,0 +1,11 @@
+package side.pxe.dhcp;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class DhcpClient {
+    DhcpConfig dhcpConfig;
+
+
+    
+}

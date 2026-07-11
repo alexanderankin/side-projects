@@ -1,0 +1,28 @@
+plugins {
+    id 'spring-conventions'
+    id 'picocli-conventions'
+}
+
+application.mainClass = 'side.pxe.PxeThing'
+
+dependencies {
+    implementation 'io.netty:netty-buffer'
+    implementation 'io.projectreactor.netty:reactor-netty'
+    if (System.getProperty('os.name').toLowerCase().startsWith('mac'))
+        implementation 'io.netty:netty-resolver-dns-native-macos::osx-aarch_64'
+}
+
+tasks.register('runClass', JavaExec) {
+    group = 'application'
+    description = 'run arbitrary class -PrcMainClass= with args -PrcArgs='
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+
+    def rcMainClass = findProperty('rcMainClass')
+    if (rcMainClass instanceof String)
+        mainClass.set rcMainClass
+
+    def rcArgs = findProperty('rcArgs')
+    if (rcArgs instanceof String)
+        args(rcArgs.split(' '))
+}
