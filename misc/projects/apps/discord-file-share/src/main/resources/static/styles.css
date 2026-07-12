@@ -1,0 +1,114 @@
+html {
+    color-scheme: light;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+}
+
+body {
+    background: #fff;
+    color: #111;
+    margin: 0;
+}
+
+main {
+    margin: 32px auto;
+    max-width: 980px;
+    padding: 0 24px;
+}
+
+header {
+    align-items: flex-start;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0 0 8px;
+}
+
+p {
+    color: #555;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+a {
+    color: #0645ad;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.session {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+button {
+    background: #f5f5f5;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    color: #111;
+    cursor: pointer;
+    padding: 6px 10px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th,
+td {
+    border-bottom: 1px solid #eee;
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    color: #444;
+    font-weight: 600;
+}
+
+td:nth-child(2),
+td:nth-child(3) {
+    color: #555;
+    white-space: nowrap;
+}
+
+td:nth-child(3) {
+    text-align: right;
+}
+
+@media (max-width: 700px) {
+    main {
+        margin: 20px auto;
+        padding: 0 12px;
+    }
+
+    header {
+        display: block;
+    }
+
+    .session {
+        justify-content: flex-start;
+        margin-top: 12px;
+    }
+
+    th:nth-child(2),
+    td:nth-child(2) {
+        display: none;
+    }
+}
