@@ -25,6 +25,8 @@ spring:
             scope:
               - identify
               - email
+              - guilds
+              - guilds.members.read
 
 management:
   endpoints:
@@ -34,3 +36,7 @@ management:
 
 file-share:
   root-directory: ${FILE_SHARE_ROOT:${user.home}/Downloads}
+  discord:
+    api-base-url: ${DISCORD_API_BASE_URL:https://discord.com/api}
+    bot-token: ${DISCORD_BOT_TOKEN:}
+  guilds: []

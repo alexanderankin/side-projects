@@ -8,9 +8,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,9 +25,11 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class FileBrowserService {
 
     private final Path rootDirectory;
+    private final boolean restricted;
 
     public FileBrowserService(FileShareProperties properties) {
         this.rootDirectory = properties.rootDirectory().toAbsolutePath().normalize();
+        this.restricted = !properties.guilds().isEmpty();
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -37,8 +42,15 @@ public class FileBrowserService {
         String currentPath = relativePath(directory);
         String parentPath = parentPath(directory);
 
+        AccessProfile accessProfile = currentAccessProfile();
+        if (!allowedDirectory(currentPath, accessProfile)) {
+            throw new ResponseStatusException(FORBIDDEN, "Discord channel access is required");
+        }
+        Set<String> allowedChildren = allowedChildren(currentPath, accessProfile);
+
         try (var stream = Files.list(directory)) {
             List<FileEntry> entries = stream
+                    .filter(path -> allowedChildren == null || allowedChildren.contains(path.getFileName().toString()))
                     .map(this::toFileEntry)
                     .sorted(Comparator
                             .comparing(FileEntry::directory).reversed()
@@ -58,6 +70,7 @@ public class FileBrowserService {
         if (!Files.isRegularFile(file)) {
             throw new ResponseStatusException(NOT_FOUND, "File not found");
         }
+        assertReadable(relativePath(file), currentAccessProfile());
         return new FileSystemResource(file);
     }
 
@@ -110,7 +123,54 @@ public class FileBrowserService {
         if (directory.equals(rootDirectory)) {
             return null;
         }
-        return relativePath(directory.getParent());
+        String parent = relativePath(directory.getParent());
+        return parent.isEmpty() || allowedDirectory(parent, currentAccessProfile()) ? parent : "";
+    }
+
+    private AccessProfile currentAccessProfile() {
+        if (!restricted) {
+            return AccessProfile.unrestrictedAccess();
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof DiscordFileSharePrincipal principal) {
+            return principal.accessProfile();
+        }
+
+        throw new ResponseStatusException(FORBIDDEN, "Discord server access is required");
+    }
+
+    private Set<String> allowedChildren(String currentPath, AccessProfile accessProfile) {
+        if (accessProfile.unrestricted()) {
+            return null;
+        }
+        if (currentPath.isEmpty()) {
+            return accessProfile.guildFolders();
+        }
+        if (accessProfile.guildFolders().contains(currentPath)) {
+            return accessProfile.channelFoldersByGuildFolder().getOrDefault(currentPath, Set.of());
+        }
+        return null;
+    }
+
+    private boolean allowedDirectory(String requestedPath, AccessProfile accessProfile) {
+        if (accessProfile.unrestricted() || requestedPath == null || requestedPath.isEmpty()) {
+            return true;
+        }
+
+        String[] parts = requestedPath.split("/");
+        if (parts.length == 1) {
+            return accessProfile.guildFolders().contains(parts[0]);
+        }
+        return accessProfile.channelFoldersByGuildFolder()
+                .getOrDefault(parts[0], Set.of())
+                .contains(parts[1]);
+    }
+
+    private void assertReadable(String requestedPath, AccessProfile accessProfile) {
+        if (!allowedDirectory(requestedPath, accessProfile)) {
+            throw new ResponseStatusException(FORBIDDEN, "Discord channel access is required");
+        }
     }
 
     private static String displaySize(long bytes) {

@@ -1,6 +1,7 @@
 package info.ankin.sideprojects.discordfileshare;
 
 import java.nio.file.Files;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,7 +23,7 @@ class FileBrowserServiceTest {
         Files.createDirectory(tempDir.resolve("folder"));
         Files.writeString(tempDir.resolve("file.txt"), "hello");
 
-        FileBrowserService service = new FileBrowserService(new FileShareProperties(tempDir));
+        FileBrowserService service = new FileBrowserService(new FileShareProperties(tempDir, List.of(), null));
 
         DirectoryListing listing = service.list(null);
 
@@ -32,7 +33,7 @@ class FileBrowserServiceTest {
 
     @Test
     void rejectsTraversalOutsideRoot() {
-        FileBrowserService service = new FileBrowserService(new FileShareProperties(tempDir));
+        FileBrowserService service = new FileBrowserService(new FileShareProperties(tempDir, List.of(), null));
 
         assertThrows(ResponseStatusException.class, () -> service.list("../"));
     }
