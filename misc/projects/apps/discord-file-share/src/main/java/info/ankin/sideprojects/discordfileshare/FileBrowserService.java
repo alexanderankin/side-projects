@@ -5,7 +5,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -28,12 +27,12 @@ public class FileBrowserService {
     private final boolean restricted;
 
     public FileBrowserService(FileShareProperties properties) {
-        this.rootDirectory = properties.rootDirectory().toAbsolutePath().normalize();
-        this.restricted = !properties.guilds().isEmpty();
+        this.rootDirectory = properties.getRootDirectory().toAbsolutePath().normalize();
+        this.restricted = !properties.getGuilds().isEmpty();
     }
 
     @PreAuthorize("isAuthenticated()")
-    public DirectoryListing list(String requestedPath) throws IOException {
+    public DirectoryListingModel list(String requestedPath) throws IOException {
         Path directory = resolveInsideRoot(requestedPath);
         if (!Files.isDirectory(directory)) {
             throw new ResponseStatusException(NOT_FOUND, "Directory not found");
@@ -49,16 +48,20 @@ public class FileBrowserService {
         Set<String> allowedChildren = allowedChildren(currentPath, accessProfile);
 
         try (var stream = Files.list(directory)) {
-            List<FileEntry> entries = stream
+            List<DirectoryListingModel.FileEntry> entries = stream
                     .filter(path -> allowedChildren == null || allowedChildren.contains(path.getFileName().toString()))
                     .map(this::toFileEntry)
                     .sorted(Comparator
-                            .comparing(FileEntry::directory).reversed()
-                            .thenComparing(entry -> entry.name().toLowerCase())
-                            .thenComparing(FileEntry::name))
+                            .comparing(DirectoryListingModel.FileEntry::isDirectory).reversed()
+                            .thenComparing(entry -> entry.getName().toLowerCase())
+                            .thenComparing(DirectoryListingModel.FileEntry::getName))
                     .toList();
 
-            return new DirectoryListing(currentPath, parentPath, directory, entries);
+            return new DirectoryListingModel()
+                    .setCurrentPath(currentPath)
+                    .setParentPath(parentPath)
+                    .setAbsolutePath(directory)
+                    .setEntries(entries);
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
@@ -79,18 +82,18 @@ public class FileBrowserService {
         return resolveInsideRoot(requestedPath).getFileName().toString();
     }
 
-    private FileEntry toFileEntry(Path path) {
+    private DirectoryListingModel.FileEntry toFileEntry(Path path) {
         try {
             BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
             boolean directory = attributes.isDirectory();
             long size = directory ? -1 : attributes.size();
-            return new FileEntry(
-                    path.getFileName().toString(),
-                    relativePath(path),
-                    directory,
-                    size,
-                    displaySize(size),
-                    attributes.lastModifiedTime().toInstant());
+            return new DirectoryListingModel.FileEntry()
+                    .setName(path.getFileName().toString())
+                    .setRelativePath(relativePath(path))
+                    .setDirectory(directory)
+                    .setSize(size)
+                    .setDisplaySize(displaySize(size))
+                    .setLastModified(attributes.lastModifiedTime().toInstant());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -145,10 +148,10 @@ public class FileBrowserService {
             return null;
         }
         if (currentPath.isEmpty()) {
-            return accessProfile.guildFolders();
+            return accessProfile.getGuildFolders();
         }
-        if (accessProfile.guildFolders().contains(currentPath)) {
-            return accessProfile.channelFoldersByGuildFolder().getOrDefault(currentPath, Set.of());
+        if (accessProfile.getGuildFolders().contains(currentPath)) {
+            return accessProfile.getChannelFoldersByGuildFolder().getOrDefault(currentPath, Set.of());
         }
         return null;
     }
@@ -160,9 +163,9 @@ public class FileBrowserService {
 
         String[] parts = requestedPath.split("/");
         if (parts.length == 1) {
-            return accessProfile.guildFolders().contains(parts[0]);
+            return accessProfile.getGuildFolders().contains(parts[0]);
         }
-        return accessProfile.channelFoldersByGuildFolder()
+        return accessProfile.getChannelFoldersByGuildFolder()
                 .getOrDefault(parts[0], Set.of())
                 .contains(parts[1]);
     }

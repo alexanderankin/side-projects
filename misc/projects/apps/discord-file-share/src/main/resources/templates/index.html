@@ -3,15 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${listing.currentPath().isEmpty() ? 'Index of /' : 'Index of /' + listing.currentPath()}">Index of /</title>
+    <title th:text="${listing.currentPath.isEmpty() ? 'Index of /' : 'Index of /' + listing.currentPath}">Index of /</title>
     <link rel="stylesheet" th:href="@{/styles.css}">
 </head>
 <body>
 <main>
     <header>
         <div>
-            <h1 th:text="${listing.currentPath().isEmpty() ? 'Index of /' : 'Index of /' + listing.currentPath()}">Index of /</h1>
-            <p th:text="${listing.absolutePath()}">/files</p>
+            <h1 th:text="${listing.currentPath.isEmpty() ? 'Index of /' : 'Index of /' + listing.currentPath}">Index of /</h1>
+            <p th:text="${listing.absolutePath}">/files</p>
         </div>
         <div class="session">
             <span th:text="${username}">user</span>
@@ -31,21 +31,21 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:if="${listing.parentPath() != null}">
-            <td><a th:href="@{/(path=${listing.parentPath()})}">../</a></td>
+        <tr th:if="${listing.parentPath != null}">
+            <td><a th:href="@{/(path=${listing.parentPath})}">../</a></td>
             <td></td>
             <td>-</td>
             <td></td>
         </tr>
-        <tr th:each="entry : ${listing.entries()}">
+        <tr th:each="entry : ${listing.entries}">
             <td>
-                <a th:if="${entry.directory()}" th:href="@{/(path=${entry.relativePath()})}" th:text="${entry.name() + '/'}">directory/</a>
-                <span th:unless="${entry.directory()}" th:text="${entry.name()}">file.txt</span>
+                <a th:if="${entry.directory}" th:href="@{/(path=${entry.relativePath})}" th:text="${entry.name + '/'}">directory/</a>
+                <span th:unless="${entry.directory}" th:text="${entry.name}">file.txt</span>
             </td>
-            <td th:text="${#temporals.format(entry.lastModified(), 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 12:00:00</td>
-            <td th:text="${entry.displaySize()}">1 KB</td>
+            <td th:text="${#temporals.format(entry.lastModified, 'yyyy-MM-dd HH:mm:ss')}">2026-01-01 12:00:00</td>
+            <td th:text="${entry.displaySize}">1 KB</td>
             <td>
-                <a th:unless="${entry.directory()}" th:href="@{/download(path=${entry.relativePath()})}">download</a>
+                <a th:unless="${entry.directory}" th:href="@{/download(path=${entry.relativePath})}">download</a>
             </td>
         </tr>
         </tbody>

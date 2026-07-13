@@ -2,7 +2,7 @@ spring:
   application:
     name: discord-file-share
   datasource:
-    url: jdbc:h2:mem:discord-file-share
+    url: jdbc:h2:./build/discord.h2:discord-file-share
     username: sa
     password:
   security:
@@ -39,4 +39,8 @@ file-share:
   discord:
     api-base-url: ${DISCORD_API_BASE_URL:https://discord.com/api}
     bot-token: ${DISCORD_BOT_TOKEN:}
-  guilds: []
+
+  guilds:
+    ${DISCORD_GUILD}:
+      channels:
+        - id: ${DISCORD_CHANNEL}

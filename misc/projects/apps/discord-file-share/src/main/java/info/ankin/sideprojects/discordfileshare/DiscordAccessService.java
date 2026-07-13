@@ -6,46 +6,48 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
+@RequiredArgsConstructor
 @Service
 public class DiscordAccessService {
-
-    private static final long VIEW_CHANNEL = 1L << 10;
-    private static final long ADMINISTRATOR = 1L << 3;
-
     private final FileShareProperties properties;
-    private final RestClient discord;
-
-    public DiscordAccessService(FileShareProperties properties) {
-        this.properties = properties;
-        this.discord = RestClient.builder()
-                .baseUrl(properties.discord().apiBaseUrl())
-                .build();
-    }
+    private final DiscordClient discordClient;
 
     public AccessProfile accessProfile(String userId, OAuth2AccessToken accessToken) {
-        if (properties.guilds().isEmpty()) {
-            return AccessProfile.unrestrictedAccess();
-        }
+        Set<String> userGuildIds = discordClient.guilds(accessToken).stream()
+                .map(DiscordClient.DiscordGuild::getId)
+                .collect(Collectors.toSet());
 
-        Set<String> userGuildIds = currentUserGuilds(accessToken);
+        properties.getGuilds().entrySet().stream()
+                .filter(e -> userGuildIds.contains(e.getKey()))
+                .map(e -> {
+                    Map<String, Set<String>> channelsByGuildFolder = new HashMap<>();
+
+                    e.getValue().getChannels().stream().map(FileShareProperties.ChannelFolder::getId).filter(channelId -> {
+                        return discordClient.isMember(userId, channelId);
+                    });
+                })
+
         Set<String> guildFolders = new HashSet<>();
-        Map<String, Set<String>> channelsByGuildFolder = new HashMap<>();
 
-        for (FileShareProperties.GuildFolder guild : properties.guilds()) {
-            if (!userGuildIds.contains(guild.id())) {
+        for (Map.Entry<String, FileShareProperties.GuildFolder> guild : properties.getGuilds().entrySet()) {
+            if (!userGuildIds.contains(guild.getKey())) {
                 continue;
             }
 
-            guildFolders.add(guild.folder());
+            guildFolders.add(guild.getKey());
             Set<String> channelFolders = accessibleChannelFolders(userId, accessToken, guild);
-            channelsByGuildFolder.put(guild.folder(), channelFolders);
+            channelsByGuildFolder.put(guild.getKey(), channelFolders);
         }
 
         if (guildFolders.isEmpty()) {
@@ -55,40 +57,26 @@ public class DiscordAccessService {
                     null));
         }
 
-        return new AccessProfile(Set.copyOf(guildFolders), copy(channelsByGuildFolder));
+        return new AccessProfile()
+                .setGuildFolders(Set.copyOf(guildFolders))
+                .setChannelFoldersByGuildFolder(new HashMap<>(channelsByGuildFolder));
     }
 
-    private Set<String> currentUserGuilds(OAuth2AccessToken accessToken) {
-        DiscordGuild[] guilds = discord.get()
-                .uri("/users/@me/guilds")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue())
-                .retrieve()
-                .body(DiscordGuild[].class);
-
-        Set<String> ids = new HashSet<>();
-        if (guilds != null) {
-            for (DiscordGuild guild : guilds) {
-                ids.add(guild.id());
-            }
-        }
-        return ids;
-    }
-
-    private Set<String> accessibleChannelFolders(String userId, OAuth2AccessToken accessToken, FileShareProperties.GuildFolder guild) {
-        if (guild.channels().isEmpty()) {
+    private Set<String> accessibleChannelFolders(String userId, OAuth2AccessToken accessToken, Map.Entry<String, FileShareProperties.GuildFolder> guild) {
+        if (guild.getValue().getChannels().isEmpty()) {
             return Set.of();
         }
 
-        DiscordGuildMember member = currentUserGuildMember(accessToken, guild.id());
-        Map<String, Long> rolePermissions = guildRolePermissions(guild.id());
-        Map<String, DiscordChannel> channels = guildChannels(guild.id());
-        Set<String> memberRoles = new HashSet<>(member.roles());
+        DiscordGuildMember member = currentUserGuildMember(accessToken, guild.getKey());
+        Map<String, Long> rolePermissions = guildRolePermissions(guild.getKey());
+        Map<String, DiscordChannel> channels = guildChannels(guild.getKey());
+        Set<String> memberRoles = new HashSet<>(member.getRoles());
         Set<String> accessibleFolders = new HashSet<>();
 
-        for (FileShareProperties.ChannelFolder configuredChannel : guild.channels()) {
-            DiscordChannel channel = channels.get(configuredChannel.id());
-            if (channel != null && canViewChannel(guild.id(), userId, memberRoles, rolePermissions, channel)) {
-                accessibleFolders.add(configuredChannel.folder());
+        for (FileShareProperties.ChannelFolder configuredChannel : guild.getValue().getChannels()) {
+            DiscordChannel channel = channels.get(configuredChannel.getId());
+            if (channel != null && canViewChannel(guild.getKey(), userId, memberRoles, rolePermissions, channel)) {
+                accessibleFolders.add(configuredChannel.getId());
             }
         }
 
@@ -108,7 +96,7 @@ public class DiscordAccessService {
         Map<String, Long> permissions = new HashMap<>();
         if (roles != null) {
             for (DiscordRole role : roles) {
-                permissions.put(role.id(), parsePermissions(role.permissions()));
+                permissions.put(role.getId(), parsePermissions(role.getPermissions()));
             }
         }
         return permissions;
@@ -119,14 +107,14 @@ public class DiscordAccessService {
         Map<String, DiscordChannel> channelsById = new HashMap<>();
         if (channels != null) {
             for (DiscordChannel channel : channels) {
-                channelsById.put(channel.id(), channel);
+                channelsById.put(channel.getId(), channel);
             }
         }
         return channelsById;
     }
 
     private <T> T botGet(String uri, Class<T> responseType, String guildId) {
-        String botToken = properties.discord().botToken();
+        String botToken = properties.getDiscord().getBotToken();
         if (botToken == null || botToken.isBlank()) {
             throw new OAuth2AuthenticationException(new OAuth2Error(
                     "discord_bot_token_required",
@@ -161,9 +149,9 @@ public class DiscordAccessService {
         long roleDeny = 0L;
         for (String role : memberRoles) {
             DiscordPermissionOverwrite overwrite = channel.overwriteFor(role);
-            if (overwrite != null && overwrite.type() == 0) {
-                roleAllow |= parsePermissions(overwrite.allow());
-                roleDeny |= parsePermissions(overwrite.deny());
+            if (overwrite != null && overwrite.getType() == 0) {
+                roleAllow |= parsePermissions(overwrite.getAllow());
+                roleDeny |= parsePermissions(overwrite.getDeny());
             }
         }
         permissions &= ~roleDeny;
@@ -177,8 +165,8 @@ public class DiscordAccessService {
         if (overwrite == null) {
             return permissions;
         }
-        permissions &= ~parsePermissions(overwrite.deny());
-        permissions |= parsePermissions(overwrite.allow());
+        permissions &= ~parsePermissions(overwrite.getDeny());
+        permissions |= parsePermissions(overwrite.getAllow());
         return permissions;
     }
 
@@ -192,28 +180,43 @@ public class DiscordAccessService {
         return Map.copyOf(copy);
     }
 
-    record DiscordGuild(String id) {}
 
-    record DiscordGuildMember(List<String> roles) {
-        DiscordGuildMember {
-            roles = roles == null ? List.of() : List.copyOf(roles);
-        }
+
+    @Data
+    @Accessors(chain = true)
+    static class DiscordGuildMember {
+        private List<String> roles = List.of();
     }
 
-    record DiscordRole(String id, String permissions) {}
+    @Data
+    @Accessors(chain = true)
+    static class DiscordRole {
+        private String id;
+        private String permissions;
+    }
 
-    record DiscordChannel(String id, @JsonProperty("permission_overwrites") List<DiscordPermissionOverwrite> permissionOverwrites) {
-        DiscordChannel {
-            permissionOverwrites = permissionOverwrites == null ? List.of() : List.copyOf(permissionOverwrites);
-        }
+    @Data
+    @Accessors(chain = true)
+    static class DiscordChannel {
+        private String id;
+
+        @JsonProperty("permission_overwrites")
+        private List<DiscordPermissionOverwrite> permissionOverwrites = List.of();
 
         DiscordPermissionOverwrite overwriteFor(String id) {
             return permissionOverwrites.stream()
-                    .filter(overwrite -> id.equals(overwrite.id()))
+                    .filter(overwrite -> id.equals(overwrite.getId()))
                     .findFirst()
                     .orElse(null);
         }
     }
 
-    record DiscordPermissionOverwrite(String id, int type, String allow, String deny) {}
+    @Data
+    @Accessors(chain = true)
+    static class DiscordPermissionOverwrite {
+        private String id;
+        private int type;
+        private String allow;
+        private String deny;
+    }
 }
