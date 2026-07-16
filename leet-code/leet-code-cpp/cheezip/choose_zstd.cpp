@@ -130,14 +130,19 @@ void setJsonError(
 
 int main(int argc, char* argv[]) {
     try {
+        std::string host = "127.0.0.1";
         int port = 8080;
-        if (argc == 2) {
+        if (argc >= 2) {
             port = std::stoi(argv[1]);
             if (port < 1 || port > 65535) {
                 throw std::invalid_argument("port must be between 1 and 65535");
             }
-        } else if (argc > 2) {
-            throw std::invalid_argument("usage: zstd_delta_server [port]");
+        }
+        if (argc >= 3) {
+            host = argv[2];
+        }
+        if (argc >= 4) {
+            throw std::invalid_argument("usage: zstd_delta_server [port] [host]");
         }
 
         ContextStore store;
@@ -207,8 +212,8 @@ int main(int argc, char* argv[]) {
             }
         });
 
-        std::cout << "Listening on http://127.0.0.1:" << port << '\n';
-        if (!server.listen("127.0.0.1", port)) {
+        std::cout << "Listening on http://" << host <<":" << port << '\n';
+        if (!server.listen(host, port)) {
             throw std::runtime_error("failed to bind HTTP server");
         }
 
