@@ -1,300 +1,216 @@
+#include <httplib.h>
+#include <nlohmann/json.hpp>
 #include <zstd.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
+#include <limits>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
-#include <string_view>
-#include <vector>
 
-using Bytes = std::vector<std::uint8_t>;
+using json = nlohmann::json;
 
-struct CompressionResult {
-    Bytes data;
-    std::size_t size() const noexcept {
-        return data.size();
-    }
+namespace {
+
+constexpr int kCompressionLevel = 9;
+constexpr int kWindowLog = 27;  // 128 MiB maximum window.
+constexpr std::size_t kMaxRequestBytes = 256ULL * 1024ULL * 1024ULL;
+
+struct ContextState {
+    std::string data;
+    std::size_t compressed_size;
 };
 
-[[noreturn]] void throwZstdError(std::size_t code, const char* operation) {
-    throw std::runtime_error(
-        std::string(operation) + ": " + ZSTD_getErrorName(code)
-    );
-}
+class ContextStore {
+public:
+    ContextStore()
+        : state_(std::make_shared<const ContextState>(
+              ContextState{"", compressedSize("")})) {}
 
-void checkZstd(std::size_t code, const char* operation) {
-    if (ZSTD_isError(code)) {
-        throwZstdError(code, operation);
-    }
-}
+    void replace(std::string data) {
+        const std::size_t baseline = compressedSize(data);
+        auto replacement = std::make_shared<const ContextState>(
+            ContextState{std::move(data), baseline});
 
-Bytes toBytes(std::string_view text) {
-    return Bytes(text.begin(), text.end());
-}
-
-Bytes concatenate(const Bytes& prefix, const Bytes& suffix) {
-    Bytes result;
-    result.reserve(prefix.size() + suffix.size());
-    result.insert(result.end(), prefix.begin(), prefix.end());
-    result.insert(result.end(), suffix.begin(), suffix.end());
-    return result;
-}
-
-/*
- * Compresses a complete input into one independent zstd frame.
- *
- * Because every trial uses the same parameters and the same prefix, comparing
- * the resulting sizes tells us which candidate compresses better at this point.
- */
-CompressionResult compressZstd(
-    const Bytes& input,
-    int compressionLevel,
-    int windowLog
-) {
-    ZSTD_CCtx* context = ZSTD_createCCtx();
-    if (context == nullptr) {
-        throw std::runtime_error("ZSTD_createCCtx failed");
+        std::lock_guard<std::mutex> lock(mutex_);
+        state_ = std::move(replacement);
     }
 
-    try {
-        checkZstd(
-            ZSTD_CCtx_setParameter(
-                context,
-                ZSTD_c_compressionLevel,
-                compressionLevel
-            ),
-            "setting compression level"
-        );
-
-        checkZstd(
-            ZSTD_CCtx_setParameter(
-                context,
-                ZSTD_c_windowLog,
-                windowLog
-            ),
-            "setting windowLog"
-        );
-
-        // Include the original size in the frame header.
-        checkZstd(
-            ZSTD_CCtx_setParameter(
-                context,
-                ZSTD_c_contentSizeFlag,
-                1
-            ),
-            "setting content-size flag"
-        );
-
-        // Single-threaded mode makes behavior straightforward and deterministic.
-        checkZstd(
-            ZSTD_CCtx_setParameter(
-                context,
-                ZSTD_c_nbWorkers,
-                0
-            ),
-            "setting worker count"
-        );
-
-        const std::size_t maximumSize = ZSTD_compressBound(input.size());
-        Bytes compressed(maximumSize);
-
-        const void* source = input.empty() ? nullptr : input.data();
-
-        const std::size_t compressedSize = ZSTD_compress2(
-            context,
-            compressed.data(),
-            compressed.size(),
-            source,
-            input.size()
-        );
-
-        checkZstd(compressedSize, "compressing data");
-        compressed.resize(compressedSize);
-
-        ZSTD_freeCCtx(context);
-        return CompressionResult{std::move(compressed)};
-    } catch (...) {
-        ZSTD_freeCCtx(context);
-        throw;
-    }
-}
-
-enum class CandidateChoice {
-    First,
-    Second
-};
-
-struct ChoiceResult {
-    CandidateChoice choice;
-    std::size_t firstCompressedSize;
-    std::size_t secondCompressedSize;
-};
-
-/*
- * Tests prefix+A and prefix+B, then commits the smaller alternative to prefix.
- *
- * On a tie, it chooses A.
- */
-ChoiceResult chooseAndCommit(
-    Bytes& committedPrefix,
-    const Bytes& candidateA,
-    const Bytes& candidateB,
-    int compressionLevel,
-    int windowLog
-) {
-    const Bytes trialA = concatenate(committedPrefix, candidateA);
-    const Bytes trialB = concatenate(committedPrefix, candidateB);
-
-    const CompressionResult compressedA =
-        compressZstd(trialA, compressionLevel, windowLog);
-
-    const CompressionResult compressedB =
-        compressZstd(trialB, compressionLevel, windowLog);
-
-    const bool chooseA = compressedA.size() <= compressedB.size();
-    const Bytes& selected = chooseA ? candidateA : candidateB;
-
-    committedPrefix.insert(
-        committedPrefix.end(),
-        selected.begin(),
-        selected.end()
-    );
-
-    return ChoiceResult{
-        chooseA ? CandidateChoice::First : CandidateChoice::Second,
-        compressedA.size(),
-        compressedB.size()
-    };
-}
-
-void writeFile(const std::string& filename, const Bytes& data) {
-    std::ofstream output(filename, std::ios::binary);
-
-    if (!output) {
-        throw std::runtime_error("Could not open output file: " + filename);
+    std::shared_ptr<const ContextState> snapshot() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return state_;
     }
 
-    output.write(
-        reinterpret_cast<const char*>(data.data()),
-        static_cast<std::streamsize>(data.size())
-    );
-
-    if (!output) {
-        throw std::runtime_error("Could not write output file: " + filename);
-    }
-}
-
-Bytes decompressZstd(const Bytes& compressed, std::size_t expectedSize) {
-    Bytes decompressed(expectedSize);
-
-    const std::size_t result = ZSTD_decompress(
-        decompressed.data(),
-        decompressed.size(),
-        compressed.data(),
-        compressed.size()
-    );
-
-    checkZstd(result, "decompressing verification frame");
-
-    if (result != expectedSize) {
-        throw std::runtime_error("Unexpected decompressed size");
-    }
-
-    return decompressed;
-}
-
-int main() {
-    try {
-        /*
-         * windowLog=27 means a requested maximum window of 2^27 bytes,
-         * which is 128 MiB.
-         */
-        constexpr int compressionLevel = 9;
-        constexpr int windowLog = 27;
-
-        Bytes committed = toBytes(
-            "Header: example stream\n"
-            "Repeated vocabulary: customer transaction account balance\n"
-        );
-
-        // First decision.
-        const Bytes candidate1A = toBytes(
-            "customer transaction account balance "
-            "customer transaction account balance\n"
-        );
-
-        const Bytes candidate1B = toBytes(
-            "completely unrelated random-looking material: 7f2a91c4\n"
-        );
-
-        const ChoiceResult decision1 = chooseAndCommit(
-            committed,
-            candidate1A,
-            candidate1B,
-            compressionLevel,
-            windowLog
-        );
-
-        std::cout
-            << "Decision 1:\n"
-            << "  prefix + A: " << decision1.firstCompressedSize << " bytes\n"
-            << "  prefix + B: " << decision1.secondCompressedSize << " bytes\n"
-            << "  selected: "
-            << (decision1.choice == CandidateChoice::First ? "A" : "B")
-            << "\n\n";
-
-        // Second decision, now using the previously selected data as history.
-        const Bytes candidate2A = toBytes(
-            "customer account balance transaction customer account\n"
-        );
-
-        const Bytes candidate2B = toBytes(
-            "qzxv-1847-jump-lantern-orbit-marble-cactus\n"
-        );
-
-        const ChoiceResult decision2 = chooseAndCommit(
-            committed,
-            candidate2A,
-            candidate2B,
-            compressionLevel,
-            windowLog
-        );
-
-        std::cout
-            << "Decision 2:\n"
-            << "  prefix + A: " << decision2.firstCompressedSize << " bytes\n"
-            << "  prefix + B: " << decision2.secondCompressedSize << " bytes\n"
-            << "  selected: "
-            << (decision2.choice == CandidateChoice::First ? "A" : "B")
-            << "\n\n";
-
-        // Produce one final frame containing all selected data.
-        const CompressionResult finalFrame = compressZstd(
-            committed,
-            compressionLevel,
-            windowLog
-        );
-
-        writeFile("output.zst", finalFrame.data);
-
-        // Verify that the generated frame round-trips correctly.
-        const Bytes restored = decompressZstd(
-            finalFrame.data,
-            committed.size()
-        );
-
-        if (restored != committed) {
-            throw std::runtime_error("Round-trip verification failed");
+    static std::size_t compressedSize(const std::string& input) {
+        ZSTD_CCtx* raw = ZSTD_createCCtx();
+        if (raw == nullptr) {
+            throw std::runtime_error("ZSTD_createCCtx failed");
         }
 
-        std::cout
-            << "Uncompressed size: " << committed.size() << " bytes\n"
-            << "Compressed size:   " << finalFrame.size() << " bytes\n"
-            << "Wrote output.zst\n"
-            << "Round-trip verification succeeded\n";
+        const auto deleter = [](ZSTD_CCtx* context) {
+            ZSTD_freeCCtx(context);
+        };
+        std::unique_ptr<ZSTD_CCtx, decltype(deleter)> context(raw, deleter);
+
+        setParameter(context.get(), ZSTD_c_compressionLevel, kCompressionLevel,
+                     "compression level");
+        setParameter(context.get(), ZSTD_c_windowLog, kWindowLog,
+                     "window size");
+        setParameter(context.get(), ZSTD_c_nbWorkers, 0,
+                     "worker count");
+        setParameter(context.get(), ZSTD_c_contentSizeFlag, 1,
+                     "content-size flag");
+
+        std::string output;
+        output.resize(ZSTD_compressBound(input.size()));
+
+        const void* source = input.empty() ? nullptr : input.data();
+        const std::size_t result = ZSTD_compress2(
+            context.get(),
+            output.data(),
+            output.size(),
+            source,
+            input.size());
+
+        check(result, "compressing input");
+        return result;
+    }
+
+private:
+    static void check(std::size_t result, const char* operation) {
+        if (ZSTD_isError(result)) {
+            throw std::runtime_error(
+                std::string(operation) + ": " + ZSTD_getErrorName(result));
+        }
+    }
+
+    static void setParameter(
+        ZSTD_CCtx* context,
+        ZSTD_cParameter parameter,
+        int value,
+        const char* name) {
+        check(ZSTD_CCtx_setParameter(context, parameter, value), name);
+    }
+
+    mutable std::mutex mutex_;
+    std::shared_ptr<const ContextState> state_;
+};
+
+std::string parseDataField(const httplib::Request& request) {
+    return request.body;
+//    json body;
+//    try {
+//        body = json::parse(request.body);
+//    } catch (const json::parse_error& error) {
+//        throw std::invalid_argument(
+//            std::string("invalid JSON: ") + error.what());
+//    }
+//
+//    if (!body.is_object() || !body.contains("data") ||
+//        !body.at("data").is_string()) {
+//        throw std::invalid_argument(
+//            "request body must be a JSON object containing string field 'data'");
+//    }
+//
+//    return body.at("data").get<std::string>();
+}
+
+void setJsonError(
+    httplib::Response& response,
+    int status,
+    const std::string& message) {
+    response.status = status;
+    response.set_content(json{{"error", message}}.dump(), "application/json");
+}
+
+}  // namespace
+
+int main(int argc, char* argv[]) {
+    try {
+        int port = 8080;
+        if (argc == 2) {
+            port = std::stoi(argv[1]);
+            if (port < 1 || port > 65535) {
+                throw std::invalid_argument("port must be between 1 and 65535");
+            }
+        } else if (argc > 2) {
+            throw std::invalid_argument("usage: zstd_delta_server [port]");
+        }
+
+        ContextStore store;
+        httplib::Server server;
+        server.set_payload_max_length(kMaxRequestBytes);
+
+        server.Post("/context", [&](const httplib::Request& request,
+                                    httplib::Response& response) {
+            try {
+                std::string data = parseDataField(request);
+                const std::size_t bytes = data.size();
+                store.replace(std::move(data));
+
+                response.status = 200;
+                response.set_content(
+                    json{{"context_bytes", bytes}}.dump(),
+                    "application/json");
+            } catch (const std::invalid_argument& error) {
+                setJsonError(response, 400, error.what());
+            } catch (const std::exception& error) {
+                setJsonError(response, 500, error.what());
+            }
+        });
+
+        server.Post("/test-input", [&](const httplib::Request& request,
+                                       httplib::Response& response) {
+            try {
+                const std::string candidate = parseDataField(request);
+                const auto state = store.snapshot();
+
+                if (state->data.size() >
+                    std::numeric_limits<std::size_t>::max() - candidate.size()) {
+                    throw std::overflow_error("context plus input is too large");
+                }
+
+                std::string combined;
+                combined.reserve(state->data.size() + candidate.size());
+                combined.append(state->data);
+                combined.append(candidate);
+
+                const std::size_t combined_size =
+                    ContextStore::compressedSize(combined);
+
+                const std::int64_t delta =
+                    static_cast<std::int64_t>(combined_size) -
+                    static_cast<std::int64_t>(state->compressed_size);
+
+                // A JSON response whose entire value is the delta number.
+                response.status = 200;
+                response.set_content(json(delta).dump(), "application/json");
+            } catch (const std::invalid_argument& error) {
+                setJsonError(response, 400, error.what());
+            } catch (const std::exception& error) {
+                setJsonError(response, 500, error.what());
+            }
+        });
+
+        server.Get("/health", [](const httplib::Request&,
+                                 httplib::Response& response) {
+            response.set_content("{\"ok\":true}", "application/json");
+        });
+
+        server.set_error_handler([](const httplib::Request&,
+                                    httplib::Response& response) {
+            if (response.status == 413) {
+                setJsonError(response, 413, "request body is too large");
+            }
+        });
+
+        std::cout << "Listening on http://127.0.0.1:" << port << '\n';
+        if (!server.listen("127.0.0.1", port)) {
+            throw std::runtime_error("failed to bind HTTP server");
+        }
 
         return EXIT_SUCCESS;
     } catch (const std::exception& error) {
