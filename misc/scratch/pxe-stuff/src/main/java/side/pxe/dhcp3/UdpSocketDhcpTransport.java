@@ -11,6 +11,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -102,13 +104,18 @@ public class UdpSocketDhcpTransport extends DhcpTransport {
                 case SERVER_MESSAGE -> listener.bind(new InetSocketAddress(transport.serverListenPort));
             }
             executorService.submit(() -> {
-                while (!executorService.isShutdown()) {
-                    var buf = transport.allocator.buffer(2048);
+                while (!executorService.isShutdown() && !listener.isClosed()) {
+                    Thread.onSpinWait();
+                    var buf = transport.allocator.heapBuffer(2048);
                     try {
                         listener.receive(new DatagramPacket(buf.array(), buf.capacity()));
+                        log.debug("got packet");
+                        log.trace("got packet with data: {}", buf.toString(StandardCharsets.US_ASCII));
                         transport.dispatchEvent(event, Message.of(buf.nioBuffer()));
                     } catch (IOException e) {
-                        log.error("error during {} receive: {}", event, e.getMessage(), e);
+                        log.error("io error during {} receive: {}", event, e.getMessage(), e);
+                    } catch (Exception e) {
+                        log.error("unexpected error during {} receive: {}", event, e.getMessage(), e);
                     } finally {
                         buf.release();
                     }
