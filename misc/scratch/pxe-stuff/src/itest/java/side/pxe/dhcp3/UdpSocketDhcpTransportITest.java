@@ -5,17 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class UdpSocketDhcpTransportITest {
     @SneakyThrows
     @Test
-    void test() {
+    void roundTripsMessagePayloads() {
         log.info("hello world");
         try (var server = new UdpSocketDhcpTransport();
              var client = new UdpSocketDhcpTransport()) {
@@ -36,12 +38,12 @@ class UdpSocketDhcpTransportITest {
             server.addEventListener(DhcpTransport.Event.SERVER_MESSAGE, _ -> cdl.countDown());
             client.addEventListener(DhcpTransport.Event.CLIENT_MESSAGE, _ -> cdl.countDown());
 
-            server.emitEvent(DhcpTransport.Event.CLIENT_MESSAGE, DhcpTransport.Message.of(ByteBuffer.wrap("goodbye".getBytes())));
-            client.emitEvent(DhcpTransport.Event.SERVER_MESSAGE, DhcpTransport.Message.of(ByteBuffer.wrap("hello".getBytes())));
+            server.emitEvent(DhcpTransport.Event.CLIENT_MESSAGE, DhcpTransport.Message.of(ByteBuffer.wrap("goodbye".getBytes(StandardCharsets.UTF_8))));
+            client.emitEvent(DhcpTransport.Event.SERVER_MESSAGE, DhcpTransport.Message.of(ByteBuffer.wrap("hello".getBytes(StandardCharsets.UTF_8))));
 
             assertTrue(cdl.await(5, TimeUnit.SECONDS));
-            log.info("got back as serverEvents: {}", serverEvents.getFirst().toByteBuffer().asCharBuffer());
-            log.info("got back as clientEvents: {}", clientEvents.getFirst().toByteBuffer().asCharBuffer());
+            assertEquals("goodbye", StandardCharsets.UTF_8.decode(serverEvents.getFirst().toByteBuffer()).toString());
+            assertEquals("hello", StandardCharsets.UTF_8.decode(clientEvents.getFirst().toByteBuffer()).toString());
         }
     }
 }

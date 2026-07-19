@@ -87,8 +87,7 @@ public abstract class DhcpTransport implements AutoCloseable {
             if (bb.hasArray()) {
                 var offset = bb.arrayOffset();
                 var start = offset + bb.position();
-                var end = offset + bb.capacity();
-                return new DatagramPacket(bb.array(), start, end);
+                return new DatagramPacket(bb.array(), start, bb.remaining());
             }
 
             var buf = new byte[bb.remaining()];

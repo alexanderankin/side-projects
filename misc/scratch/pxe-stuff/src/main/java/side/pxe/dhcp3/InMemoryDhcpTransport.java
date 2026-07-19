@@ -12,11 +12,38 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @Accessors(chain = true)
 public class InMemoryDhcpTransport extends DhcpTransport {
+    @ToString.Exclude
+    InMemoryDhcpTransport client;
+    @ToString.Exclude
+    InMemoryDhcpTransport server;
+
+    public InMemoryDhcpTransport connectToServer(InMemoryDhcpTransport other) {
+        other.setClient(this);
+        this.setServer(other);
+        other.startServer();
+        this.startClient();
+        return this;
+    }
+
+    public InMemoryDhcpTransport connectToClient(InMemoryDhcpTransport other) {
+        this.setClient(other);
+        other.setServer(this);
+        other.startClient();
+        startServer();
+        return this;
+    }
+
     @Override
     public void emitEvent(Event event, Message message) {
-        dispatchEvent(switch (event) {
-            case CLIENT_MESSAGE -> Event.SERVER_MESSAGE;
-            case SERVER_MESSAGE -> Event.CLIENT_MESSAGE;
-        }, message);
+        switch (event) {
+            case CLIENT_MESSAGE -> {
+                if (client != null)
+                    client.dispatchEvent(Event.CLIENT_MESSAGE, message);
+            }
+            case SERVER_MESSAGE -> {
+                if (server != null)
+                    server.dispatchEvent(Event.SERVER_MESSAGE, message);
+            }
+        }
     }
 }

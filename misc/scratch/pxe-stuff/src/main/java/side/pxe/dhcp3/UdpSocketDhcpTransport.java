@@ -11,7 +11,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,10 +107,14 @@ public class UdpSocketDhcpTransport extends DhcpTransport {
                     Thread.onSpinWait();
                     var buf = transport.allocator.heapBuffer(2048);
                     try {
-                        listener.receive(new DatagramPacket(buf.array(), buf.capacity()));
-                        log.debug("got packet");
-                        log.trace("got packet with data: {}", buf.toString(StandardCharsets.US_ASCII));
-                        transport.dispatchEvent(event, Message.of(buf.nioBuffer()));
+                        var packet = new DatagramPacket(buf.array(), buf.arrayOffset(), buf.capacity());
+                        listener.receive(packet);
+
+                        log.debug("got new packet");
+                        log.atTrace()
+                                .addArgument(() -> new String(buf.array(), buf.arrayOffset(), packet.getLength(), StandardCharsets.US_ASCII))
+                                .log("got packet with data: '{}'");
+                        transport.dispatchEvent(event, Message.of(buf.nioBuffer(0, packet.getLength())));
                     } catch (IOException e) {
                         log.error("io error during {} receive: {}", event, e.getMessage(), e);
                     } catch (Exception e) {
