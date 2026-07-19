@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
+import java.nio.channels.AsynchronousCloseException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -93,13 +95,13 @@ public abstract class BaseDhcpTransport {
             try {
                 var packet = new DatagramPacket(buf.array(), buf.arrayOffset(), buf.capacity());
                 socket.receive(packet);
-                for (var listener : listeners) {
-                    try {
-                        listener.accept(packet);
-                    } catch (Exception e) {
-                        log.error("error with listener: {}: {}", listener, e.getMessage(), e);
-                    }
+                dispatch(packet);
+            } catch (SocketException e) {
+                if (e.getCause() instanceof AsynchronousCloseException) {
+                    log.debug("thread saw that socket is closed");
+                    return;
                 }
+                log.warn("SocketException on thread", e);
             } catch (Exception e) {
                 if (!started) {
                     log.debug("error while exiting thread", e);
@@ -108,6 +110,16 @@ public abstract class BaseDhcpTransport {
                 }
             } finally {
                 buf.release();
+            }
+        }
+    }
+
+    protected void dispatch(DatagramPacket packet) {
+        for (var listener : listeners) {
+            try {
+                listener.accept(packet);
+            } catch (Exception e) {
+                log.error("error with listener: {}: {}", listener, e.getMessage(), e);
             }
         }
     }
