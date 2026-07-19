@@ -65,7 +65,7 @@ public class DefaultLeaseService {
                 }
             }
         }
-        LeaseOffer offer = offersByClient.get(request.client().getKeyString());
+        // LeaseOffer offer = offersByClient.get(request.client().getKeyString());
     //     if (offer == null) {
     //         return new RequestResult.Nak("No outstanding offer for client");
     //     }
@@ -95,7 +95,8 @@ public class DefaultLeaseService {
     //     leasesByClient.put(request.client().getKeyString(), lease);
     //     leasesByAddress.put(request.requestedAddress(), lease);
     //
-        return new RequestResult.Ack(lease);
+    //     return new RequestResult.Ack(lease);
+        throw new UnsupportedOperationException();
     }
 
     public RequestResult renew(RenewRequest request) {
