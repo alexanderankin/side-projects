@@ -13,7 +13,7 @@ import static side.pxe.dhcp4.DhcpTransportITestSupport.payload;
 class InMemoryDhcpTransportITest {
     @Test
     void serverProcessesMultiplePacketsAndSurvivesAListenerFailure() {
-        var ports = new BaseDhcpTransport.Ports(67, 68);
+        var ports = BaseDhcpTransport.Ports.DEFAULT;
         var server = new InMemoryDhcpTransport(ports);
         var client = new InMemoryDhcpTransport(ports).connectTo(server);
         var failFirstPacket = new AtomicBoolean(true);

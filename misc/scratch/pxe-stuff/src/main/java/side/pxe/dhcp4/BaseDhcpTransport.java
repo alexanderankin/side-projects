@@ -125,6 +125,9 @@ public abstract class BaseDhcpTransport {
     }
 
     public record Ports(int server, int client) {
+        public static final Ports DEFAULT = new Ports(67, 68);
+        public static final Ports UNPRIVILEGED = new Ports(6767, 6868);
+
         InetSocketAddress clientAnyInterface() {
             return new InetSocketAddress(client);
         }
