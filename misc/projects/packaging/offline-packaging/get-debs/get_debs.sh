@@ -45,6 +45,7 @@ docker exec get-debs bash -c '
   echo "tzdata tzdata/Zones/America select Los_Angeles" | debconf-set-selections;
   apt-get -o APT::Keep-Downloaded-Packages=true install -y \
     rsync htop nmap apache2-utils tree pv jq fdisk vim nginx-full curl wget net-tools openssh-server openssh-client software-properties-common nodejs xclip dnsmasq \
+    cmake iputils-arping iputils-clockdiff iputils-ping iputils-tracepath \
     openjdk-21-jdk openjdk-21-dbg openjdk-21-doc \
     $(if [[ ${version_number} != 22.04 ]]; then echo " openjdk-25-jdk openjdk-25-dbg openjdk-25-doc "; fi) \
     $(if [[ ${version_number} == 22.04 ]]; then echo " postgresql-14 "; fi) \
@@ -57,10 +58,15 @@ docker exec get-debs bash -c '
   add-apt-repository ppa:deadsnakes/ppa -y >/dev/null 2>&1 && status_dead_snakes=true || status_dead_snakes=false;
   echo "[$(date --iso=s)] Installed deadsnakes repo: ${status_dead_snakes}"
   if ! [[ ${status_dead_snakes} == "true" ]]; then echo "not successful: deadsnakes repo"; exit 1; fi;
+  echo "[$(date --iso=s)] Installed python repo: ${status_dead_snakes}"
 
-  status_python_311=
-  apt-get -o APT::Keep-Downloaded-Packages=true install -y python3.11-venv python3.11-dev python3.11-full python-is-python3 >/dev/null 2>&1 && status_python_311=true || status_python_311=false;
-  echo "[$(date --iso=s)] Installed python: ${status_dead_snakes}"
+  for PVER in 3.10 3.11 3.12 3.13 3.14
+  do
+  status_python_3x=
+  apt-get -o APT::Keep-Downloaded-Packages=true install -y python${PVER}-venv python${PVER}-dev python${PVER}-full python-is-python3 >/dev/null 2>&1 && status_python_3x=true || status_python_3x=false;
+  echo "[$(date --iso=s)] Installed python ${PVER}: ${status_python_3x}"
+  if [[ ${status_python_3x} == "false" ]]; then exit 1; fi
+  done
 
   status_k8s_prereq=
   apt-get -o APT::Keep-Downloaded-Packages=true install -y apt-transport-https ca-certificates curl gnupg >/dev/null 2>&1 && status_k8s_prereq=true || status_k8s_prereq=false
@@ -97,6 +103,13 @@ docker exec get-debs bash -c '
   { apt-get update >/dev/null 2>&1 && apt-get -o APT::Keep-Downloaded-Packages=true install -y rabbitmq-server >/dev/null 2>&1; } && status_rabbitmq=true || status_rabbitmq=false
   echo "[$(date --iso=s)] Installed rabbitmq: ${status_rabbitmq}"
   if ! [[ ${status_rabbitmq} == "true" ]]; then echo "not successful: status_rabbitmq"; exit 1; fi;
+
+  status_cuda=
+  wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb >/dev/null 2>&1
+  dpkg -i cuda-keyring_1.1-1_all.deb >/dev/null 2>&1
+  apt-get update >/dev/null 2>&1
+  apt-get -y install cuda-toolkit-13-3 >/dev/null 2>&1
+  if ! [[ ${status_cuda} == "true" ]]; then echo "not successful: status_cuda"; exit 1; fi;
 
   echo "[$(date --iso=s)] Copying to output"
   rsync --recursive -u -c /etc/apt/sources.list /output/sources/sources.list;
