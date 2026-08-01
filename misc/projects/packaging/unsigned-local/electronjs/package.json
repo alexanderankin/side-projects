@@ -1,0 +1,20 @@
+{
+  "name": "electronjs",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "asar pack src dist/app.asar",
+    "format": "npx prettier . --write",
+    "install-electron": "npm exec --package=electron -- install-electron --no",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@electron/asar": "^4.2.1",
+    "electron": "^43.2.0",
+    "prettier": "3.9.6"
+  }
+}

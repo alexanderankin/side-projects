@@ -1,0 +1,7 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+application.mainClass = 'org.example.Example'
+jar.manifest.attributes 'Main-Class': application.mainClass
