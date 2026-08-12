@@ -39,7 +39,7 @@ docker exec get-debs bash -c '
   status_base=
   echo "tzdata tzdata/Areas select America"             | debconf-set-selections;
   echo "tzdata tzdata/Zones/America select Los_Angeles" | debconf-set-selections;
-  apt-get -o APT::Keep-Downloaded-Packages=true install -y htop nmap apache2-utils tree pv jq fdisk vim nginx-full curl wget net-tools openssh-server openssh-client software-properties-common openjdk-21-jre-headless build-essential >/dev/null 2>&1 && status_base=true || status_base=false;
+  apt-get -o APT::Keep-Downloaded-Packages=true install -y htop screen postgresql nmap apache2-utils tree pv jq fdisk vim nginx-full curl wget net-tools openssh-server openssh-client software-properties-common openjdk-21-jre-headless build-essential >/dev/null 2>&1 && status_base=true || status_base=false;
   echo "[$(date --iso=s)] Installed base packages and utilities: ${status_base}"
   if ! [[ ${status_base} == "true" ]]; then echo "not successful: base"; exit 1; fi;
 
