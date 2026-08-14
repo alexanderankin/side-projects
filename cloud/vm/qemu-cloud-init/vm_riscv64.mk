@@ -29,7 +29,7 @@ start_vm_riscv64: clean_vm build/vm_riscv64_$(NAME).img build/seed.iso build/.ch
 	  -smp 2 \
 	  -drive file=build/vm_riscv64_$(NAME).img,format=qcow2,if=virtio \
 	  -drive file=build/seed.iso,format=raw,if=virtio,file.locking=off \
-	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22$(APP_PORT_FORWARD) \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
 

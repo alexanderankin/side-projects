@@ -32,6 +32,10 @@ endif
 SSH_PORT        ?= 2222
 UI_MODE         ?= serial
 
+ifneq ($(strip $(APP_PORT)),)
+APP_PORT_FORWARD = ,hostfwd=tcp::$(APP_PORT)-:9090
+endif
+
 ifeq ($(UI_MODE),serial)
   UI_OPTIONS ?= -display none -serial mon:stdio
 
