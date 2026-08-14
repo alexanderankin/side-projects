@@ -25,7 +25,7 @@ start_vm_amd64: clean_vm build/vm_amd64_$(NAME).img build/seed.iso build/.check-
 	  -smp 2 \
 	  -drive file=build/vm_amd64_$(NAME).img,format=qcow2,if=virtio \
 	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
-	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22$(APP_PORT_FORWARD) \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
 
@@ -36,7 +36,7 @@ start_vm_amd64_virtual: clean_vm build/vm_amd64_$(NAME).img build/seed.iso build
 	  -smp 2 \
 	  -drive file=build/vm_amd64_$(NAME).img,format=qcow2,if=virtio \
 	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
-	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22$(APP_PORT_FORWARD) \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
 

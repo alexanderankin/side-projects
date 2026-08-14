@@ -27,7 +27,7 @@ start_vm_arm64: clean_vm build/vm_arm64_$(NAME).img build/seed.iso build/.check_
 	  -bios /opt/homebrew/share/qemu/edk2-aarch64-code.fd \
 	  -drive file=build/vm_arm64_$(NAME).img,format=qcow2,if=virtio \
 	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
-	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22$(APP_PORT_FORWARD) \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
 
@@ -43,7 +43,7 @@ start_vm_arm64_virtual: clean_vm build/vm_arm64_$(NAME).img build/seed.iso # bui
 	  -bios /usr/share/qemu-efi-aarch64/QEMU_EFI.fd \
 	  -drive file=build/vm_arm64_$(NAME).img,format=qcow2,if=virtio \
 	  -drive file=build/seed.iso,media=cdrom,file.locking=off \
-	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22,hostfwd=tcp::0-:9090 \
+	  -netdev user,id=net0,hostfwd=tcp::$(SSH_PORT)-:22$(APP_PORT_FORWARD) \
 	  -device virtio-net-pci,netdev=net0 \
 	  $(UI_OPTIONS)
 
