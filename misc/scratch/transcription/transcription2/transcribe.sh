@@ -1,9 +1,8 @@
-#!/bin/bash
-# standard bash script prefix
+#!/usr/bin/env bash
 if [[ "$0" != "$BASH_SOURCE" ]]; then echo "no sourcing">&2; return 1; fi;
-set -euo pipefail  # exit on first error, print commands
-if [[ -n "${DEBUG:-}" ]]; then set -x; fi # debug mode
-full="$(readlink -f "$BASH_SOURCE")"; dir=${full%\/*}; file=${full##*/};
+set -eu -o pipefail
+[[ ! -z ${DEBUG:-} ]] && set -x
+full="$(readlink -f "$BASH_SOURCE")"; dir="${full%\/*}"; file="${full##*/}";
 
 input_file="$(readlink -f "$1")"
 output_file="$(readlink -f "$2")"

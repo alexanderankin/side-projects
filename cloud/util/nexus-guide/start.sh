@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-
-dir="$(dirname "$BASH_SOURCE")"
-dir="$(readlink -f "$dir")"
+if [[ "$0" != "$BASH_SOURCE" ]]; then echo "no sourcing">&2; return 1; fi;
+set -eu -o pipefail
+[[ ! -z ${DEBUG:-} ]] && set -x
+full="$(readlink -f "$BASH_SOURCE")"; dir="${full%\/*}"; file="${full##*/}";
 
 # https://hub.docker.com/r/sonatype/nexus3
 sudo mkdir -p "$dir"/nexus-data
