@@ -6,6 +6,38 @@
 dhcp
 chain --autofree tftp://${next-server}/arch.ipxe
 
+#:menu
+#menu Welcome
+#item
+#item --gap --    ------------------------- Operating systems ------------------------------
+##item hello-world Boot example Hello World OS
+#item ubuntu      Boot Ubuntu
+#item --gap --    ------------------------------ Utilities ---------------------------------
+#item shell       Enter iPXE shell
+#item reboot      Reboot
+#item
+#item exit        Exit (boot local disk)
+#
+#choose --default ubuntu --timeout 5000 target && goto ${target}
+#
+##:hello-world
+##echo "hello world"
+##exit
+#:ubuntu
+#goto boot-ubuntu
+#
+#:shell
+#shell
+#set menu-timeout 0
+#goto menu
+#
+#:reboot
+#reboot
+#
+#:exit
+#exit
+
+:boot-ubuntu
 # kernel tftp://${next-server}/vmlinuz console=ttyS0 # initial attempt, but not seeing console
 # kernel tftp://${next-server}/vmlinuz
 kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic

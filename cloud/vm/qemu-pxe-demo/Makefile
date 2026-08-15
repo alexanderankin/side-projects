@@ -31,6 +31,16 @@ build/resolute-server-cloudimg-amd64-vmlinuz-generic:
 	@mkdir -p build
 	cd build && wget -N '$(UBUNTU_BASE)/unpacked/resolute-server-cloudimg-amd64-vmlinuz-generic'
 
+# pre-emptively added in case we can do stuff
+build/resolute-server-cloudimg-amd64.img:
+	@mkdir -p build
+	cd build && wget -N '$(UBUNTU_BASE)/resolute-server-cloudimg-amd64.img'
+
+# can unpack/overwrite sda?
+build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd64.img
+	qemu-img convert -f qcow2 -O raw $< build/resolute-server-cloudimg-amd64.raw
+	gzip -f build/resolute-server-cloudimg-amd64.raw
+
 build/ubuntu.ipxe: boot.ipxe
 	cp $< $@
 
