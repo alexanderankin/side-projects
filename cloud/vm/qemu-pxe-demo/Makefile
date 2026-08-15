@@ -21,19 +21,25 @@ build/vars: find-ovmf.sh
 
 UBUNTU_BASE := https://cloud-images.ubuntu.com/resolute/current
 .PHONY: ubuntu
-ubuntu: build/initrd build/vmlinuz build/ubuntu.ipxe
+ubuntu: build/resolute-server-cloudimg-amd64-initrd-generic build/resolute-server-cloudimg-amd64-vmlinuz-generic build/ubuntu.ipxe
 
-build/initrd:
+build/resolute-server-cloudimg-amd64-initrd-generic:
 	@mkdir -p build
-	wget -O $@ '$(UBUNTU_BASE)/unpacked/resolute-server-cloudimg-amd64-initrd-generic'
+	cd build && wget -N '$(UBUNTU_BASE)/unpacked/resolute-server-cloudimg-amd64-initrd-generic'
 
-build/vmlinuz:
+build/resolute-server-cloudimg-amd64-vmlinuz-generic:
 	@mkdir -p build
-	wget -O $@ '$(UBUNTU_BASE)/unpacked/resolute-server-cloudimg-amd64-vmlinuz-generic'
+	cd build && wget -N '$(UBUNTU_BASE)/unpacked/resolute-server-cloudimg-amd64-vmlinuz-generic'
 
-build/ubuntu.ipxe: boot.pxe
+build/ubuntu.ipxe: boot.ipxe
+	cp $< $@
+
+.PHONY: ipxe_scripts
+ipxe_scripts: build/arch.ipxe
+
+build/arch.ipxe: arch.ipxe
 	cp $< $@
 
 .PHONY: single_host
-single_host: build/disk.img build/ipxe.pxe ubuntu
+single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu
 	./single-host.sh

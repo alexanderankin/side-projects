@@ -1,0 +1,13 @@
+#!ipxe
+
+# dhcp
+# chain --autofree tftp://${next-server}/ubuntu.ipxe
+
+dhcp
+chain --autofree tftp://${next-server}/arch.ipxe
+
+# kernel tftp://${next-server}/vmlinuz console=ttyS0 # initial attempt, but not seeing console
+# kernel tftp://${next-server}/vmlinuz
+kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic
+initrd tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-initrd-generic
+boot

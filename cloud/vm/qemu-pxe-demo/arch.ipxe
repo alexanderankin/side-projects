@@ -1,0 +1,25 @@
+#!ipxe
+# https://ipxe.org/cfg/buildarch
+# chain --autofree tftp://${next-server}/arch.ipxe
+iseq ${buildarch} i386 && goto amd
+iseq ${buildarch} x86_64 && goto amd
+iseq ${buildarch} arm32 && goto arm32
+iseq ${buildarch} arm64 && goto arm64
+
+:amd
+cpuid --ext 29 && set arch x86_64 || set arch i386
+goto done_arch
+
+:arm32
+set arch arm32
+goto done_arch
+
+:arm64
+set arch arm64
+goto done_arch
+
+:done_arch
+iseq ${arch} x86_64 && set deb_arch amd64 && goto done
+iseq ${arch} arm64 && set deb_arch arm64 && goto done
+
+:done
