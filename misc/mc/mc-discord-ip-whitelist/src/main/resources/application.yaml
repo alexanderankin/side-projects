@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: discord-ip-whitelist
+  security:
+    oauth2:
+      client:
+        registration:
+          discord:
+            client-id: ${discord.client.id}
+            client-secret: ${discord.client.secret}
+            scope:
+              - identify
+              - email
+              - guilds
+        provider:
+          discord:
+            authorization-uri: https://discord.com/api/oauth2/authorize
+            token-uri: https://discord.com/api/oauth2/token
+            user-info-uri: https://discord.com/api/users/@me
+            user-name-attribute: username
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: ${spring.application.name}
+        http-only: on
+
+#spring.security.oauth2.client.provider.discord.
+#spring.security.oauth2.client.provider.discord.
+#spring.security.oauth2.client.provider.discord.
+#spring.security.oauth2.client.provider.discord.
