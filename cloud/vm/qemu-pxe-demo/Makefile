@@ -3,7 +3,6 @@ all: single_host
 
 build/disk.img:
 	@mkdir -p build
-	rm -f build/.installed
 	qemu-img create -f qcow2 $@ 20G
 
 .PHONY: build_ipxe-embedded
@@ -54,7 +53,7 @@ build/image-version.ipxe: build/resolute-server-cloudimg-amd64.img
 	@version=$$(sha256sum $< | cut -d ' ' -f 1); \
 		printf '#!ipxe\nset deploy-version %s\n' "$$version" > $@
 
-build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-image.service deploy-initrd/udhcpc-script cloud-init/user-data cloud-init/meta-data
+build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-image.service deploy-initrd/udhcpc-script cloud-init/user-data cloud-init/meta-data cloud-init/network-config
 	@mkdir -p build
 	@overlay=$$(mktemp -d); \
 		trap 'rm -r "$$overlay"' EXIT; \
@@ -64,7 +63,7 @@ build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-im
 		cp deploy-initrd/udhcpc-script "$$overlay/usr/bin/deploy-udhcpc-script"; \
 		cp deploy-initrd/deploy-image.service "$$overlay/etc/systemd/system/deploy-image.service"; \
 		ln -s ../deploy-image.service "$$overlay/etc/systemd/system/initrd.target.wants/deploy-image.service"; \
-		cp cloud-init/user-data cloud-init/meta-data "$$overlay/seed/"; \
+		cp cloud-init/user-data cloud-init/meta-data cloud-init/network-config "$$overlay/seed/"; \
 		chmod 0755 "$$overlay/usr/bin/busybox" "$$overlay/usr/bin/deploy-image" "$$overlay/usr/bin/deploy-udhcpc-script"; \
 		(cd "$$overlay" && find . -print0 | cpio --null --create --format=newc 2>/dev/null) | gzip -1 > $@
 
@@ -124,5 +123,5 @@ stop_server: build/server
 
 clean: stop_server
 	@mkdir -p build
-	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -delete
+	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -not -path '*-generic' -delete
 	rm -vf build/disk.img

@@ -21,13 +21,42 @@ if [ -z "$image_url" ] || [ -z "$image_version" ]; then
     exit 1
 fi
 
+wait_for_block_device() {
+    device=$1
+    attempts=${2:-50}
+    attempt=0
+
+    while [ ! -b "$device" ]; do
+        attempt=$((attempt + 1))
+        [ "$attempt" -lt "$attempts" ] || return 1
+        $bb sleep 0.1
+    done
+}
+
+refresh_partitions() {
+    echo "deploy-image: refresh_partitions"
+    disk_name=${target_disk##*/}
+    $bb blockdev --rereadpt "$target_disk" 2>/dev/null || true
+    /usr/bin/udevadm trigger --action=change "/sys/class/block/$disk_name" 2>/dev/null || true
+    /usr/bin/udevadm settle 2>/dev/null || true
+}
+
+wait_for_block_device "$target_disk" 100 || {
+    echo "deploy-image: target disk $target_disk did not appear" >&2
+    exit 1
+}
+
+refresh_partitions
+
 $bb mkdir -p "$check_dir"
-if $bb mount -o ro "$target_root" "$check_dir" 2>/dev/null; then
-    installed_version=$($bb cat "$check_dir/etc/qemu-pxe-image-version" 2>/dev/null || true)
-    $bb umount "$check_dir"
-    if [ "$installed_version" = "$image_version" ]; then
-        echo "deploy-image: $image_version is already installed"
-        exit 0
+if wait_for_block_device "$target_root" 10; then
+    if $bb mount -o ro "$target_root" "$check_dir" 2>/dev/null; then
+        installed_version=$($bb cat "$check_dir/etc/qemu-pxe-image-version" 2>/dev/null || true)
+        $bb umount "$check_dir"
+        if [ "$installed_version" = "$image_version" ]; then
+            echo "deploy-image: $image_version is already installed"
+            exit 0
+        fi
     fi
 fi
 
@@ -61,21 +90,18 @@ echo "deploy-image: downloading $image_url"
 echo "deploy-image: overwriting $target_disk"
 $bb wget -q -O - "$image_url" | $bb gzip -dc | $bb dd of="$target_disk" bs=4M
 $bb sync
+refresh_partitions
 
-attempt=0
-while [ ! -b "$target_root" ]; do
-    attempt=$((attempt + 1))
-    if [ "$attempt" -ge 100 ]; then
-        echo "deploy-image: $target_root did not appear" >&2
-        exit 1
-    fi
-    $bb sleep 0.1
-done
+wait_for_block_device "$target_root" 100 || {
+    echo "deploy-image: $target_root did not appear after deployment" >&2
+    exit 1
+}
 
 $bb mount "$target_root" "$check_dir"
 $bb mkdir -p "$check_dir/var/lib/cloud/seed/nocloud"
 $bb cp /seed/user-data "$check_dir/var/lib/cloud/seed/nocloud/user-data"
 $bb cp /seed/meta-data "$check_dir/var/lib/cloud/seed/nocloud/meta-data"
+$bb cp /seed/network-config "$check_dir/var/lib/cloud/seed/nocloud/network-config"
 echo "$image_version" > "$check_dir/etc/qemu-pxe-image-version"
 $bb sync
 $bb umount "$check_dir"
