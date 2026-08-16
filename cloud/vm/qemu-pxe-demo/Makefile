@@ -5,9 +5,14 @@ build/disk.img:
 	@mkdir -p build
 	qemu-img create -f qcow2 $@ 20G
 
-build/ipxe.pxe:
+.PHONY: build_ipxe-embedded
+build_ipxe-embedded:
+	$(MAKE) -C ipxe-embedded
+
+build/ipxe.pxe: build_ipxe-embedded
 	@mkdir -p build
-	cd build; wget -N 'https://boot.ipxe.org/ipxe.pxe'
+	@#cd build; wget -N 'https://boot.ipxe.org/ipxe.pxe'
+	cp ipxe-embedded/ipxe/src/bin/ipxe.pxe $@
 
 .PHONY: uefi
 uefi: build/code build/vars
@@ -21,7 +26,7 @@ build/vars: find-ovmf.sh
 
 UBUNTU_BASE := https://cloud-images.ubuntu.com/resolute/current
 .PHONY: ubuntu
-ubuntu: build/resolute-server-cloudimg-amd64-initrd-generic build/resolute-server-cloudimg-amd64-vmlinuz-generic build/ubuntu.ipxe
+ubuntu: build/resolute-server-cloudimg-amd64-initrd-generic build/resolute-server-cloudimg-amd64-vmlinuz-generic build/boot.ipxe
 
 build/resolute-server-cloudimg-amd64-initrd-generic:
 	@mkdir -p build
@@ -41,7 +46,11 @@ build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd6
 	qemu-img convert -f qcow2 -O raw $< build/resolute-server-cloudimg-amd64.raw
 	gzip -f build/resolute-server-cloudimg-amd64.raw
 
-build/ubuntu.ipxe: boot.ipxe
+build/resolute-mini-iso-amd64.iso:
+	@mkdir -p build
+	cd build && wget -N https://cdimage.ubuntu.com/ubuntu-mini-iso/resolute/daily-live/current/resolute-mini-iso-amd64.iso
+
+build/boot.ipxe: boot.ipxe
 	cp $< $@
 
 .PHONY: ipxe_scripts

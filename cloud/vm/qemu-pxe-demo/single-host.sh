@@ -21,5 +21,6 @@ exec "${qemu_system[@]}" \
   -boot n \
   -device e1000,netdev=n1 \
   -netdev user,id=n1,tftp=build,bootfile=/ipxe.pxe \
-  -display curses
+  -display sdl -serial mon:stdio
+#  -display curses
 #  -display none -serial mon:stdio
