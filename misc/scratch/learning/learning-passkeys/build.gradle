@@ -1,0 +1,11 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation platform(libs.zxing)
+    implementation 'com.google.zxing:core'
+    implementation 'com.google.zxing:javase'
+    implementation 'tools.jackson.dataformat:jackson-dataformat-cbor'
+    implementation 'ch.qos.logback:logback-classic'
+}

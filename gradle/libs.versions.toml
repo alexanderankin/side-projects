@@ -1,0 +1,5 @@
+[versions]
+zxing = "3.5.4"
+
+[libraries]
+zxing = { group = "com.google.zxing", name = "zxing-parent", version.ref = "zxing" }

@@ -14,8 +14,9 @@ dependencies {
     // implementation 'com.github.sarxos:webcam-capture-driver-jmf:0.3.12'
     // implementation 'com.github.sarxos:webcam-capture-driver-ffmpeg-cli:0.3.12'
     // Source: https://mvnrepository.com/artifact/com.google.zxing/core
-    implementation 'com.google.zxing:core:3.5.4'
-    implementation 'com.google.zxing:javase:3.5.4'
+    implementation platform(libs.zxing)
+    implementation 'com.google.zxing:core'
+    implementation 'com.google.zxing:javase'
     // Source: https://mvnrepository.com/artifact/org.bytedeco/javacv
     implementation 'org.bytedeco:javacv:1.5.13'
 
