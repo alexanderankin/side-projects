@@ -3,6 +3,7 @@ all: single_host
 
 build/disk.img:
 	@mkdir -p build
+	rm -f build/.installed
 	qemu-img create -f qcow2 $@ 20G
 
 .PHONY: build_ipxe-embedded
@@ -26,7 +27,7 @@ build/vars: find-ovmf.sh
 
 UBUNTU_BASE := https://cloud-images.ubuntu.com/resolute/current
 .PHONY: ubuntu
-ubuntu: build/resolute-server-cloudimg-amd64-initrd-generic build/resolute-server-cloudimg-amd64-vmlinuz-generic build/boot.ipxe
+ubuntu: build/ubuntu-26.04-live-server-amd64.iso
 
 build/resolute-server-cloudimg-amd64-initrd-generic:
 	@mkdir -p build
@@ -46,19 +47,47 @@ build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd6
 	qemu-img convert -f qcow2 -O raw $< build/resolute-server-cloudimg-amd64.raw
 	gzip -f build/resolute-server-cloudimg-amd64.raw
 
-build/resolute-mini-iso-amd64.iso:
+#build/resolute-mini-iso-amd64.iso:
+#	@mkdir -p build
+#	cd build && wget -N https://cdimage.ubuntu.com/ubuntu-mini-iso/resolute/daily-live/current/resolute-mini-iso-amd64.iso
+
+build/ubuntu-26.04-live-server-amd64.iso:
 	@mkdir -p build
-	cd build && wget -N https://cdimage.ubuntu.com/ubuntu-mini-iso/resolute/daily-live/current/resolute-mini-iso-amd64.iso
+	cd build && wget -N https://releases.ubuntu.com/resolute/ubuntu-26.04-live-server-amd64.iso
+
+build/installer-vmlinuz: build/ubuntu-26.04-live-server-amd64.iso
+	@mkdir -p build
+	xorriso -osirrox on -indev $< -extract /casper/vmlinuz $@
+
+build/installer-initrd: build/ubuntu-26.04-live-server-amd64.iso
+	@mkdir -p build
+	xorriso -osirrox on -indev $< -extract /casper/initrd $@
+
+build/autoinstall-seed.img: autoinstall/user-data autoinstall/meta-data
+	@mkdir -p build
+	cloud-localds $@ autoinstall/user-data autoinstall/meta-data
+
+.PHONY: ipxe_scripts
+ipxe_scripts: build/boot.ipxe build/arch.ipxe
 
 build/boot.ipxe: boot.ipxe
 	cp $< $@
 
-.PHONY: ipxe_scripts
-ipxe_scripts: build/arch.ipxe
-
 build/arch.ipxe: arch.ipxe
 	cp $< $@
 
+build/memdisk:
+	@mkdir -p build
+	@# apt-get install -y syslinux
+	cp /usr/lib/syslinux/memdisk $@
+
 .PHONY: single_host
-single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu
+single_host: build/disk.img ipxe_scripts ubuntu build/memdisk
 	./single-host.sh
+
+build/server:
+	systemd-run --user --unit=my-http-server python3 -m http.server -d build/ && touch $@
+.PHONY: start_server stop_server
+start_server: build/server
+stop_server: build/server
+	systemctl --user stop my-http-server && rm $<

@@ -1,0 +1,23 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  refresh-installer:
+    update: false
+  source:
+    id: ubuntu-server-minimal
+    search_drivers: false
+  identity:
+    hostname: ubuntu-server
+    username: ubuntu
+    # Demo password: ubuntu
+    password: '$6$qemu-demo$.zRBsXSmsJH.F64fxshwfg0Wt33sIWjrOnij8TeNlb//a8hNYw1Rlf6e61Z9O6gTwn4rvH.HUXdELvyPsUH7s1'
+  ssh:
+    install-server: true
+    allow-pw: true
+  storage:
+    layout:
+      name: direct
+  #shutdown: poweroff

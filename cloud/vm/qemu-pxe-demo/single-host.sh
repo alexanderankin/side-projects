@@ -12,6 +12,8 @@ amd64|x86_64) qemu_system=(qemu-system-x86_64 -enable-kvm -cpu host);;
 *) echo "unknown uname machine (uname -m): $(uname -m)"; exit 1;;
 esac
 
+# deliberately only boot to network: test ipxe
+
 #  -drive if=pflash,unit=0,format=raw,readonly=on,file=build/code \
 #  -drive if=pflash,unit=1,format=raw,file=build/vars \
 #  -nodefaults \

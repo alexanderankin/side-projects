@@ -12,14 +12,14 @@ item
 item --gap --    ------------------------- Operating systems ------------------------------
 #item hello-world Boot example Hello World OS
 item ubuntu      Boot Ubuntu
-item ubuntu-mi   Install Ubuntu w/Mini-ISO
+item ubuntu-iso  Install Ubuntu w/ISO
 item --gap --    ------------------------------ Utilities ---------------------------------
 item shell       Enter iPXE shell
 item reboot      Reboot
 item
 item exit        Exit (boot local disk)
 
-choose --default ubuntu-mi --timeout 5000 target && goto ${target}
+choose --default ubuntu-iso --timeout 5000 target && goto ${target}
 
 #:hello-world
 #echo "hello world"
@@ -27,8 +27,18 @@ choose --default ubuntu-mi --timeout 5000 target && goto ${target}
 :ubuntu
 goto boot-ubuntu
 
-:ubuntu-mi
-chain /resolute-mini-iso-amd64.iso iso raw
+:ubuntu-iso
+#chain /resolute-mini-iso-amd64.iso iso raw
+#boot
+
+#kernel tftp://${next-server}/memdisk
+#initrd tftp://${next-server}/ubuntu-26.04-live-server-amd64.iso
+#imgargs memdisk iso raw live-media-path=/casper/
+#boot
+
+# NEW STUFF GOES HERE
+
+boot
 
 :shell
 shell
