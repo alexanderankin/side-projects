@@ -1,5 +1,5 @@
 .PHONY: all
-all: single_host
+all: run_raw_image_boot
 
 build/disk.img:
 	@mkdir -p build
@@ -105,12 +105,22 @@ build/arch.ipxe: arch.ipxe
 #	@# apt-get install -y syslinux
 #	cp /usr/lib/syslinux/memdisk $@
 
-.PHONY: single_host
-single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
+.PHONY: run_raw_image_boot
+run_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
+	@cp *.ipxe build/ # hacks - todo fixme
+	sed -e 's/^set default-choice .*/set default-choice ubuntu/' -i build/boot.ipxe
 	./single-host.sh
 
-.PHONY: iso_install
-iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+.PHONY: run_offline_raw_image_boot
+run_offline_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
+	@cp *.ipxe build/ # hacks - todo fixme
+	sed -e 's/^set default-choice .*/set default-choice ubuntu/' -i build/boot.ipxe
+	sed -e 's#http://$${next-server}:8000#http://10.0.2.100:8000#g' -i build/boot.ipxe
+	./single-host.sh restrict
+
+.PHONY: run_iso_install
+run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+	sed -e 's/^set default-choice .*/set default-choice ubuntu-iso/' -i build/boot.ipxe
 	./single-host.sh
 
 # DO NOT MODIFY _server target recipes, they are intentionally simple

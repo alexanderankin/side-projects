@@ -14,6 +14,12 @@ esac
 
 # deliberately only boot to network: test ipxe
 
+net_dev_modifier=
+if [[ "${1:-}" == "restrict" ]]
+then
+  net_dev_modifier=',restrict=on,guestfwd=tcp:10.0.2.100:8000-tcp:127.0.0.1:8000'
+fi
+
 #  -drive if=pflash,unit=0,format=raw,readonly=on,file=build/code \
 #  -drive if=pflash,unit=1,format=raw,file=build/vars \
 #  -nodefaults \
@@ -22,7 +28,7 @@ exec "${qemu_system[@]}" \
   -drive file=build/disk.img,format=qcow2,if=virtio \
   -boot n \
   -device e1000,netdev=n1 \
-  -netdev user,id=n1,tftp=build,bootfile=/ipxe.pxe \
+  -netdev user,id=n1,tftp=build,bootfile=/ipxe.pxe${net_dev_modifier} \
   -display sdl -serial mon:stdio
 #  -display curses
 #  -display none -serial mon:stdio
