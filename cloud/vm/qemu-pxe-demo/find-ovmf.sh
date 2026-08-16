@@ -7,7 +7,7 @@ full="$(readlink -f "$BASH_SOURCE")"; dir="${full%\/*}"; file="${full##*/}";
 error() { echo "$@" >&2 ; exit 1; }
 
 # apt-get install -y ovmf-generic
-if [[ -d /usr/share/OVMF1 ]]; then
+if [[ -d /usr/share/OVMF ]]; then
   code=/usr/share/OVMF/OVMF_CODE_4M.fd
   vars=/usr/share/OVMF/OVMF_VARS_4M.fd
 elif [ -d /opt/homebrew ]; then
