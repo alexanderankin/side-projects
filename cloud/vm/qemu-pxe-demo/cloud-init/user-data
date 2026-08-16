@@ -1,0 +1,17 @@
+#cloud-config
+hostname: ubuntu-server
+manage_etc_hosts: true
+ssh_pwauth: true
+users:
+  - name: ubuntu
+    groups: [adm, sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+    # Demo password: ubuntu
+    passwd: '$6$qemu-demo$.zRBsXSmsJH.F64fxshwfg0Wt33sIWjrOnij8TeNlb//a8hNYw1Rlf6e61Z9O6gTwn4rvH.HUXdELvyPsUH7s1'
+growpart:
+  mode: auto
+  devices: [/]
+resize_rootfs: true
+

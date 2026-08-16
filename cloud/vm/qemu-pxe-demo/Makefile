@@ -27,7 +27,10 @@ build/vars: find-ovmf.sh
 
 UBUNTU_BASE := https://cloud-images.ubuntu.com/resolute/current
 .PHONY: ubuntu
-ubuntu: build/ubuntu-26.04-live-server-amd64.iso
+ubuntu: build/resolute-server-cloudimg-amd64.raw.gz \
+  build/resolute-server-cloudimg-amd64-initrd-generic \
+  build/resolute-server-cloudimg-amd64-vmlinuz-generic \
+  build/deploy-overlay.cpio.gz build/image-version.ipxe
 
 build/resolute-server-cloudimg-amd64-initrd-generic:
 	@mkdir -p build
@@ -45,7 +48,25 @@ build/resolute-server-cloudimg-amd64.img:
 # can unpack/overwrite sda?
 build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd64.img
 	qemu-img convert -f qcow2 -O raw $< build/resolute-server-cloudimg-amd64.raw
-	gzip -f build/resolute-server-cloudimg-amd64.raw
+	gzip -1 -f build/resolute-server-cloudimg-amd64.raw
+
+build/image-version.ipxe: build/resolute-server-cloudimg-amd64.img
+	@version=$$(sha256sum $< | cut -d ' ' -f 1); \
+		printf '#!ipxe\nset deploy-version %s\n' "$$version" > $@
+
+build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-image.service deploy-initrd/udhcpc-script cloud-init/user-data cloud-init/meta-data
+	@mkdir -p build
+	@overlay=$$(mktemp -d); \
+		trap 'rm -r "$$overlay"' EXIT; \
+		mkdir -p "$$overlay/usr/bin" "$$overlay/etc/systemd/system/initrd.target.wants" "$$overlay/seed"; \
+		cp /usr/bin/busybox "$$overlay/usr/bin/busybox"; \
+		cp deploy-initrd/deploy-image "$$overlay/usr/bin/deploy-image"; \
+		cp deploy-initrd/udhcpc-script "$$overlay/usr/bin/deploy-udhcpc-script"; \
+		cp deploy-initrd/deploy-image.service "$$overlay/etc/systemd/system/deploy-image.service"; \
+		ln -s ../deploy-image.service "$$overlay/etc/systemd/system/initrd.target.wants/deploy-image.service"; \
+		cp cloud-init/user-data cloud-init/meta-data "$$overlay/seed/"; \
+		chmod 0755 "$$overlay/usr/bin/busybox" "$$overlay/usr/bin/deploy-image" "$$overlay/usr/bin/deploy-udhcpc-script"; \
+		(cd "$$overlay" && find . -print0 | cpio --null --create --format=newc 2>/dev/null) | gzip -1 > $@
 
 #build/resolute-mini-iso-amd64.iso:
 #	@mkdir -p build
@@ -86,9 +107,14 @@ build/arch.ipxe: arch.ipxe
 #	cp /usr/lib/syslinux/memdisk $@
 
 .PHONY: single_host
-single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
 	./single-host.sh
 
+.PHONY: iso_install
+iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+	./single-host.sh
+
+# DO NOT MODIFY _server target recipes, they are intentionally simple
 build/server:
 	systemd-run --user --unit=my-http-server --same-dir python3 -m http.server -d build/ && touch $@
 .PHONY: start_server stop_server

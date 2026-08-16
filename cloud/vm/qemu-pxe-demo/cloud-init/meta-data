@@ -1,0 +1,2 @@
+instance-id: qemu-ubuntu-cloud-image
+local-hostname: ubuntu-server

@@ -1,0 +1,14 @@
+[Unit]
+Description=Deploy Ubuntu cloud image when the target disk is stale
+DefaultDependencies=no
+Wants=systemd-udev-trigger.service
+After=systemd-udev-trigger.service
+Before=sysroot.mount initrd-root-device.target dracut-mount.service initrd-root-fs.target
+ConditionKernelCommandLine=deploy-url
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/deploy-image
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console

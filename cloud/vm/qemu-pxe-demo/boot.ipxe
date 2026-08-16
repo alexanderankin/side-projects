@@ -11,7 +11,7 @@ menu Welcome
 item
 item --gap --    ------------------------- Operating systems ------------------------------
 #item hello-world Boot example Hello World OS
-item ubuntu      Boot Ubuntu
+item ubuntu      Deploy/boot Ubuntu cloud image
 item ubuntu-iso  Install Ubuntu w/ISO
 item --gap --    ------------------------------ Utilities ---------------------------------
 item shell       Enter iPXE shell
@@ -19,13 +19,18 @@ item reboot      Reboot
 item
 item exit        Exit (boot local disk)
 
-choose --default ubuntu-iso --timeout 5000 target && goto ${target}
+set default-choice ubuntu
+choose --default ${default-choice} --timeout 5000 target && goto ${target}
 
 #:hello-world
 #echo "hello world"
 #exit
 :ubuntu
-goto boot-ubuntu
+chain --autofree tftp://${next-server}/image-version.ipxe
+kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic initrd=resolute-initrd root=/dev/vda1 rootfstype=ext4 rw rd.neednet=0 deploy-url=http://${next-server}:8000/resolute-server-cloudimg-${deb_arch}.raw.gz deploy-version=${deploy-version} console=tty0 console=ttyS0,115200n8
+initrd --name resolute-initrd tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-initrd-generic
+initrd tftp://${next-server}/deploy-overlay.cpio.gz
+boot || goto failed
 
 :ubuntu-iso
 #chain /resolute-mini-iso-amd64.iso iso raw
@@ -55,11 +60,3 @@ reboot
 
 :exit
 exit
-
-# kept here in hopes that eventually we make custom vmlinuz that just dumps qcow2/raw file into disk and boots
-:boot-ubuntu
-# kernel tftp://${next-server}/vmlinuz console=ttyS0 # initial attempt, but not seeing console
-# kernel tftp://${next-server}/vmlinuz
-kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic
-initrd tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-initrd-generic
-boot

@@ -1,0 +1,82 @@
+#!/usr/bin/sh
+set -eu
+set -o pipefail
+
+bb=/usr/bin/busybox
+target_disk=/dev/vda
+target_root=/dev/vda1
+check_dir=/run/deploy-target
+image_url=
+image_version=
+
+for argument in $($bb cat /proc/cmdline); do
+    case "$argument" in
+        deploy-url=*) image_url="${argument#deploy-url=}" ;;
+        deploy-version=*) image_version="${argument#deploy-version=}" ;;
+    esac
+done
+
+if [ -z "$image_url" ] || [ -z "$image_version" ]; then
+    echo "deploy-image: deploy-url and deploy-version are required" >&2
+    exit 1
+fi
+
+$bb mkdir -p "$check_dir"
+if $bb mount -o ro "$target_root" "$check_dir" 2>/dev/null; then
+    installed_version=$($bb cat "$check_dir/etc/qemu-pxe-image-version" 2>/dev/null || true)
+    $bb umount "$check_dir"
+    if [ "$installed_version" = "$image_version" ]; then
+        echo "deploy-image: $image_version is already installed"
+        exit 0
+    fi
+fi
+
+/usr/bin/modprobe e1000 2>/dev/null || true
+/usr/bin/modprobe virtio_net 2>/dev/null || true
+
+interface=
+attempt=0
+while [ -z "$interface" ]; do
+    for candidate in /sys/class/net/*; do
+        candidate=${candidate##*/}
+        if [ "$candidate" != lo ]; then
+            interface=$candidate
+            break
+        fi
+    done
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 50 ] || break
+    [ -n "$interface" ] || $bb sleep 0.1
+done
+if [ -z "$interface" ]; then
+    echo "deploy-image: no network interface found" >&2
+    exit 1
+fi
+
+echo "deploy-image: configuring $interface with DHCP"
+$bb ip link set "$interface" up
+$bb udhcpc -q -n -t 10 -i "$interface" -s /usr/bin/deploy-udhcpc-script
+
+echo "deploy-image: downloading $image_url"
+echo "deploy-image: overwriting $target_disk"
+$bb wget -q -O - "$image_url" | $bb gzip -dc | $bb dd of="$target_disk" bs=4M
+$bb sync
+
+attempt=0
+while [ ! -b "$target_root" ]; do
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge 100 ]; then
+        echo "deploy-image: $target_root did not appear" >&2
+        exit 1
+    fi
+    $bb sleep 0.1
+done
+
+$bb mount "$target_root" "$check_dir"
+$bb mkdir -p "$check_dir/var/lib/cloud/seed/nocloud"
+$bb cp /seed/user-data "$check_dir/var/lib/cloud/seed/nocloud/user-data"
+$bb cp /seed/meta-data "$check_dir/var/lib/cloud/seed/nocloud/meta-data"
+echo "$image_version" > "$check_dir/etc/qemu-pxe-image-version"
+$bb sync
+$bb umount "$check_dir"
+echo "deploy-image: deployment complete; continuing into $target_root"
