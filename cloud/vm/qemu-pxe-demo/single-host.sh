@@ -18,7 +18,7 @@ esac
 #  -drive if=pflash,unit=1,format=raw,file=build/vars \
 #  -nodefaults \
 exec "${qemu_system[@]}" \
-  -smp 2 -m 4096 \
+  -smp 4 -m 8192 \
   -drive file=build/disk.img,format=qcow2,if=virtio \
   -boot n \
   -device e1000,netdev=n1 \

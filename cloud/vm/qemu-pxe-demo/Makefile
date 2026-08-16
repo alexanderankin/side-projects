@@ -63,9 +63,13 @@ build/installer-initrd: build/ubuntu-26.04-live-server-amd64.iso
 	@mkdir -p build
 	xorriso -osirrox on -indev $< -extract /casper/initrd $@
 
-build/autoinstall-seed.img: autoinstall/user-data autoinstall/meta-data
-	@mkdir -p build
-	cloud-localds $@ autoinstall/user-data autoinstall/meta-data
+build/autoinstall/user-data: autoinstall/user-data
+	@mkdir -p build/autoinstall
+	cp $< $@
+
+build/autoinstall/meta-data: autoinstall/meta-data
+	@mkdir -p build/autoinstall
+	cp $< $@
 
 .PHONY: ipxe_scripts
 ipxe_scripts: build/boot.ipxe build/arch.ipxe
@@ -76,18 +80,23 @@ build/boot.ipxe: boot.ipxe
 build/arch.ipxe: arch.ipxe
 	cp $< $@
 
-build/memdisk:
-	@mkdir -p build
-	@# apt-get install -y syslinux
-	cp /usr/lib/syslinux/memdisk $@
+#build/memdisk:
+#	@mkdir -p build
+#	@# apt-get install -y syslinux
+#	cp /usr/lib/syslinux/memdisk $@
 
 .PHONY: single_host
-single_host: build/disk.img ipxe_scripts ubuntu build/memdisk
+single_host: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
 	./single-host.sh
 
 build/server:
-	systemd-run --user --unit=my-http-server python3 -m http.server -d build/ && touch $@
+	systemd-run --user --unit=my-http-server --same-dir python3 -m http.server -d build/ && touch $@
 .PHONY: start_server stop_server
 start_server: build/server
 stop_server: build/server
 	systemctl --user stop my-http-server && rm $<
+
+clean: stop_server
+	@mkdir -p build
+	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -delete
+	rm -vf build/disk.img

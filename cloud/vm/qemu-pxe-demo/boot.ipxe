@@ -36,9 +36,14 @@ goto boot-ubuntu
 #imgargs memdisk iso raw live-media-path=/casper/
 #boot
 
-# NEW STUFF GOES HERE
+kernel tftp://${next-server}/installer-vmlinuz initrd=installer-initrd ip=dhcp url=http://${next-server}:8000/ubuntu-26.04-live-server-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net;s=http://${next-server}:8000/autoinstall/ console=ttyS0,115200n8 ---
+initrd --name installer-initrd tftp://${next-server}/installer-initrd
+boot || goto failed
 
-boot
+:failed
+echo Ubuntu installer boot failed
+prompt Press any key to return to the menu
+goto menu
 
 :shell
 shell
@@ -51,6 +56,7 @@ reboot
 :exit
 exit
 
+# kept here in hopes that eventually we make custom vmlinuz that just dumps qcow2/raw file into disk and boots
 :boot-ubuntu
 # kernel tftp://${next-server}/vmlinuz console=ttyS0 # initial attempt, but not seeing console
 # kernel tftp://${next-server}/vmlinuz
