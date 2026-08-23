@@ -144,9 +144,17 @@ check.dependsOn integrationTest
 
 // use junit for all tests
 tasks.withType(Test).configureEach { t -> t.useJUnitPlatform() }
-tasks.withType(Test).configureEach { t -> t.jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}" }
+tasks.withType(Test).configureEach { t -> t.jvmArgs "-javaagent:${configurations.mockitoAgent.asPath}" }
 
 // patch for java changes
 tasks.withType(JavaCompile).configureEach { options.compilerArgs.add '-parameters' }
 
-tasks.withType(JavaExec).configureEach { jvmArgs = jvmArgs.collect().tap { add '--enable-native-access=ALL-UNNAMED' } }
+/*
+tasks.configureEach {
+    if (it instanceof JavaForkOptions) {
+        it.jvmArgs '--enable-native-access=ALL-UNNAMED'
+    }
+}
+*/
+tasks.withType(Test).configureEach { jvmArgs '--enable-native-access=ALL-UNNAMED' }
+tasks.withType(JavaExec).configureEach { jvmArgs '--enable-native-access=ALL-UNNAMED' }
