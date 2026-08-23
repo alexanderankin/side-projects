@@ -36,7 +36,8 @@ public class DiscordAccessService {
                     e.getValue().getChannels().stream().map(FileShareProperties.ChannelFolder::getId).filter(channelId -> {
                         return discordClient.isMember(userId, channelId);
                     });
-                })
+                    throw new UnsupportedOperationException();
+                });
 
         Set<String> guildFolders = new HashSet<>();
 
@@ -47,7 +48,7 @@ public class DiscordAccessService {
 
             guildFolders.add(guild.getKey());
             Set<String> channelFolders = accessibleChannelFolders(userId, accessToken, guild);
-            channelsByGuildFolder.put(guild.getKey(), channelFolders);
+            // channelsByGuildFolder.put(guild.getKey(), channelFolders);
         }
 
         if (guildFolders.isEmpty()) {
@@ -59,7 +60,8 @@ public class DiscordAccessService {
 
         return new AccessProfile()
                 .setGuildFolders(Set.copyOf(guildFolders))
-                .setChannelFoldersByGuildFolder(new HashMap<>(channelsByGuildFolder));
+                // .setChannelFoldersByGuildFolder(new HashMap<>(channelsByGuildFolder));
+        ;
     }
 
     private Set<String> accessibleChannelFolders(String userId, OAuth2AccessToken accessToken, Map.Entry<String, FileShareProperties.GuildFolder> guild) {
@@ -84,11 +86,14 @@ public class DiscordAccessService {
     }
 
     private DiscordGuildMember currentUserGuildMember(OAuth2AccessToken accessToken, String guildId) {
+        throw new UnsupportedOperationException();
+        /*
         return discord.get()
                 .uri("/users/@me/guilds/{guildId}/member", guildId)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken.getTokenValue())
                 .retrieve()
                 .body(DiscordGuildMember.class);
+        */
     }
 
     private Map<String, Long> guildRolePermissions(String guildId) {
@@ -122,11 +127,14 @@ public class DiscordAccessService {
                     null));
         }
 
+        throw new UnsupportedOperationException();
+        /*
         return discord.get()
                 .uri(uri, guildId)
                 .header(HttpHeaders.AUTHORIZATION, "Bot " + botToken)
                 .retrieve()
                 .body(responseType);
+        */
     }
 
     private static boolean canViewChannel(
@@ -139,9 +147,11 @@ public class DiscordAccessService {
         for (String role : memberRoles) {
             permissions |= rolePermissions.getOrDefault(role, 0L);
         }
-        if ((permissions & ADMINISTRATOR) == ADMINISTRATOR) {
-            return true;
-        }
+        if (2 > 1)
+            throw new UnsupportedOperationException();
+        // if ((permissions & ADMINISTRATOR) == ADMINISTRATOR) {
+        //     return true;
+        // }
 
         permissions = applyOverwrite(permissions, channel.overwriteFor(guildId));
 
@@ -158,7 +168,8 @@ public class DiscordAccessService {
         permissions |= roleAllow;
 
         permissions = applyOverwrite(permissions, channel.overwriteFor(userId));
-        return (permissions & VIEW_CHANNEL) == VIEW_CHANNEL;
+        // return (permissions & VIEW_CHANNEL) == VIEW_CHANNEL;
+        throw new UnsupportedOperationException();
     }
 
     private static long applyOverwrite(long permissions, DiscordPermissionOverwrite overwrite) {

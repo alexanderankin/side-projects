@@ -25,6 +25,7 @@ dependencies {
     implementation 'commons-codec:commons-codec'
 
     testImplementation project(':cloud:util:util-acme:pebble-testcontainers')
+    testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
 }
 
 publishing.publications.create('maven', MavenPublication).from(components.java)

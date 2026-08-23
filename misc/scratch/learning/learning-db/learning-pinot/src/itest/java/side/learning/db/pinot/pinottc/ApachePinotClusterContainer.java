@@ -6,19 +6,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.lifecycle.Startables;
+import org.testcontainers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -151,7 +149,7 @@ public class ApachePinotClusterContainer extends GenericContainer<ApachePinotClu
                     .withEnv("LOCALSTACK_HOST", "localstack")
                     .withExposedPorts(LOCALSTACK_PORT)
                     .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("localstack")))
-                    .withServices(LocalStackContainer.Service.S3);
+                    .withServices("s3");
         }
     }
 

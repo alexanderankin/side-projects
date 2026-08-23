@@ -3,17 +3,13 @@ plugins {
 }
 
 dependencies {
-    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.0.6')
-    implementation platform('org.springframework.boot:spring-boot-dependencies:4.0.6')
-    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2025.1.1')
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.1')
+    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2025.1.2')
 
-    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:4.0.2')
+    implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:4.1.0')
 
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-
-    // todo remove me when spring boot 4
-    // Source: https://mvnrepository.com/artifact/org.jspecify/jspecify
-    implementation 'org.jspecify:jspecify:1.0.0'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }

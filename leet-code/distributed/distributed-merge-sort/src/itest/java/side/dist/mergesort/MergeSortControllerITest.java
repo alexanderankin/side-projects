@@ -22,7 +22,7 @@ class MergeSortControllerITest extends DistributedMergeSortITest {
         String originalContents = webTestClient.get().uri("/api/sorts/{id}/input", result.getResponseBody().getId()).exchange()
                 .expectStatus().isOk()
                 .expectBody(String.class)
-                .value(notNullValue())
+                .value(v -> assertThat(v, is(notNullValue())))
                 .returnResult().getResponseBody();
         assertThat(originalContents, is(notNullValue()));
         assertThat(originalContents, startsWith("0\n1\n2\n3\n"));
