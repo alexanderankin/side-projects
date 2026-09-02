@@ -31,6 +31,15 @@ endif
 
 SSH_PORT        ?= 2222
 UI_MODE         ?= serial
+PXE_LAB_SSH_PORT ?= 2026
+PXE_LAB_SSH_COMMON = -o UserKnownHostsFile=build/pxe-lab-known_hosts -o StrictHostKeyChecking=accept-new
+PXE_SERVER_PROJECT = ../../../misc/scratch/pxe-stuff
+
+ifneq ($(filter $(shell uname -m),aarch64 arm64),)
+PXE_LAB_VM_TARGET ?= start_vm_arm64_best
+else
+PXE_LAB_VM_TARGET ?= start_vm_amd64_best
+endif
 
 ifneq ($(strip $(APP_PORT)),)
 APP_PORT_FORWARD = ,hostfwd=tcp::$(APP_PORT)-:9090
@@ -85,6 +94,28 @@ else
 endif
 
 include vm_*.mk
+
+.PHONY: start_pxe_lab ssh_pxe_lab copy_pxe_lab_tools provision_pxe_lab build_pxe_server copy_pxe_server
+start_pxe_lab:
+	UI_MODE='headless' NAME=pxe-lab SSH_PORT=$(PXE_LAB_SSH_PORT) $(MAKE) $(PXE_LAB_VM_TARGET)
+
+ssh_pxe_lab:
+	ssh $(PXE_LAB_SSH_COMMON) -p $(PXE_LAB_SSH_PORT) ubuntu@127.0.0.1
+
+copy_pxe_lab_tools:
+	scp $(PXE_LAB_SSH_COMMON) -P $(PXE_LAB_SSH_PORT) \
+	  pxe-lab-network.sh pxe-client.sh ubuntu@127.0.0.1:
+
+provision_pxe_lab: copy_pxe_lab_tools
+	ssh $(PXE_LAB_SSH_COMMON) -p $(PXE_LAB_SSH_PORT) ubuntu@127.0.0.1 \
+	  'cloud-init status --wait && sudo apt-get update && sudo apt-get install -y iproute2 qemu-system-x86 tcpdump python3 openjdk-25-jre-headless'
+
+build_pxe_server:
+	cd ../../.. && ./gradlew :misc:scratch:pxe-stuff:installDist
+
+copy_pxe_server: build_pxe_server
+	scp $(PXE_LAB_SSH_COMMON) -P $(PXE_LAB_SSH_PORT) -r \
+	  $(PXE_SERVER_PROJECT)/build/install/pxe-stuff ubuntu@127.0.0.1:
 
 start_all:
 	if [ -f build/amd64 ]; then :; else UI_MODE='headless' NAME=amd64 SSH_PORT=2022 $(MAKE) start_vm_amd64_best; fi

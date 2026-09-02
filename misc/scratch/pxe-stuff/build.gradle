@@ -3,7 +3,7 @@ plugins {
     id 'picocli-conventions'
 }
 
-application.mainClass = 'side.pxe.PxeThing'
+application.mainClass = 'side.pxe.PxeDhcpServer'
 
 dependencies {
     implementation 'io.netty:netty-buffer'
