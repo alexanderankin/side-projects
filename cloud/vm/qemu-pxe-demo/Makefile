@@ -5,11 +5,10 @@ build/disk.img:
 	@mkdir -p build
 	qemu-img create -f qcow2 $@ 20G
 
-.PHONY: build_ipxe-embedded
-build_ipxe-embedded:
+ipxe-embedded/ipxe/src/bin/ipxe.pxe:
 	$(MAKE) -C ipxe-embedded
 
-build/ipxe.pxe: build_ipxe-embedded
+build/ipxe.pxe: ipxe-embedded/ipxe/src/bin/ipxe.pxe
 	@mkdir -p build
 	@#cd build; wget -N 'https://boot.ipxe.org/ipxe.pxe'
 	cp ipxe-embedded/ipxe/src/bin/ipxe.pxe $@
@@ -26,7 +25,7 @@ build/vars: find-ovmf.sh
 
 UBUNTU_BASE := https://cloud-images.ubuntu.com/resolute/current
 .PHONY: ubuntu
-ubuntu: build/resolute-server-cloudimg-amd64.raw.gz \
+ubuntu: build/resolute-server-cloudimg-amd64.raw \
   build/resolute-server-cloudimg-amd64-initrd-generic \
   build/resolute-server-cloudimg-amd64-vmlinuz-generic \
   build/deploy-overlay.cpio.gz build/image-version.ipxe
@@ -42,23 +41,26 @@ build/resolute-server-cloudimg-amd64-vmlinuz-generic:
 # pre-emptively added in case we can do stuff
 build/resolute-server-cloudimg-amd64.img:
 	@mkdir -p build
+	bash -c 'if ! [[ -f build/resolute-server-cloudimg-amd64.img ]] && [[ -f ../qemu-cloud-init/build/resolute-server-cloudimg-amd64.img ]]; then rsync -a ../qemu-cloud-init/build/resolute-server-cloudimg-amd64.img build/resolute-server-cloudimg-amd64.img; fi'
 	cd build && wget -N '$(UBUNTU_BASE)/resolute-server-cloudimg-amd64.img'
 
 # can unpack/overwrite sda?
-build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd64.img
-	qemu-img convert -f qcow2 -O raw $< build/resolute-server-cloudimg-amd64.raw
-	gzip -1 -f build/resolute-server-cloudimg-amd64.raw
+build/resolute-server-cloudimg-amd64.raw: build/resolute-server-cloudimg-amd64.img
+	qemu-img convert -f qcow2 -O raw $< $@
+
+build/resolute-server-cloudimg-amd64.raw.gz: build/resolute-server-cloudimg-amd64.raw
+	gzip -1 -f $<
 
 build/image-version.ipxe: build/resolute-server-cloudimg-amd64.img
 	@version=$$(sha256sum $< | cut -d ' ' -f 1); \
 		printf '#!ipxe\nset deploy-version %s\n' "$$version" > $@
 
-build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-image.service deploy-initrd/udhcpc-script cloud-init/user-data cloud-init/meta-data cloud-init/network-config
+build/deploy-overlay.cpio.gz: deploy-initrd/deploy-image deploy-initrd/deploy-image.service deploy-initrd/udhcpc-script cloud-init/user-data cloud-init/meta-data cloud-init/network-config build/busy-box/busybox
 	@mkdir -p build
 	@overlay=$$(mktemp -d); \
 		trap 'rm -r "$$overlay"' EXIT; \
 		mkdir -p "$$overlay/usr/bin" "$$overlay/etc/systemd/system/initrd.target.wants" "$$overlay/seed"; \
-		cp /usr/bin/busybox "$$overlay/usr/bin/busybox"; \
+		cp build/busy-box/busybox "$$overlay/usr/bin/busybox"; \
 		cp deploy-initrd/deploy-image "$$overlay/usr/bin/deploy-image"; \
 		cp deploy-initrd/udhcpc-script "$$overlay/usr/bin/deploy-udhcpc-script"; \
 		cp deploy-initrd/deploy-image.service "$$overlay/etc/systemd/system/deploy-image.service"; \
@@ -120,18 +122,37 @@ run_offline_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu st
 
 .PHONY: run_iso_install
 run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-iso/' -i build/boot.ipxe
 	./single-host.sh
 
-# DO NOT MODIFY _server target recipes, they are intentionally simple
+SERVER_NAME ?= qemu-pxe-demo-server
 build/server:
-	systemd-run --user --unit=my-http-server --same-dir python3 -m http.server -d build/ && touch $@
+	docker run -d --name $(SERVER_NAME) -p 8000:80 -v ./build:/usr/share/nginx/html:ro nginx:alpine && touch $@
 .PHONY: start_server stop_server
 start_server: build/server
 stop_server: build/server
-	systemctl --user stop my-http-server && rm $<
+	-docker stop $(SERVER_NAME)
+	-docker rm -f $(SERVER_NAME)
+	rm -f build/server
 
 clean: stop_server
 	@mkdir -p build
 	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -not -path '*-generic' -delete
 	rm -vf build/disk.img
+
+build/busy-box/.downloaded:
+	#tar -xf archive.tar.gz --strip-components=1 -C /target/directory
+	mkdir -p build/busy-box
+	wget 'https://busybox.net/downloads/busybox-1.38.0.tar.bz2' -qO- | tar -xjf - --strip-components=1 -C build/busy-box
+	touch $@
+
+build/busy-box/busybox: build/busy-box/.downloaded
+	cat busybox-builder.Dockerfile | docker build -t busybox-builder -
+	@#docker build -t ipxe-embedded-docker-image --build-arg CROSS_COMPILER_NAME=$$(./print-cross-compiler-name.sh) ./ipxe-embedded-docker-image
+	docker run --rm -it --name busybox-build -v ./build/busy-box:/busy-box --user $$(id -u):$$(id -g) busybox-builder \
+	  make -C /busy-box ARCH=amd64 CROSS_COMPILE=x86_64-linux-gnu- defconfig
+	sed 's/^CONFIG_TC=.*/CONFIG_TC=n/' -i build/busy-box/.config
+	docker run --rm -it --name busybox-build -v ./build/busy-box:/busy-box --user $$(id -u):$$(id -g) busybox-builder \
+	  make -j -C /busy-box ARCH=amd64 CROSS_COMPILE=x86_64-linux-gnu- busybox
+	@#$(MAKE) -C /busy-box ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-

@@ -88,7 +88,10 @@ $bb udhcpc -q -n -t 10 -i "$interface" -s /usr/bin/deploy-udhcpc-script
 
 echo "deploy-image: downloading $image_url"
 echo "deploy-image: overwriting $target_disk"
-$bb wget -q -O - "$image_url" | $bb gzip -dc | $bb dd of="$target_disk" bs=4M
+case "$image_url" in
+*.gz) $bb wget -q -O - "$image_url" | $bb gzip -dc | $bb dd of="$target_disk" bs=4M;;
+*)    $bb wget -q -O - "$image_url" | $bb dd of="$target_disk" bs=4M;;
+esac
 $bb sync
 refresh_partitions
 

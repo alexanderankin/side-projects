@@ -27,7 +27,7 @@ choose --default ${default-choice} --timeout 5000 target && goto ${target}
 #exit
 :ubuntu
 chain --autofree tftp://${next-server}/image-version.ipxe
-kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic initrd=resolute-initrd root=/dev/vda1 rootfstype=ext4 rw rd.neednet=0 deploy-url=http://${next-server}:8000/resolute-server-cloudimg-${deb_arch}.raw.gz deploy-version=${deploy-version} console=tty0 console=ttyS0,115200n8
+kernel tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-vmlinuz-generic initrd=resolute-initrd root=/dev/vda1 rootfstype=ext4 rw rd.neednet=0 deploy-url=http://${next-server}:8000/resolute-server-cloudimg-${deb_arch}.raw deploy-version=${deploy-version} console=tty0 console=ttyS0,115200n8
 initrd --name resolute-initrd tftp://${next-server}/resolute-server-cloudimg-${deb_arch}-initrd-generic
 initrd tftp://${next-server}/deploy-overlay.cpio.gz
 boot || goto failed
