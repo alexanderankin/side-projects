@@ -11,8 +11,9 @@ menu Welcome
 item
 item --gap --    ------------------------- Operating systems ------------------------------
 #item hello-world Boot example Hello World OS
-item ubuntu      Deploy/boot Ubuntu cloud image
-item ubuntu-iso  Install Ubuntu w/ISO
+item ubuntu          Deploy/boot Ubuntu cloud image
+item ubuntu-iso      Install Ubuntu Server unattended
+item ubuntu-desktop  Install Ubuntu Desktop unattended
 item --gap --    ------------------------------ Utilities ---------------------------------
 item shell       Enter iPXE shell
 item reboot      Reboot
@@ -33,16 +34,14 @@ initrd tftp://${next-server}/deploy-overlay.cpio.gz
 boot || goto failed
 
 :ubuntu-iso
-#chain /resolute-mini-iso-amd64.iso iso raw
-#boot
+kernel tftp://${next-server}/server-installer-vmlinuz initrd=server-installer-initrd ip=dhcp url=http://${next-server}:8000/ubuntu-26.04-live-server-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net\;s=http://${next-server}:8000/autoinstall/ console=ttyS0,115200n8 ---
+initrd --name server-installer-initrd tftp://${next-server}/server-installer-initrd
+boot || goto failed
 
-#kernel tftp://${next-server}/memdisk
-#initrd tftp://${next-server}/ubuntu-26.04-live-server-amd64.iso
-#imgargs memdisk iso raw live-media-path=/casper/
-#boot
-
-kernel tftp://${next-server}/installer-vmlinuz initrd=installer-initrd ip=dhcp url=http://${next-server}:8000/ubuntu-26.04-live-server-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net;s=http://${next-server}:8000/autoinstall/ console=ttyS0,115200n8 ---
-initrd --name installer-initrd tftp://${next-server}/installer-initrd
+:ubuntu-desktop
+kernel tftp://${next-server}/desktop-installer-vmlinuz initrd=desktop-installer-initrd boot=casper ip=dhcp netboot=nfs nfsroot=${next-server}:/exports autoinstall cloud-config-url=/dev/null ds=nocloud-net\;s=http://${next-server}:8000/autoinstall-desktop/ console=tty0 console=ttyS0,115200n8 ---
+initrd --name desktop-installer-initrd tftp://${next-server}/desktop-installer-initrd
+initrd tftp://${next-server}/desktop-nfs-overlay.cpio.gz
 boot || goto failed
 
 :failed

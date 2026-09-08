@@ -5,6 +5,10 @@ build/disk.img:
 	@mkdir -p build
 	qemu-img create -f qcow2 $@ 20G
 
+build/desktop-disk.img:
+	@mkdir -p build
+	qemu-img create -f qcow2 $@ 32G
+
 ipxe-embedded/ipxe/src/bin/ipxe.pxe:
 	$(MAKE) -C ipxe-embedded
 
@@ -77,13 +81,33 @@ build/ubuntu-26.04-live-server-amd64.iso:
 	@mkdir -p build
 	cd build && wget -N https://releases.ubuntu.com/resolute/ubuntu-26.04-live-server-amd64.iso
 
-build/installer-vmlinuz: build/ubuntu-26.04-live-server-amd64.iso
+build/server-installer-vmlinuz: build/ubuntu-26.04-live-server-amd64.iso
 	@mkdir -p build
 	xorriso -osirrox on -indev $< -extract /casper/vmlinuz $@
 
-build/installer-initrd: build/ubuntu-26.04-live-server-amd64.iso
+build/server-installer-initrd: build/ubuntu-26.04-live-server-amd64.iso
 	@mkdir -p build
 	xorriso -osirrox on -indev $< -extract /casper/initrd $@
+
+build/ubuntu-26.04-desktop-amd64.iso:
+	@mkdir -p build
+	cd build && wget -N https://releases.ubuntu.com/resolute/ubuntu-26.04-desktop-amd64.iso
+
+build/desktop-installer-vmlinuz: build/ubuntu-26.04-desktop-amd64.iso
+	@mkdir -p build
+	xorriso -osirrox on -indev $< -extract /casper/vmlinuz $@
+
+build/desktop-installer-initrd: build/ubuntu-26.04-desktop-amd64.iso
+	@mkdir -p build
+	xorriso -osirrox on -indev $< -extract /casper/initrd $@
+
+build/desktop-nfs-overlay.cpio.gz: desktop-initrd/casper.conf
+	@mkdir -p build
+	@overlay=$$(mktemp -d); \
+		trap 'rm -r "$$overlay"' EXIT; \
+		mkdir -p "$$overlay/etc"; \
+		cp $< "$$overlay/etc/casper.conf"; \
+		(cd "$$overlay" && find . -print0 | cpio --null --create --format=newc 2>/dev/null) | gzip -1 > $@
 
 build/autoinstall/user-data: autoinstall/user-data
 	@mkdir -p build/autoinstall
@@ -91,6 +115,18 @@ build/autoinstall/user-data: autoinstall/user-data
 
 build/autoinstall/meta-data: autoinstall/meta-data
 	@mkdir -p build/autoinstall
+	cp $< $@
+
+build/autoinstall-desktop/user-data: autoinstall-desktop/user-data
+	@mkdir -p build/autoinstall-desktop
+	cp $< $@
+
+build/autoinstall-desktop/meta-data: autoinstall-desktop/meta-data
+	@mkdir -p build/autoinstall-desktop
+	cp $< $@
+
+build/autoinstall-desktop/network-config: autoinstall-desktop/network-config
+	@mkdir -p build/autoinstall-desktop
 	cp $< $@
 
 .PHONY: ipxe_scripts
@@ -121,10 +157,25 @@ run_offline_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu st
 	./single-host.sh restrict
 
 .PHONY: run_iso_install
-run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/server-installer-vmlinuz build/server-installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
 	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-iso/' -i build/boot.ipxe
 	./single-host.sh
+
+.PHONY: run_desktop_iso_install
+run_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-nfs-overlay.cpio.gz build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data build/autoinstall-desktop/network-config start_server start_nfs_server
+	@cp *.ipxe build/ # hacks - todo fixme
+	sed -e 's/^set default-choice .*/set default-choice ubuntu-desktop/' -i build/boot.ipxe
+	sed -e 's#$${next-server}:/exports#10.0.2.100:/exports#g' -i build/boot.ipxe
+	DISK_IMAGE=build/desktop-disk.img ./single-host.sh
+
+.PHONY: run_offline_desktop_iso_install
+run_offline_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-nfs-overlay.cpio.gz build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data start_server start_nfs_server
+	@cp *.ipxe build/ # hacks - todo fixme
+	sed -e 's/^set default-choice .*/set default-choice ubuntu-desktop/' -i build/boot.ipxe
+	sed -e 's#http://$${next-server}:8000#http://10.0.2.100:8000#g' -i build/boot.ipxe
+	sed -e 's#$${next-server}:/#10.0.2.100:/#g' -i build/boot.ipxe
+	DISK_IMAGE=build/desktop-disk.img ./single-host.sh restrict
 
 SERVER_NAME ?= qemu-pxe-demo-server
 build/server:
@@ -136,10 +187,39 @@ stop_server: build/server
 	-docker rm -f $(SERVER_NAME)
 	rm -f build/server
 
-clean: stop_server
+NFS_SERVER_NAME ?= qemu-pxe-demo-nfs-server
+NFS_SERVER_IMAGE ?= qemu-pxe-demo-nfs
+NFS_DATA_VOLUME ?= qemu-pxe-demo-desktop-iso
+build/nfs-server-image: nfs-server.Dockerfile nfs-ganesha.conf nfs-ganesha-entrypoint.sh
+	@mkdir -p build
+	docker build -t $(NFS_SERVER_IMAGE) -f nfs-server.Dockerfile .
+	touch $@
+
+build/desktop-nfs-volume: build/ubuntu-26.04-desktop-amd64.iso | build/nfs-server-image
+	docker volume create $(NFS_DATA_VOLUME)
+	docker run --rm --entrypoint xorriso -v $(abspath $<):/installer.iso:ro -v $(NFS_DATA_VOLUME):/exports $(NFS_SERVER_IMAGE) -osirrox on -indev /installer.iso -extract / /exports
+	touch $@
+
+build/nfs-server: build/nfs-server-image build/desktop-nfs-volume
+	docker run -d --name $(NFS_SERVER_NAME) --cap-add DAC_READ_SEARCH -p 30111:111 -p 32049:2049 -p 30048:20048 -v $(NFS_DATA_VOLUME):/exports:ro $(NFS_SERVER_IMAGE)
+	touch $@
+
+.PHONY: start_nfs_server stop_nfs_server
+start_nfs_server: build/nfs-server
+stop_nfs_server:
+	-docker stop $(NFS_SERVER_NAME)
+	-docker rm -f $(NFS_SERVER_NAME)
+	rm -f build/nfs-server
+
+.PHONY: remove_nfs_data
+remove_nfs_data: stop_nfs_server
+	-docker volume rm $(NFS_DATA_VOLUME)
+	rm -f build/desktop-nfs-volume
+
+clean: stop_server remove_nfs_data
 	@mkdir -p build
 	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -not -path '*-generic' -delete
-	rm -vf build/disk.img
+	rm -vf build/disk.img build/desktop-disk.img
 
 build/busy-box/.downloaded:
 	#tar -xf archive.tar.gz --strip-components=1 -C /target/directory
