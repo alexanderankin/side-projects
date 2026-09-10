@@ -19,6 +19,14 @@ ephemeral "sshconnection_connection" "connection" {
     host         = "127.0.0.1"
     host_port    = "80"
   }
+  ssh_option {
+    name = "StrictHostKeyChecking"
+    value = "no"
+  }
+  ssh_option {
+    name = "UserKnownHostsFile"
+    value = "/dev/null"
+  }
 }
 
 resource "terraform_data" "sleep" {
