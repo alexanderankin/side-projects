@@ -28,7 +28,7 @@ resource "terraform_data" "sleep" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
     command     = <<-EOF
-      sleep 10
+      sleep 5
     EOF
   }
 }
@@ -41,7 +41,10 @@ data "local_command" "output" {
       curl -v localhost:18080
     EOF
   ]
+
   allow_non_zero_exit_code = true
+
+  depends_on = [terraform_data.sleep]
 }
 
 output "output" {
