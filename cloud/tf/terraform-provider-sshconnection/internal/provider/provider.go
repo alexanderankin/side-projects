@@ -42,5 +42,10 @@ func (p *sshConnectionProvider) DataSources(context.Context) []func() datasource
 func (p *sshConnectionProvider) Resources(context.Context) []func() resource.Resource { return nil }
 
 func (p *sshConnectionProvider) EphemeralResources(context.Context) []func() ephemeral.EphemeralResource {
-	return []func() ephemeral.EphemeralResource{NewSSHConnection}
+	// The framework invokes the factory for each RPC. Share the registry across
+	// Open and Close, while separate provider instances retain separate ownership.
+	connections := NewSSHConnection()
+	return []func() ephemeral.EphemeralResource{
+		func() ephemeral.EphemeralResource { return connections },
+	}
 }

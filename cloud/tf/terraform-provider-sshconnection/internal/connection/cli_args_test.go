@@ -1,4 +1,4 @@
-package provider
+package connection
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func TestBuildSSHArgs(t *testing.T) {
 		t.Fatalf("constructing jump host: %v", diags)
 	}
 
-	data := sshConnectionModel{
+	data := Model{
 		Destination:               types.StringValue("server.example.com"),
 		IPVersion:                 types.StringValue("ipv6"),
 		AgentConnectionForwarding: types.BoolValue(true),

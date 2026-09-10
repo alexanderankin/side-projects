@@ -30,6 +30,6 @@ provider "terraform.example.com/side-projects/sshconnection" {
   version     = "1.0.0"
   constraints = "1.0.0"
   hashes = [
-    "h1:m6rCK5lJ6Uj/s/kPChILjhiUHFAT3hPJXb6wU9U9B6Y=",
+    "h1:JPTz7aEGWiGts+JYYEilBdB6EnGUKvc2o6X+lPnkXvw=",
   ]
 }

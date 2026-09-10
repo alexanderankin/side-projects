@@ -1,23 +1,18 @@
 package provider
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"io"
-	"os"
-	"os/exec"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/toor/terraform-provider-ssh-connection/internal/connection"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -29,50 +24,16 @@ const processKey = "ssh_connection_provider_process_id"
 var _ ephemeral.EphemeralResource = (*sshConnectionResource)(nil)
 var _ ephemeral.EphemeralResourceWithClose = (*sshConnectionResource)(nil)
 
-type commandProcess struct {
-	cmd       *exec.Cmd
-	keepalive io.Closer
-	done      <-chan error
-}
-
 type sshConnectionResource struct {
 	mu        sync.Mutex
-	processes map[string]commandProcess
+	processes map[string]connection.Connection
+	start     func(context.Context, connection.Model) (connection.Connection, error)
 }
 
-type sshConnectionModel struct {
-	Destination               types.String `tfsdk:"destination"`
-	IPVersion                 types.String `tfsdk:"ip_version"`
-	AgentConnectionForwarding types.Bool   `tfsdk:"agent_connection_forwarding"`
-	CipherSpec                types.List   `tfsdk:"cipher_spec"`
-	LogFile                   types.String `tfsdk:"log_file"`
-	ConfigFile                types.String `tfsdk:"config_file"`
-	IdentityFile              types.String `tfsdk:"identity_file"`
-	JumpHost                  types.List   `tfsdk:"jump_host"`
-	Listen                    types.List   `tfsdk:"listen"`
-	LoginName                 types.String `tfsdk:"login_name"`
-	MACSpec                   types.List   `tfsdk:"mac_spec"`
-	Port                      types.Int64  `tfsdk:"port"`
-	Quiet                     types.Bool   `tfsdk:"quiet"`
-	RemoteListen              types.List   `tfsdk:"remote_listen"`
-	PTYAllocation             types.Bool   `tfsdk:"pty_allocation"`
-	SSHOptions                types.List   `tfsdk:"ssh_option"`
-	//InstanceToken             types.String `tfsdk:"instance_token"`
-}
-
-type jumpHostModel struct {
-	Destination types.String `tfsdk:"jump_host_destination"`
-}
-
-type listenModel struct {
-	BindAddress types.String `tfsdk:"bind_address"`
-	Port        types.String `tfsdk:"port"`
-	Host        types.String `tfsdk:"host"`
-	HostPort    types.String `tfsdk:"host_port"`
-}
+type sshConnectionModel = connection.Model
 
 func NewSSHConnection() ephemeral.EphemeralResource {
-	return &sshConnectionResource{processes: make(map[string]commandProcess)}
+	return &sshConnectionResource{processes: make(map[string]connection.Connection), start: connection.StartCLI}
 }
 
 func (r *sshConnectionResource) Metadata(_ context.Context, req ephemeral.MetadataRequest, resp *ephemeral.MetadataResponse) {
@@ -88,7 +49,7 @@ func (r *sshConnectionResource) Schema(_ context.Context, _ ephemeral.SchemaRequ
 	}
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Starts `ssh -N` when opened and stops it when the ephemeral resource is closed. SSH must be available on `PATH`.",
+		MarkdownDescription: "Starts `ssh -N` and waits up to 60 seconds for authentication, local listeners, and server acknowledgement of remote forwards. Stops SSH on failure, cancellation, or close. Readiness does not check the services behind the forwards. SSH must be available on `PATH`.",
 		Attributes: map[string]schema.Attribute{
 			"destination":                 schema.StringAttribute{Required: true, MarkdownDescription: "SSH destination, such as `user@example.com`. This is the first positional argument."},
 			"identity_file":               schema.StringAttribute{Optional: true, MarkdownDescription: "Identity file (`-i`)."},
@@ -100,7 +61,7 @@ func (r *sshConnectionResource) Schema(_ context.Context, _ ephemeral.SchemaRequ
 			"log_file":                    schema.StringAttribute{Optional: true, MarkdownDescription: "File to receive SSH debug logs (`-E`)."},
 			"config_file":                 schema.StringAttribute{Optional: true, MarkdownDescription: "Alternative SSH client configuration file (`-F`)."},
 			"mac_spec":                    schema.ListAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: "Ordered MAC list, passed to `-m` as a comma-separated value."},
-			"quiet":                       schema.BoolAttribute{Optional: true, MarkdownDescription: "Enable quiet mode (`-q`). Defaults to false."},
+			"quiet":                       schema.BoolAttribute{Optional: true, MarkdownDescription: "Suppress routine SSH output. Internal readiness diagnostics and failure details remain available. Defaults to false."},
 			"pty_allocation":              schema.BoolAttribute{Optional: true, MarkdownDescription: "Force (`-t`) or disable (`-T`) pseudo-terminal allocation. Defaults to false."},
 			//"instance_token":              schema.StringAttribute{Computed: true, MarkdownDescription: "internal invocation id"},
 		},
@@ -142,12 +103,6 @@ func (r *sshConnectionResource) Open(ctx context.Context, req ephemeral.OpenRequ
 		return
 	}
 
-	args, diags := buildSSHArgs(ctx, data)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	tokenBytes := make([]byte, 16)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		resp.Diagnostics.AddError("Unable to track SSH process", err.Error())
@@ -159,44 +114,23 @@ func (r *sshConnectionResource) Open(ctx context.Context, req ephemeral.OpenRequ
 		return
 	}
 
-	keepaliveReader, keepaliveWriter, err := os.Pipe()
+	conn, err := r.start(ctx, data)
 	if err != nil {
-		resp.Diagnostics.AddError("Unable to create SSH supervisor", err.Error())
-		return
-	}
-	executable, err := os.Executable()
-	if err != nil {
-		_ = keepaliveReader.Close()
-		_ = keepaliveWriter.Close()
-		resp.Diagnostics.AddError("Unable to locate SSH supervisor", err.Error())
-		return
-	}
-
-	var stderr, stdout bytes.Buffer
-	cmd := exec.Command(executable, append([]string{"--ssh-supervisor"}, args...)...)
-	cmd.Stdin = keepaliveReader
-	cmd.Stderr = &stderr
-	cmd.Stdout = &stdout
-	if err := cmd.Start(); err != nil {
-		_ = keepaliveReader.Close()
-		_ = keepaliveWriter.Close()
 		resp.Diagnostics.AddError("Unable to start SSH", err.Error())
 		return
 	}
-	_ = keepaliveReader.Close()
-
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		_ = keepaliveWriter.Close()
-		resp.Diagnostics.AddError("SSH connection exited", fmt.Sprintf("ssh exited before the connection could be opened: %v\n%s", err, strings.TrimSpace(stderr.String())))
+	readyCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	if err := conn.WaitReady(readyCtx); err != nil {
+		resp.Diagnostics.AddError("SSH connection did not become ready", err.Error())
+		if closeErr := conn.Close(); closeErr != nil {
+			resp.Diagnostics.AddError("Unable to stop SSH", closeErr.Error())
+		}
 		return
-	case <-time.After(200 * time.Millisecond):
 	}
 
 	r.mu.Lock()
-	r.processes[token] = commandProcess{cmd: cmd, keepalive: keepaliveWriter, done: done}
+	r.processes[token] = conn
 	r.mu.Unlock()
 }
 
@@ -218,110 +152,7 @@ func (r *sshConnectionResource) Close(ctx context.Context, req ephemeral.CloseRe
 	if !ok {
 		return
 	}
-	if err := process.keepalive.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
-		resp.Diagnostics.AddError("Unable to signal SSH supervisor", err.Error())
-		return
-	}
-	if err := <-process.done; err != nil {
+	if err := process.Close(); err != nil {
 		resp.Diagnostics.AddError("Unable to stop SSH", err.Error())
 	}
-}
-
-func buildSSHArgs(ctx context.Context, data sshConnectionModel) ([]string, diag.Diagnostics) {
-	var diags diag.Diagnostics
-	args := []string{"-N", "-o", "ExitOnForwardFailure=yes"}
-
-	switch data.IPVersion.ValueString() {
-	case "ipv4":
-		args = append(args, "-4")
-	case "ipv6":
-		args = append(args, "-6")
-	}
-	if data.AgentConnectionForwarding.ValueBool() {
-		args = append(args, "-A")
-	} else {
-		args = append(args, "-a")
-	}
-	args = appendStringList(ctx, args, "-c", data.CipherSpec, &diags)
-	args = appendOptional(args, "-E", data.LogFile)
-	args = appendOptional(args, "-F", data.ConfigFile)
-	args = appendOptional(args, "-i", data.IdentityFile)
-	if !data.JumpHost.IsNull() && !data.JumpHost.IsUnknown() {
-		var jumps []jumpHostModel
-		diags.Append(data.JumpHost.ElementsAs(ctx, &jumps, false)...)
-		if !diags.HasError() && len(jumps) == 1 {
-			args = append(args, "-J", jumps[0].Destination.ValueString())
-		}
-	}
-	args = appendForwards(ctx, args, "-L", data.Listen, &diags)
-	args = appendOptional(args, "-l", data.LoginName)
-	args = appendStringList(ctx, args, "-m", data.MACSpec, &diags)
-	if !data.Port.IsNull() && !data.Port.IsUnknown() {
-		args = append(args, "-p", strconv.FormatInt(data.Port.ValueInt64(), 10))
-	}
-	if data.Quiet.ValueBool() {
-		args = append(args, "-q")
-	}
-	args = appendForwards(ctx, args, "-R", data.RemoteListen, &diags)
-	if data.PTYAllocation.ValueBool() {
-		args = append(args, "-t")
-	} else {
-		args = append(args, "-T")
-	}
-	args = appendSshOptions(ctx, args, data.SSHOptions, &diags)
-	args = append(args, data.Destination.ValueString())
-	return args, diags
-}
-
-func appendOptional(args []string, flag string, value types.String) []string {
-	if value.IsNull() || value.IsUnknown() {
-		return args
-	}
-	return append(args, flag, value.ValueString())
-}
-
-func appendStringList(ctx context.Context, args []string, flag string, value types.List, diags *diag.Diagnostics) []string {
-	if value.IsNull() || value.IsUnknown() {
-		return args
-	}
-	var values []string
-	diags.Append(value.ElementsAs(ctx, &values, false)...)
-	if len(values) > 0 {
-		args = append(args, flag, strings.Join(values, ","))
-	}
-	return args
-}
-
-func appendForwards(ctx context.Context, args []string, flag string, value types.List, diags *diag.Diagnostics) []string {
-	if value.IsNull() || value.IsUnknown() {
-		return args
-	}
-	var forwards []listenModel
-	diags.Append(value.ElementsAs(ctx, &forwards, false)...)
-	for _, forward := range forwards {
-		parts := make([]string, 0, 4)
-		if !forward.BindAddress.IsNull() {
-			parts = append(parts, forward.BindAddress.ValueString())
-		}
-		parts = append(parts, forward.Port.ValueString(), forward.Host.ValueString(), forward.HostPort.ValueString())
-		args = append(args, flag, strings.Join(parts, ":"))
-	}
-	return args
-}
-
-type sshOptionModel struct {
-	Name  types.String `tfsdk:"name"`
-	Value types.String `tfsdk:"value"`
-}
-
-func appendSshOptions(ctx context.Context, args []string, value types.List, diags *diag.Diagnostics) []string {
-	if value.IsNull() || value.IsUnknown() {
-		return args
-	}
-	var options []sshOptionModel
-	diags.Append(value.ElementsAs(ctx, &options, false)...)
-	for _, option := range options {
-		args = append(args, "-o", option.Name.ValueString()+"="+option.Value.ValueString())
-	}
-	return args
 }

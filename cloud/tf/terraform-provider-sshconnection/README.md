@@ -15,3 +15,13 @@ go generate ./...
 ```
 
 Do not edit `generated-docs/` directly. Update schema descriptions or examples and regenerate instead. The original hand-written `docs/` tree is intentionally left unchanged.
+
+## Connection readiness
+
+Opening a connection waits up to 60 seconds for SSH authentication, local listener setup, and acknowledgement of every remote forward. Cancellation, timeout, or startup failure closes the connection before returning an error. Readiness confirms forwarding setup, not the availability of the destination service. Consumers must still depend on the ephemeral connection to keep it open while they use it.
+
+The provider passes its decoded model to the connection backend. `internal/connection` owns CLI argument construction, supervised process startup, `WaitReady(ctx)`, and idempotent `Close()`. A future native implementation can consume the same model and return the same `Connection` interface.
+
+The CLI backend recognizes OpenSSH's startup diagnostics, including pending remote-forward acknowledgements from SSH configuration files. It keeps internal DEBUG1 logging enabled even in quiet mode; `log_file` receives a copy. It forces `ExitOnForwardFailure=yes`, disables backgrounding and connection multiplexing, and enables `BatchMode` so interactive authentication cannot hang the operation. Configure agent/key authentication and known hosts beforehand. If an incompatible SSH version does not emit the expected readiness markers, opening times out rather than reporting a ready connection.
+
+Run `go test -race ./...` to exercise the real OpenSSH client and supervisor against an isolated local SSH test server. The table-driven test covers usable forwarding, delayed remote acknowledgement, rejected forwarding, an occupied local port, and cancellation. Each case checks that closing the connection disconnects SSH and releases its local listener. No external host or user credentials are required.

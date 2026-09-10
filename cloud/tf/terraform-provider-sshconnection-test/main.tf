@@ -38,13 +38,13 @@ data "local_command" "output" {
   arguments = [
     "-c",
     <<-EOF
-      curl -v localhost:18080
+      curl --fail --show-error --max-time 10 -v http://127.0.0.1:18080
     EOF
   ]
 
-  allow_non_zero_exit_code = true
+  allow_non_zero_exit_code = false
 
-  depends_on = [terraform_data.sleep]
+  depends_on = [terraform_data.sleep, ephemeral.sshconnection_connection.connection]
 }
 
 output "output" {
