@@ -17,7 +17,9 @@ func main() {
 	flag.Parse()
 
 	err := providerserver.Serve(context.Background(), provider.New(version), providerserver.ServeOpts{
-		Address: "registry.terraform.io/toor/ssh-connection",
+		// you might choose to use terraform.example.com as your placeholder hostname, even if that hostname doesn't actually resolve in DNS
+		// https://developer.hashicorp.com/terraform/language/providers/requirements
+		Address: "terraform.example.com/side-projects/sshconnection",
 		Debug:   debug,
 	})
 	if err != nil {

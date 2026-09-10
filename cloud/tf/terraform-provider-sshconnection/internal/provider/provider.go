@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	_ "embed"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -25,8 +26,11 @@ func (p *sshConnectionProvider) Metadata(_ context.Context, _ provider.MetadataR
 	resp.Version = p.version
 }
 
+//go:embed providerDoc.md
+var providerDoc string
+
 func (p *sshConnectionProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
-	resp.Schema = schema.Schema{MarkdownDescription: "Opens SSH connections for the duration of a Terraform or OpenTofu operation."}
+	resp.Schema = schema.Schema{MarkdownDescription: providerDoc}
 }
 
 func (p *sshConnectionProvider) Configure(context.Context, provider.ConfigureRequest, *provider.ConfigureResponse) {

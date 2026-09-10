@@ -54,6 +54,7 @@ type sshConnectionModel struct {
 	Quiet                     types.Bool   `tfsdk:"quiet"`
 	RemoteListen              types.List   `tfsdk:"remote_listen"`
 	PTYAllocation             types.Bool   `tfsdk:"pty_allocation"`
+	SSHOptions                types.List   `tfsdk:"ssh_options"`
 }
 
 type jumpHostModel struct {
@@ -100,9 +101,32 @@ func (r *sshConnectionResource) Schema(_ context.Context, _ ephemeral.SchemaRequ
 			"pty_allocation":              schema.BoolAttribute{Optional: true, MarkdownDescription: "Force (`-t`) or disable (`-T`) pseudo-terminal allocation. Defaults to false."},
 		},
 		Blocks: map[string]schema.Block{
-			"jump_host":     schema.ListNestedBlock{MarkdownDescription: "Optional jump host (`-J`).", Validators: []validator.List{listvalidator.SizeAtMost(1)}, NestedObject: schema.NestedBlockObject{Attributes: map[string]schema.Attribute{"jump_host_destination": schema.StringAttribute{Required: true, MarkdownDescription: "SSH jump destination."}}}},
-			"listen":        schema.ListNestedBlock{MarkdownDescription: "Repeatable local TCP forwarding (`-L`).", NestedObject: schema.NestedBlockObject{Attributes: forwardAttributes}},
-			"remote_listen": schema.ListNestedBlock{MarkdownDescription: "Repeatable remote TCP forwarding (`-R`).", NestedObject: schema.NestedBlockObject{Attributes: forwardAttributes}},
+			"jump_host": schema.ListNestedBlock{
+				MarkdownDescription: "Optional jump host (`-J`).",
+				Validators:          []validator.List{listvalidator.SizeAtMost(1)},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"jump_host_destination": schema.StringAttribute{Required: true, MarkdownDescription: "SSH jump destination."},
+					},
+				},
+			},
+			"listen": schema.ListNestedBlock{
+				MarkdownDescription: "Repeatable local TCP forwarding (`-L`).",
+				NestedObject:        schema.NestedBlockObject{Attributes: forwardAttributes},
+			},
+			"remote_listen": schema.ListNestedBlock{
+				MarkdownDescription: "Repeatable remote TCP forwarding (`-R`).",
+				NestedObject:        schema.NestedBlockObject{Attributes: forwardAttributes},
+			},
+			"ssh_option": schema.ListNestedBlock{
+				MarkdownDescription: "Repeatable option (`-o Name=Value`)",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name":  schema.StringAttribute{Required: true, MarkdownDescription: "see `man ssh_config`"},
+						"value": schema.StringAttribute{Required: true, MarkdownDescription: "see `man ssh_config`"},
+					},
+				},
+			},
 		},
 	}
 }
@@ -219,6 +243,7 @@ func buildSSHArgs(ctx context.Context, data sshConnectionModel) ([]string, diag.
 	} else {
 		args = append(args, "-T")
 	}
+	args = appendSshOptions(ctx, args, data.SSHOptions, &diags)
 	args = append(args, data.Destination.ValueString())
 	return args, diags
 }
@@ -255,6 +280,23 @@ func appendForwards(ctx context.Context, args []string, flag string, value types
 		}
 		parts = append(parts, forward.Port.ValueString(), forward.Host.ValueString(), forward.HostPort.ValueString())
 		args = append(args, flag, strings.Join(parts, ":"))
+	}
+	return args
+}
+
+type sshOptionModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
+func appendSshOptions(ctx context.Context, args []string, value types.List, diags *diag.Diagnostics) []string {
+	if value.IsNull() || value.IsUnknown() {
+		return args
+	}
+	var options []sshOptionModel
+	diags.Append(value.ElementsAs(ctx, &options, false)...)
+	for _, option := range options {
+		args = append(args, "-o", option.Name.ValueString()+"="+option.Value.ValueString())
 	}
 	return args
 }
