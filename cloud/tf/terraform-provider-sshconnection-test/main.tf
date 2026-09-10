@@ -28,7 +28,7 @@ resource "terraform_data" "sleep" {
   provisioner "local-exec" {
     interpreter = ["bash", "-c"]
     command     = <<-EOF
-      sleep 5
+      true
     EOF
   }
 }

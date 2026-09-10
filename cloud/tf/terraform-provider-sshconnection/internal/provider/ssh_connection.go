@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -29,8 +30,9 @@ var _ ephemeral.EphemeralResource = (*sshConnectionResource)(nil)
 var _ ephemeral.EphemeralResourceWithClose = (*sshConnectionResource)(nil)
 
 type commandProcess struct {
-	cmd  *exec.Cmd
-	done <-chan error
+	cmd       *exec.Cmd
+	keepalive io.Closer
+	done      <-chan error
 }
 
 type sshConnectionResource struct {
@@ -146,39 +148,56 @@ func (r *sshConnectionResource) Open(ctx context.Context, req ephemeral.OpenRequ
 		return
 	}
 
+	tokenBytes := make([]byte, 16)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		resp.Diagnostics.AddError("Unable to track SSH process", err.Error())
+		return
+	}
+	token := hex.EncodeToString(tokenBytes)
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, processKey, []byte(strconv.Quote(token)))...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	keepaliveReader, keepaliveWriter, err := os.Pipe()
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to create SSH supervisor", err.Error())
+		return
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		_ = keepaliveReader.Close()
+		_ = keepaliveWriter.Close()
+		resp.Diagnostics.AddError("Unable to locate SSH supervisor", err.Error())
+		return
+	}
+
 	var stderr, stdout bytes.Buffer
-	cmd := exec.Command("ssh", args...)
+	cmd := exec.Command(executable, append([]string{"--ssh-supervisor"}, args...)...)
+	cmd.Stdin = keepaliveReader
 	cmd.Stderr = &stderr
 	cmd.Stdout = &stdout
 	if err := cmd.Start(); err != nil {
+		_ = keepaliveReader.Close()
+		_ = keepaliveWriter.Close()
 		resp.Diagnostics.AddError("Unable to start SSH", err.Error())
 		return
 	}
+	_ = keepaliveReader.Close()
 
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
 	select {
 	case err := <-done:
+		_ = keepaliveWriter.Close()
 		resp.Diagnostics.AddError("SSH connection exited", fmt.Sprintf("ssh exited before the connection could be opened: %v\n%s", err, strings.TrimSpace(stderr.String())))
 		return
 	case <-time.After(200 * time.Millisecond):
 	}
 
-	tokenBytes := make([]byte, 16)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		_ = cmd.Process.Kill()
-		<-done
-		resp.Diagnostics.AddError("Unable to track SSH process", err.Error())
-		return
-	}
-	token := hex.EncodeToString(tokenBytes)
-	// instance_token
-	//data.InstanceToken = types.StringValue(token)
-	//resp.Result.Set(ctx, &data)
 	r.mu.Lock()
-	r.processes[token] = commandProcess{cmd: cmd, done: done}
+	r.processes[token] = commandProcess{cmd: cmd, keepalive: keepaliveWriter, done: done}
 	r.mu.Unlock()
-	resp.Diagnostics.Append(resp.Private.SetKey(ctx, processKey, []byte(strconv.Quote(token)))...)
 }
 
 func (r *sshConnectionResource) Close(ctx context.Context, req ephemeral.CloseRequest, resp *ephemeral.CloseResponse) {
@@ -199,12 +218,13 @@ func (r *sshConnectionResource) Close(ctx context.Context, req ephemeral.CloseRe
 	if !ok {
 		return
 	}
-	err := process.cmd.Process.Kill()
-	if err != nil && !errors.Is(err, os.ErrProcessDone) {
-		resp.Diagnostics.AddError("Unable to stop SSH", err.Error())
+	if err := process.keepalive.Close(); err != nil && !errors.Is(err, os.ErrClosed) {
+		resp.Diagnostics.AddError("Unable to signal SSH supervisor", err.Error())
 		return
 	}
-	<-process.done
+	if err := <-process.done; err != nil {
+		resp.Diagnostics.AddError("Unable to stop SSH", err.Error())
+	}
 }
 
 func buildSSHArgs(ctx context.Context, data sshConnectionModel) ([]string, diag.Diagnostics) {
