@@ -1,0 +1,3 @@
+ssh_destination = "tunnel@example.com"
+database_host    = "database.internal"
+

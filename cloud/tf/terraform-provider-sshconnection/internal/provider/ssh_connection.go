@@ -54,7 +54,8 @@ type sshConnectionModel struct {
 	Quiet                     types.Bool   `tfsdk:"quiet"`
 	RemoteListen              types.List   `tfsdk:"remote_listen"`
 	PTYAllocation             types.Bool   `tfsdk:"pty_allocation"`
-	SSHOptions                types.List   `tfsdk:"ssh_options"`
+	SSHOptions                types.List   `tfsdk:"ssh_option"`
+	//InstanceToken             types.String `tfsdk:"instance_token"`
 }
 
 type jumpHostModel struct {
@@ -99,6 +100,7 @@ func (r *sshConnectionResource) Schema(_ context.Context, _ ephemeral.SchemaRequ
 			"mac_spec":                    schema.ListAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: "Ordered MAC list, passed to `-m` as a comma-separated value."},
 			"quiet":                       schema.BoolAttribute{Optional: true, MarkdownDescription: "Enable quiet mode (`-q`). Defaults to false."},
 			"pty_allocation":              schema.BoolAttribute{Optional: true, MarkdownDescription: "Force (`-t`) or disable (`-T`) pseudo-terminal allocation. Defaults to false."},
+			//"instance_token":              schema.StringAttribute{Computed: true, MarkdownDescription: "internal invocation id"},
 		},
 		Blocks: map[string]schema.Block{
 			"jump_host": schema.ListNestedBlock{
@@ -170,6 +172,9 @@ func (r *sshConnectionResource) Open(ctx context.Context, req ephemeral.OpenRequ
 		return
 	}
 	token := hex.EncodeToString(tokenBytes)
+	// instance_token
+	//data.InstanceToken = types.StringValue(token)
+	//resp.Result.Set(ctx, &data)
 	r.mu.Lock()
 	r.processes[token] = commandProcess{cmd: cmd, done: done}
 	r.mu.Unlock()
