@@ -11,29 +11,33 @@ import (
 // provider owns the other end of keepalive, so provider termination always
 // causes the SSH process to be killed and reaped by this supervisor.
 func Run(keepalive io.Reader, args []string) error {
-	cmd := exec.Command("ssh", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Start(); err != nil {
+	command := exec.Command("ssh", args...)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	if err := command.Start(); err != nil {
 		return err
 	}
 
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	keepaliveClosed := make(chan struct{})
+	sshExited := make(chan error, 1)
+	// A goroutine waits in the background while the main function watches the pipe.
+	go func() { sshExited <- command.Wait() }()
+
+	providerDisconnected := make(chan struct{})
 	go func() {
 		_, _ = io.Copy(io.Discard, keepalive)
-		close(keepaliveClosed)
+		close(providerDisconnected)
 	}()
 
+	// Whichever event happens first decides how to finish. Killing SSH is not
+	// enough: receiving from sshExited also waits for the OS to collect it.
 	select {
-	case err := <-done:
+	case err := <-sshExited:
 		return err
-	case <-keepaliveClosed:
-		if err := cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
+	case <-providerDisconnected:
+		if err := command.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
 			return err
 		}
-		<-done
+		<-sshExited
 		return nil
 	}
 }

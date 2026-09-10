@@ -1,10 +1,10 @@
-// Package connection defines the backend-independent lifetime of an SSH connection.
+// Package connection starts SSH, waits for forwarding setup, and stops it.
 package connection
 
 import "context"
 
 // Connection is already started, but may still be authenticating or binding
-// listeners. A future native backend can implement this without a subprocess.
+// listeners. The provider uses this small interface to manage its lifetime.
 type Connection interface {
 	// WaitReady waits for authentication, local listener setup, and server
 	// acknowledgement of remote forwards. It does not probe target services.

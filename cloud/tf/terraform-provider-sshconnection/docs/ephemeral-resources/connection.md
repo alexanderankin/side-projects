@@ -3,12 +3,18 @@
 page_title: "sshconnection_connection Ephemeral Resource - terraform-provider-sshconnection"
 subcategory: ""
 description: |-
-  Starts ssh -N when opened and stops it when the ephemeral resource is closed. SSH must be available on PATH.
+  Starts ssh -N and waits up to 60 seconds for authentication, local listeners, and server acknowledgement of remote
+  forwards. Stops SSH on failure, cancellation, or close. Readiness does not check the services behind the forwards. SSH
+  must be available on PATH. User and system SSH configuration files are disabled with -F none; specify connection
+  settings in Terraform.
 ---
 
 # sshconnection_connection (Ephemeral Resource)
 
-Starts `ssh -N` when opened and stops it when the ephemeral resource is closed. SSH must be available on `PATH`.
+Starts `ssh -N` and waits up to 60 seconds for authentication, local listeners, and server acknowledgement of remote
+forwards. Stops SSH on failure, cancellation, or close. Readiness does not check the services behind the forwards. SSH
+must be available on `PATH`. User and system SSH configuration files are disabled with `-F none`; specify connection
+settings in Terraform.
 
 
 
@@ -23,19 +29,19 @@ Starts `ssh -N` when opened and stops it when the ephemeral resource is closed. 
 
 - `agent_connection_forwarding` (Boolean) Enable (`-A`) or explicitly disable (`-a`) authentication-agent forwarding. Defaults to false.
 - `cipher_spec` (List of String) Ordered cipher list, passed to `-c` as a comma-separated value.
-- `config_file` (String) Alternative SSH client configuration file (`-F`).
+- `config_file` (String, Deprecated) Deprecated. Only `none` is accepted; SSH always runs with `-F none` and ignores user and system configuration files.
 - `identity_file` (String) Identity file (`-i`).
 - `ip_version` (String) IP family: `default` (the default), `ipv4`, or `ipv6`.
 - `jump_host` (Block List) Optional jump host (`-J`). (see [below for nested schema](#nestedblock--jump_host))
 - `listen` (Block List) Repeatable local TCP forwarding (`-L`). (see [below for nested schema](#nestedblock--listen))
-- `log_file` (String) File to receive SSH debug logs (`-E`).
+- `log_file` (String) Append a copy of internal SSH debug logs to this file. The provider writes the file; it does not pass -E to SSH.
 - `login_name` (String) Remote login name (`-l`).
 - `mac_spec` (List of String) Ordered MAC list, passed to `-m` as a comma-separated value.
 - `port` (Number) SSH server port (`-p`).
 - `pty_allocation` (Boolean) Force (`-t`) or disable (`-T`) pseudo-terminal allocation. Defaults to false.
-- `quiet` (Boolean) Enable quiet mode (`-q`). Defaults to false.
+- `quiet` (Boolean) Compatibility setting. Routine SSH output is always captured internally, regardless of this value. Readiness diagnostics, failure details, and log_file copies remain available.
 - `remote_listen` (Block List) Repeatable remote TCP forwarding (`-R`). (see [below for nested schema](#nestedblock--remote_listen))
-- `ssh_option` (Block List) Repeatable option (`-o Name=Value`) (see [below for nested schema](#nestedblock--ssh_option))
+- `ssh_option` (Block List) Repeatable option (`-o Name=Value`). Conflicts with required settings are rejected: LogLevel=DEBUG1, ExitOnForwardFailure=yes, ForkAfterAuthentication=no, ControlMaster=no, ControlPath=none, ControlPersist=no, BatchMode=yes, ClearAllForwardings=no, SessionType=none. Include, Host, and Match are unsupported. (see [below for nested schema](#nestedblock--ssh_option))
 
 <a id="nestedblock--jump_host"></a>
 ### Nested Schema for `jump_host`

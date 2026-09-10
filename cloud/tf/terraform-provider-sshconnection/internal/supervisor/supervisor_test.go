@@ -4,6 +4,7 @@ package supervisor
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,6 +28,8 @@ func TestRunKillsSSHWhenKeepaliveCloses(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer func() { _ = reader.Close() }()
+	defer func() { _ = writer.Close() }()
 	done := make(chan error, 1)
 	go func() { done <- Run(reader, []string{"ignored"}) }()
 
@@ -62,5 +65,37 @@ func TestRunKillsSSHWhenKeepaliveCloses(t *testing.T) {
 
 	if err := syscall.Kill(pid, 0); !errors.Is(err, syscall.ESRCH) {
 		t.Fatalf("SSH process %d is still running", pid)
+	}
+}
+
+func TestRunStartupFailure(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+	if err := Run(strings.NewReader(""), nil); err == nil {
+		t.Fatal("missing SSH did not fail")
+	}
+}
+
+func TestRunNaturalExit(t *testing.T) {
+	for _, status := range []string{"0", "7"} {
+		t.Run(status, func(t *testing.T) {
+			dir := t.TempDir()
+			if err := os.WriteFile(filepath.Join(dir, "ssh"), []byte("#!/bin/sh\nexit "+status+"\n"), 0755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PATH", dir)
+			reader, writer := io.Pipe()
+			defer func() { _ = reader.Close() }()
+			defer func() { _ = writer.Close() }()
+			done := make(chan error, 1)
+			go func() { done <- Run(reader, nil) }()
+			select {
+			case err := <-done:
+				if (err != nil) != (status != "0") {
+					t.Fatalf("status %s: %v", status, err)
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatal("supervisor waited for pipe after SSH exited")
+			}
+		})
 	}
 }

@@ -6,6 +6,10 @@ build/terraform-provider-sshconnection: $(GO_FILES)
 test:
 	go test ./...
 
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
 install_local:
 	./install-local.sh
 

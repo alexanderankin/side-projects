@@ -4,155 +4,139 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
-	"strconv"
+	"encoding/json"
 	"sync"
 	"time"
 
 	"github.com/toor/terraform-provider-ssh-connection/internal/connection"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
-	"github.com/hashicorp/terraform-plugin-framework/ephemeral/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const processKey = "ssh_connection_provider_process_id"
+// Keep this private key for compatibility. Its value is a random token, not a PID.
+const connectionKey = "ssh_connection_provider_process_id"
+const startupTimeout = 60 * time.Second
 
 var _ ephemeral.EphemeralResource = (*sshConnectionResource)(nil)
+var _ ephemeral.EphemeralResourceWithValidateConfig = (*sshConnectionResource)(nil)
 var _ ephemeral.EphemeralResourceWithClose = (*sshConnectionResource)(nil)
 
 type sshConnectionResource struct {
-	mu        sync.Mutex
-	processes map[string]connection.Connection
-	start     func(context.Context, connection.Model) (connection.Connection, error)
+	// Terraform can open/close different instances concurrently. Protect only
+	// the token lookup; never hold this lock while waiting for SSH to stop.
+	mu          sync.Mutex
+	connections map[string]connection.Connection
+	start       func(context.Context, connection.Model) (connection.Connection, error)
 }
-
-type sshConnectionModel = connection.Model
 
 func NewSSHConnection() ephemeral.EphemeralResource {
-	return &sshConnectionResource{processes: make(map[string]connection.Connection), start: connection.StartCLI}
+	return &sshConnectionResource{connections: make(map[string]connection.Connection), start: connection.StartSupervisor}
 }
 
-func (r *sshConnectionResource) Metadata(_ context.Context, req ephemeral.MetadataRequest, resp *ephemeral.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_connection"
+func (resource *sshConnectionResource) Metadata(_ context.Context, request ephemeral.MetadataRequest, response *ephemeral.MetadataResponse) {
+	response.TypeName = request.ProviderTypeName + "_connection"
 }
 
-func (r *sshConnectionResource) Schema(_ context.Context, _ ephemeral.SchemaRequest, resp *ephemeral.SchemaResponse) {
-	forwardAttributes := map[string]schema.Attribute{
-		"bind_address": schema.StringAttribute{Optional: true, MarkdownDescription: "Address on which SSH listens. Omit it to use the SSH default."},
-		"port":         schema.StringAttribute{Required: true, MarkdownDescription: "Listening TCP port."},
-		"host":         schema.StringAttribute{Required: true, MarkdownDescription: "Destination host reached through the tunnel."},
-		"host_port":    schema.StringAttribute{Required: true, MarkdownDescription: "Destination TCP port."},
-	}
-
-	resp.Schema = schema.Schema{
-		MarkdownDescription: "Starts `ssh -N` and waits up to 60 seconds for authentication, local listeners, and server acknowledgement of remote forwards. Stops SSH on failure, cancellation, or close. Readiness does not check the services behind the forwards. SSH must be available on `PATH`.",
-		Attributes: map[string]schema.Attribute{
-			"destination":                 schema.StringAttribute{Required: true, MarkdownDescription: "SSH destination, such as `user@example.com`. This is the first positional argument."},
-			"identity_file":               schema.StringAttribute{Optional: true, MarkdownDescription: "Identity file (`-i`)."},
-			"port":                        schema.Int64Attribute{Optional: true, MarkdownDescription: "SSH server port (`-p`)."},
-			"login_name":                  schema.StringAttribute{Optional: true, MarkdownDescription: "Remote login name (`-l`)."},
-			"ip_version":                  schema.StringAttribute{Optional: true, MarkdownDescription: "IP family: `default` (the default), `ipv4`, or `ipv6`.", Validators: []validator.String{stringvalidator.OneOf("default", "ipv4", "ipv6")}},
-			"agent_connection_forwarding": schema.BoolAttribute{Optional: true, MarkdownDescription: "Enable (`-A`) or explicitly disable (`-a`) authentication-agent forwarding. Defaults to false."},
-			"cipher_spec":                 schema.ListAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: "Ordered cipher list, passed to `-c` as a comma-separated value."},
-			"log_file":                    schema.StringAttribute{Optional: true, MarkdownDescription: "File to receive SSH debug logs (`-E`)."},
-			"config_file":                 schema.StringAttribute{Optional: true, MarkdownDescription: "Alternative SSH client configuration file (`-F`)."},
-			"mac_spec":                    schema.ListAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: "Ordered MAC list, passed to `-m` as a comma-separated value."},
-			"quiet":                       schema.BoolAttribute{Optional: true, MarkdownDescription: "Suppress routine SSH output. Internal readiness diagnostics and failure details remain available. Defaults to false."},
-			"pty_allocation":              schema.BoolAttribute{Optional: true, MarkdownDescription: "Force (`-t`) or disable (`-T`) pseudo-terminal allocation. Defaults to false."},
-			//"instance_token":              schema.StringAttribute{Computed: true, MarkdownDescription: "internal invocation id"},
-		},
-		Blocks: map[string]schema.Block{
-			"jump_host": schema.ListNestedBlock{
-				MarkdownDescription: "Optional jump host (`-J`).",
-				Validators:          []validator.List{listvalidator.SizeAtMost(1)},
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"jump_host_destination": schema.StringAttribute{Required: true, MarkdownDescription: "SSH jump destination."},
-					},
-				},
-			},
-			"listen": schema.ListNestedBlock{
-				MarkdownDescription: "Repeatable local TCP forwarding (`-L`).",
-				NestedObject:        schema.NestedBlockObject{Attributes: forwardAttributes},
-			},
-			"remote_listen": schema.ListNestedBlock{
-				MarkdownDescription: "Repeatable remote TCP forwarding (`-R`).",
-				NestedObject:        schema.NestedBlockObject{Attributes: forwardAttributes},
-			},
-			"ssh_option": schema.ListNestedBlock{
-				MarkdownDescription: "Repeatable option (`-o Name=Value`)",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name":  schema.StringAttribute{Required: true, MarkdownDescription: "see `man ssh_config`"},
-						"value": schema.StringAttribute{Required: true, MarkdownDescription: "see `man ssh_config`"},
-					},
-				},
-			},
-		},
-	}
-}
-
-func (r *sshConnectionResource) Open(ctx context.Context, req ephemeral.OpenRequest, resp *ephemeral.OpenResponse) {
-	var data sshConnectionModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
+func (resource *sshConnectionResource) Open(ctx context.Context, request ephemeral.OpenRequest, response *ephemeral.OpenResponse) {
+	var model connection.Model
+	response.Diagnostics.Append(request.Config.Get(ctx, &model)...)
+	if response.Diagnostics.HasError() {
 		return
 	}
 
+	response.Diagnostics.Append(connection.Validate(ctx, model)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+
+	// Private data survives from Open to Close, unlike this method's local variables.
 	tokenBytes := make([]byte, 16)
-	if _, err := rand.Read(tokenBytes); err != nil {
-		resp.Diagnostics.AddError("Unable to track SSH process", err.Error())
+	_, err := rand.Read(tokenBytes)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to track SSH connection", err.Error())
 		return
 	}
 	token := hex.EncodeToString(tokenBytes)
-	resp.Diagnostics.Append(resp.Private.SetKey(ctx, processKey, []byte(strconv.Quote(token)))...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	conn, err := r.start(ctx, data)
+	encodedToken, err := json.Marshal(token)
 	if err != nil {
-		resp.Diagnostics.AddError("Unable to start SSH", err.Error())
+		response.Diagnostics.AddError("Unable to track SSH connection", err.Error())
 		return
 	}
-	readyCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
-	defer cancel()
-	if err := conn.WaitReady(readyCtx); err != nil {
-		resp.Diagnostics.AddError("SSH connection did not become ready", err.Error())
-		if closeErr := conn.Close(); closeErr != nil {
-			resp.Diagnostics.AddError("Unable to stop SSH", closeErr.Error())
-		}
+	response.Diagnostics.Append(response.Private.SetKey(ctx, connectionKey, encodedToken)...)
+	if response.Diagnostics.HasError() {
 		return
 	}
 
-	r.mu.Lock()
-	r.processes[token] = conn
-	r.mu.Unlock()
+	runningConnection, err := resource.start(ctx, model)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to start SSH", err.Error())
+		return
+	}
+	// Until registration succeeds, any return path must stop the new connection.
+	registered := false
+	defer func() {
+		if !registered {
+			err := runningConnection.Close()
+			if err != nil {
+				response.Diagnostics.AddError("Unable to stop SSH", err.Error())
+			}
+		}
+	}()
+	readyCtx, cancel := context.WithTimeout(ctx, startupTimeout)
+	defer cancel()
+	err = runningConnection.WaitReady(readyCtx)
+	if err != nil {
+		response.Diagnostics.AddError("SSH connection did not become ready", err.Error())
+		return
+	}
+
+	resource.mu.Lock()
+	defer resource.mu.Unlock()
+	// A cancellation can arrive just as WaitReady succeeds.
+	err = readyCtx.Err()
+	if err != nil {
+		response.Diagnostics.AddError("SSH connection opening was canceled", err.Error())
+		return
+	}
+	resource.connections[token] = runningConnection
+	registered = true
 }
 
-func (r *sshConnectionResource) Close(ctx context.Context, req ephemeral.CloseRequest, resp *ephemeral.CloseResponse) {
-	raw, diags := req.Private.GetKey(ctx, processKey)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || len(raw) == 0 {
+func (resource *sshConnectionResource) Close(ctx context.Context, request ephemeral.CloseRequest, response *ephemeral.CloseResponse) {
+	raw, diagnostics := request.Private.GetKey(ctx, connectionKey)
+	response.Diagnostics.Append(diagnostics...)
+	if response.Diagnostics.HasError() || len(raw) == 0 {
 		return
 	}
 	var token string
-	if _, err := fmt.Sscanf(string(raw), "%q", &token); err != nil {
-		resp.Diagnostics.AddError("Unable to identify SSH process", err.Error())
+	err := json.Unmarshal(raw, &token)
+	if err != nil {
+		response.Diagnostics.AddError("Unable to identify SSH connection", err.Error())
 		return
 	}
-	r.mu.Lock()
-	process, ok := r.processes[token]
-	delete(r.processes, token)
-	r.mu.Unlock()
+	if token == "" {
+		response.Diagnostics.AddError("Unable to identify SSH connection", "The private connection token is empty or null.")
+		return
+	}
+	resource.mu.Lock()
+	runningConnection, ok := resource.connections[token]
+	delete(resource.connections, token)
+	resource.mu.Unlock()
 	if !ok {
 		return
 	}
-	if err := process.Close(); err != nil {
-		resp.Diagnostics.AddError("Unable to stop SSH", err.Error())
+	err = runningConnection.Close()
+	if err != nil {
+		response.Diagnostics.AddError("Unable to stop SSH", err.Error())
 	}
+}
+
+// ValidateConfig runs during planning too, when some expressions are unknown.
+func (resource *sshConnectionResource) ValidateConfig(ctx context.Context, request ephemeral.ValidateConfigRequest, response *ephemeral.ValidateConfigResponse) {
+	var model connection.Model
+	response.Diagnostics.Append(request.Config.Get(ctx, &model)...)
+	if response.Diagnostics.HasError() {
+		return
+	}
+	response.Diagnostics.Append(connection.Validate(ctx, model)...)
 }

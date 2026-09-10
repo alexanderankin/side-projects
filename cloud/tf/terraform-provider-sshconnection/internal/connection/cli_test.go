@@ -40,11 +40,12 @@ func TestCLIReadiness(t *testing.T) {
 	}
 
 	for _, scenario := range []struct {
-		name                             string
-		remote, reject, occupied, cancel bool
+		name                                           string
+		remote, reject, occupied, cancel, customOption bool
 	}{
 		{name: "local_forward"},
 		{name: "delayed_remote_forward", remote: true},
+		{name: "remote_forward_via_custom_option", remote: true, customOption: true},
 		{name: "remote_forward_denied", remote: true, reject: true},
 		{name: "local_port_already_owned", occupied: true},
 		{name: "cancel_while_remote_forward_pending", remote: true, cancel: true},
@@ -54,7 +55,7 @@ func TestCLIReadiness(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer server.Close()
+			defer func() { _ = server.Close() }()
 			forward, err := net.Listen("tcp", "127.0.0.1:0")
 			if err != nil {
 				t.Fatal(err)
@@ -63,7 +64,7 @@ func TestCLIReadiness(t *testing.T) {
 			if !scenario.occupied {
 				_ = forward.Close()
 			}
-			defer forward.Close()
+			defer func() { _ = forward.Close() }()
 			pending := make(chan struct{})
 			release := make(chan struct{})
 			defer close(release)
@@ -74,14 +75,14 @@ func TestCLIReadiness(t *testing.T) {
 				if err != nil {
 					return
 				}
-				defer raw.Close()
+				defer func() { _ = raw.Close() }()
 				config := &ssh.ServerConfig{NoClientAuth: true}
 				config.AddHostKey(signer)
 				conn, channels, requests, err := ssh.NewServerConn(raw, config)
 				if err != nil {
 					return
 				}
-				defer conn.Close()
+				defer func() { _ = conn.Close() }()
 				disconnected := make(chan struct{})
 				go func() { _ = conn.Wait(); close(disconnected) }()
 				go func() {
@@ -136,13 +137,19 @@ func TestCLIReadiness(t *testing.T) {
 			}
 			if scenario.remote {
 				forwardModel.Port = types.StringValue("18081")
-				model.RemoteListen = listValue(forwardTypes, []listenModel{forwardModel})
+				if scenario.customOption {
+					extraOption := optionList(t, sshOptionModel{Name: types.StringValue("RemoteForward"), Value: types.StringValue("18081 target:80")})
+					elements := append(model.SSHOptions.Elements(), extraOption.Elements()...)
+					model.SSHOptions, _ = types.ListValue(model.SSHOptions.ElementType(context.Background()), elements)
+				} else {
+					model.RemoteListen = listValue(forwardTypes, []listenModel{forwardModel})
+				}
 			}
-			conn, err := startCLI(context.Background(), executable, model)
+			conn, err := startSupervisor(context.Background(), executable, model)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			ready := make(chan error, 1)
