@@ -6,12 +6,16 @@ all: ipxe/src/bin/ipxe.pxe ipxe/src/bin-x86_64-efi/ipxe.efi
 ipxe/.git/HEAD:
 	git clone https://github.com/ipxe/ipxe.git
 
-prepare: ipxe/.git/HEAD
+.PHONY: prepare
+prepare: ipxe/.git/.prepared
+
+ipxe/.git/.prepared: ipxe/.git/HEAD
 	git -C ipxe cat-file -e $(IPXE_COMMIT)^{commit} || git -C ipxe fetch origin $(IPXE_COMMIT)
 	git -C ipxe checkout --detach $(IPXE_COMMIT)
+	touch $@
 
 # Use the same bootstrap for embedded local builds and external autoexec.ipxe.
-ipxe/src/embed.ipxe: embed.pxe | ipxe/.git/HEAD
+ipxe/src/embed.ipxe: embed.ipxe | ipxe/.git/HEAD
 	cp $< $@
 
 ipxe/src/bin/ipxe.pxe: prepare ipxe/src/embed.ipxe

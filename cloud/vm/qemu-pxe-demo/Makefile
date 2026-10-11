@@ -1,16 +1,27 @@
 .PHONY: all
 all: run_raw_image_boot
 
+.PHONY: physical
+physical: ubuntu ipxe_scripts ipxe_pxe
+
 build/disk.img:
 	@mkdir -p build
 	qemu-img create -f qcow2 $@ 20G
 
 .PHONY: build_ipxe-embedded
 build_ipxe-embedded:
-	$(MAKE) -C ipxe-embedded
+	$(MAKE) -j -C ipxe-embedded
 
 .PHONY: ipxe_pxe
 ipxe_pxe: build/ipxe.pxe build/ipxe.efi
+
+#build/ipxe.pxe:
+#	@mkdir -p build
+#	@cd build; wget -N 'https://boot.ipxe.org/ipxe.pxe'
+#
+#build/ipxe.efi:
+#	@mkdir -p build
+#	@cd build; wget -N 'https://boot.ipxe.org/x86_64-efi/ipxe.efi'
 
 build/ipxe.pxe: build_ipxe-embedded
 	@mkdir -p build
@@ -101,7 +112,7 @@ build/autoinstall/meta-data: autoinstall/meta-data
 .PHONY: ipxe_scripts
 ipxe_scripts: build/autoexec.ipxe build/boot.ipxe build/arch.ipxe
 
-build/autoexec.ipxe: ipxe-embedded/embed.pxe
+build/autoexec.ipxe: ipxe-embedded/embed.ipxe
 	@mkdir -p build
 	cp $< $@
 
@@ -148,3 +159,4 @@ clean: stop_server
 	@mkdir -p build
 	find build -mindepth 1 -not -path '*.iso' -not -path '*.img' -not -path '*-generic' -delete
 	rm -vf build/disk.img
+	make -C ipxe-embedded clean
