@@ -9,10 +9,17 @@ build/disk.img:
 build_ipxe-embedded:
 	$(MAKE) -C ipxe-embedded
 
+.PHONY: ipxe_pxe
+ipxe: build/ipxe.pxe build/ipxe.efi
+
 build/ipxe.pxe: build_ipxe-embedded
 	@mkdir -p build
 	@#cd build; wget -N 'https://boot.ipxe.org/ipxe.pxe'
 	cp ipxe-embedded/ipxe/src/bin/ipxe.pxe $@
+
+build/ipxe.efi: build_ipxe-embedded
+	@mkdir -p build
+	cp ipxe-embedded/ipxe/src/bin-x86_64-efi/ipxe.efi $@
 
 .PHONY: uefi
 uefi: build/code build/vars
@@ -106,20 +113,20 @@ build/arch.ipxe: arch.ipxe
 #	cp /usr/lib/syslinux/memdisk $@
 
 .PHONY: run_raw_image_boot
-run_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
+run_raw_image_boot: build/disk.img ipxe_pxe ipxe_scripts ubuntu start_server
 	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu/' -i build/boot.ipxe
 	./single-host.sh
 
 .PHONY: run_offline_raw_image_boot
-run_offline_raw_image_boot: build/disk.img build/ipxe.pxe ipxe_scripts ubuntu start_server
+run_offline_raw_image_boot: build/disk.img ipxe_pxe ipxe_scripts ubuntu start_server
 	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu/' -i build/boot.ipxe
 	sed -e 's#http://$${next-server}:8000#http://10.0.2.100:8000#g' -i build/boot.ipxe
 	./single-host.sh restrict
 
 .PHONY: run_iso_install
-run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
+run_iso_install: build/disk.img ipxe_pxe ipxe_scripts build/ubuntu-26.04-live-server-amd64.iso build/installer-vmlinuz build/installer-initrd build/autoinstall/user-data build/autoinstall/meta-data start_server
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-iso/' -i build/boot.ipxe
 	./single-host.sh
 
