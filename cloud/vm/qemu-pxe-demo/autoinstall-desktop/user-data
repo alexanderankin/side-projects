@@ -21,5 +21,5 @@ autoinstall:
   storage:
     layout:
       name: direct
-  # The demo always boots from PXE; power off instead of reinstalling on reboot.
-  shutdown: poweroff
+  # # The demo always boots from PXE; power off instead of reinstalling on reboot.
+  # shutdown: poweroff
