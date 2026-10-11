@@ -10,7 +10,7 @@ build_ipxe-embedded:
 	$(MAKE) -C ipxe-embedded
 
 .PHONY: ipxe_pxe
-ipxe: build/ipxe.pxe build/ipxe.efi
+ipxe_pxe: build/ipxe.pxe build/ipxe.efi
 
 build/ipxe.pxe: build_ipxe-embedded
 	@mkdir -p build
@@ -99,12 +99,18 @@ build/autoinstall/meta-data: autoinstall/meta-data
 	cp $< $@
 
 .PHONY: ipxe_scripts
-ipxe_scripts: build/boot.ipxe build/arch.ipxe
+ipxe_scripts: build/autoexec.ipxe build/boot.ipxe build/arch.ipxe
+
+build/autoexec.ipxe: ipxe-embedded/embed.pxe
+	@mkdir -p build
+	cp $< $@
 
 build/boot.ipxe: boot.ipxe
+	@mkdir -p build
 	cp $< $@
 
 build/arch.ipxe: arch.ipxe
+	@mkdir -p build
 	cp $< $@
 
 #build/memdisk:
