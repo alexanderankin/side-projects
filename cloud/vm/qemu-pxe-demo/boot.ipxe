@@ -34,14 +34,13 @@ initrd tftp://${next-server}/deploy-overlay.cpio.gz
 boot || goto failed
 
 :ubuntu-iso
-kernel tftp://${next-server}/server-installer-vmlinuz initrd=server-installer-initrd ip=dhcp url=http://${next-server}:8000/ubuntu-26.04-live-server-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net\;s=http://${next-server}:8000/autoinstall/ console=ttyS0,115200n8 ---
+kernel tftp://${next-server}/server-installer-vmlinuz initrd=server-installer-initrd ip=dhcp url=http://${next-server}:8000/ubuntu-26.04-live-server-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net;s=http://${next-server}:8000/autoinstall/ console=ttyS0,115200n8 ---
 initrd --name server-installer-initrd tftp://${next-server}/server-installer-initrd
 boot || goto failed
 
 :ubuntu-desktop
-kernel tftp://${next-server}/desktop-installer-vmlinuz initrd=desktop-installer-initrd boot=casper ip=dhcp netboot=nfs nfsroot=${next-server}:/exports autoinstall cloud-config-url=/dev/null ds=nocloud-net\;s=http://${next-server}:8000/autoinstall-desktop/ console=tty0 console=ttyS0,115200n8 ---
+kernel tftp://${next-server}/desktop-installer-vmlinuz initrd=desktop-installer-initrd boot=casper noprompt ip=dhcp iso-url=http://${next-server}:8000/ubuntu-26.04-desktop-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net;s=http://${next-server}:8000/autoinstall-desktop/ console=tty0 console=ttyS0,115200n8 ---
 initrd --name desktop-installer-initrd tftp://${next-server}/desktop-installer-initrd
-initrd tftp://${next-server}/desktop-nfs-overlay.cpio.gz
 boot || goto failed
 
 :failed

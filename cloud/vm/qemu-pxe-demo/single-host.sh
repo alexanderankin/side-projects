@@ -58,7 +58,7 @@ esac
 
 # deliberately only boot to network: test ipxe
 
-net_dev_modifier=',guestfwd=tcp:10.0.2.100:111-tcp:127.0.0.1:30111,guestfwd=tcp:10.0.2.100:2049-tcp:127.0.0.1:32049,guestfwd=tcp:10.0.2.100:20048-tcp:127.0.0.1:30048'
+net_dev_modifier=
 if [[ "${1:-}" == "restrict" ]]
 then
   net_dev_modifier+=',restrict=on,guestfwd=tcp:10.0.2.100:8000-tcp:127.0.0.1:8000'
@@ -73,11 +73,11 @@ esac
 #  -drive if=pflash,unit=1,format=raw,file=build/vars \
 #  -nodefaults \
 exec "${qemu_system[@]}" \
-  -smp 4 -m 8192 \
+  -smp 4 -m "${MEMORY:-8192}" \
   -drive file="${DISK_IMAGE:-build/disk.img}",format=qcow2,if=virtio \
   -nodefaults -vga virtio \
   -boot n \
-  -device e1000,netdev=n1 \
+  -device "${NIC_MODEL:-e1000}",netdev=n1 \
   -netdev user,id=n1,tftp=build,bootfile=/ipxe.pxe${net_dev_modifier} \
   -display ${display} -serial mon:stdio
 #  -display curses

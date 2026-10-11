@@ -162,20 +162,19 @@ run_iso_install: build/disk.img build/ipxe.pxe ipxe_scripts build/ubuntu-26.04-l
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-iso/' -i build/boot.ipxe
 	./single-host.sh
 
+# HTTP ISO boot holds the Desktop ISO in RAM; allocate 16 GiB for these runs.
 .PHONY: run_desktop_iso_install
-run_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-nfs-overlay.cpio.gz build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data build/autoinstall-desktop/network-config start_server start_nfs_server
+run_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data build/autoinstall-desktop/network-config start_server
 	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-desktop/' -i build/boot.ipxe
-	sed -e 's#$${next-server}:/exports#10.0.2.100:/exports#g' -i build/boot.ipxe
-	DISK_IMAGE=build/desktop-disk.img ./single-host.sh
+	NIC_MODEL=virtio-net-pci MEMORY=16384 DISK_IMAGE=build/desktop-disk.img ./single-host.sh
 
 .PHONY: run_offline_desktop_iso_install
-run_offline_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-nfs-overlay.cpio.gz build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data start_server start_nfs_server
+run_offline_desktop_iso_install: build/desktop-disk.img build/ipxe.pxe ipxe_scripts build/desktop-installer-vmlinuz build/desktop-installer-initrd build/autoinstall-desktop/user-data build/autoinstall-desktop/meta-data build/autoinstall-desktop/network-config start_server
 	@cp *.ipxe build/ # hacks - todo fixme
 	sed -e 's/^set default-choice .*/set default-choice ubuntu-desktop/' -i build/boot.ipxe
 	sed -e 's#http://$${next-server}:8000#http://10.0.2.100:8000#g' -i build/boot.ipxe
-	sed -e 's#$${next-server}:/#10.0.2.100:/#g' -i build/boot.ipxe
-	DISK_IMAGE=build/desktop-disk.img ./single-host.sh restrict
+	NIC_MODEL=virtio-net-pci MEMORY=16384 DISK_IMAGE=build/desktop-disk.img ./single-host.sh restrict
 
 SERVER_NAME ?= qemu-pxe-demo-server
 build/server:

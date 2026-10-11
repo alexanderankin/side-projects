@@ -1,6 +1,7 @@
 #cloud-config
 autoinstall:
   version: 1
+  interactive-sections: []
   locale: en_US.UTF-8
   keyboard:
     layout: us
@@ -20,3 +21,5 @@ autoinstall:
   storage:
     layout:
       name: direct
+  # The demo always boots from PXE; power off instead of reinstalling on reboot.
+  shutdown: poweroff
