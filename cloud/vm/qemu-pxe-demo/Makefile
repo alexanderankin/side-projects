@@ -9,6 +9,44 @@ build/desktop-disk.img:
 	@mkdir -p build
 	qemu-img create -f qcow2 $@ 32G
 
+DESKTOP_SOURCE ?= build/desktop-disk.img
+DESKTOP_TARGET ?= build/desktop-flashed-disk.img
+DESKTOP_IMAGE_TOOLS ?= qemu-pxe-demo-desktop-image-tools
+
+build/desktop-image-tools: desktop-image/Dockerfile desktop-image/prepare.py
+	@mkdir -p build
+	docker build --platform linux/amd64 -t $(DESKTOP_IMAGE_TOOLS) -f desktop-image/Dockerfile desktop-image
+	touch $@
+
+.PHONY: capture_desktop_image
+capture_desktop_image: build/desktop-image-tools
+	python3 desktop-image/capture.py --source "$(DESKTOP_SOURCE)" --tools-image "$(DESKTOP_IMAGE_TOOLS)"
+
+build/desktop-image.ipxe:
+	@echo 'No cached Desktop image. Finish the installer VM, then run make capture_desktop_image.' >&2
+	@exit 1
+
+build/desktop-deploy-overlay.cpio.gz: desktop-initrd/deploy-desktop-image desktop-image/user-data desktop-image/build-overlay.sh deploy-initrd/udhcpc-script build/desktop-image-tools
+	docker run --rm --platform linux/amd64 -v "$(CURDIR):/repo" \
+	  -e OUTPUT_UID=$$(id -u) -e OUTPUT_GID=$$(id -g) \
+	  $(DESKTOP_IMAGE_TOOLS) bash /repo/desktop-image/build-overlay.sh
+
+$(DESKTOP_TARGET):
+	@mkdir -p "$(@D)"
+	qemu-img create -f qcow2 "$@" 32G
+
+.PHONY: run_desktop_image_boot
+run_desktop_image_boot: $(DESKTOP_TARGET) build/ipxe.pxe ipxe_scripts build/desktop-image.ipxe build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-deploy-overlay.cpio.gz start_server
+	@test "$$(realpath "$(DESKTOP_SOURCE)")" != "$$(realpath "$(DESKTOP_TARGET)")" || { echo 'Desktop source and target must differ.' >&2; exit 1; }
+	@cp *.ipxe build/
+	sed -e 's/^set default-choice .*/set default-choice desktop-image/' -i build/boot.ipxe
+	BOOT_CONFIG=order=c,once=n DRIVE_OPTIONS=,discard=unmap,detect-zeroes=unmap \
+	  NIC_MODEL=virtio-net-pci MEMORY=4096 DISK_IMAGE="$(DESKTOP_TARGET)" ./single-host.sh
+
+.PHONY: test_desktop_image_deploy
+test_desktop_image_deploy: build/desktop-installer-vmlinuz build/desktop-installer-initrd build/desktop-deploy-overlay.cpio.gz
+	python3 desktop-image/test-deploy.py
+
 ipxe-embedded/ipxe/src/bin/ipxe.pxe:
 	$(MAKE) -C ipxe-embedded
 

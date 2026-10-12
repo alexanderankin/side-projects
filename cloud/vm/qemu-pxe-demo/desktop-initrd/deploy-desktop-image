@@ -1,0 +1,145 @@
+#!/desktop-tools/busybox sh
+# Dedicated PID 1: flash once, then reboot into the disk's own bootloader.
+set -eu
+set -o pipefail
+bb=/desktop-tools/busybox
+check_dir=/run/deploy-target
+marker=/etc/qemu-pxe-desktop-image
+target_disk=/dev/vda
+image_url=
+image_version=
+image_bytes=
+root_partition=
+hash_pid=
+count_pid=
+
+rescue() {
+    trap - EXIT INT TERM
+    [ -z "$hash_pid" ] || $bb kill "$hash_pid" 2>/dev/null || true
+    [ -z "$count_pid" ] || $bb kill "$count_pid" 2>/dev/null || true
+    $bb umount "$check_dir" 2>/dev/null || true
+    echo 'Desktop deployment stopped; no completion marker was written.'
+    echo 'A partially written disk must be wiped manually before retrying.'
+    while :; do $bb sh </dev/console >/dev/console 2>&1; done
+}
+trap rescue EXIT INT TERM
+
+die() { echo "desktop-deploy: $*" >&2; exit 1; }
+boot_local() {
+    $bb sync
+    trap - EXIT INT TERM
+    $bb reboot -f
+    while :; do $bb sleep 1; done
+}
+
+# /proc may not exist yet because rdinit bypasses the stock /init.
+$bb mkdir -p /proc /sys /dev /run
+$bb mount -t proc proc /proc
+$bb mount -t sysfs sysfs /sys
+$bb mount -t devtmpfs devtmpfs /dev
+$bb mount -t tmpfs tmpfs /run
+$bb mkdir -p "$check_dir"
+for argument in $($bb cat /proc/cmdline); do
+    case "$argument" in
+        desktop-image-url=*) image_url=${argument#*=} ;;
+        desktop-image-version=*) image_version=${argument#*=} ;;
+        desktop-image-bytes=*) image_bytes=${argument#*=} ;;
+        desktop-root-partition=*) root_partition=${argument#*=} ;;
+    esac
+done
+
+attempt=0
+until [ -b "$target_disk" ]; do
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 100 ] || die "target disk did not appear"
+    $bb sleep 0.1
+done
+
+# Look on every partition, independent of the current template's layout/version.
+# noload prevents an ext4 journal replay during the no-write path.
+for partition in "$target_disk"[0-9]*; do
+    [ -b "$partition" ] || continue
+    if $bb mount -t ext4 -o ro,noload "$partition" "$check_dir" 2>/dev/null; then
+        if [ -f "$check_dir$marker" ] &&
+           $bb grep -qx 'desktop-image-v1' "$check_dir$marker"; then
+            $bb umount "$check_dir"
+            echo 'Desktop was already flashed; leaving this disk untouched.'
+            boot_local
+        fi
+        $bb umount "$check_dir"
+    fi
+done
+
+case "$image_url" in http://*|https://*) ;; *) die 'missing HTTP image URL' ;; esac
+[ "${#image_version}" = 64 ] || die 'invalid image checksum'
+case "$image_version" in *[!a-f0-9]*) die 'invalid image checksum' ;; esac
+case "$image_bytes" in ''|*[!0-9]*) die 'invalid image size' ;; esac
+case "$root_partition" in ''|*[!0-9]*) die 'invalid root partition' ;; esac
+[ "$root_partition" -gt 0 ] && [ "$root_partition" -le 128 ] || die 'invalid root partition'
+[ "$image_bytes" -gt 0 ] && [ $((image_bytes % 4194304)) -eq 0 ] || die 'unaligned image size'
+disk_bytes=$($bb blockdev --getsize64 "$target_disk")
+[ "$disk_bytes" -ge "$image_bytes" ] || die 'target disk is too small'
+
+# Require a fully zeroed disk, not merely absent partition signatures.
+echo "Checking that $target_disk is blank ($disk_bytes bytes)..."
+if ! {
+    $bb dd if=/dev/zero bs=1048576 count=$((disk_bytes / 1048576)) 2>/dev/null
+    $bb dd if=/dev/zero bs=512 count=$(((disk_bytes % 1048576) / 512)) 2>/dev/null
+} | $bb cmp - "$target_disk"; then
+    die 'unmarked, nonempty disk: wipe it manually before flashing'
+fi
+
+interface=
+for candidate in /sys/class/net/*; do
+    candidate=${candidate##*/}
+    [ "$candidate" = lo ] || { interface=$candidate; break; }
+done
+[ -n "$interface" ] || die 'no network interface'
+$bb ip link set "$interface" up
+$bb udhcpc -q -n -t 10 -i "$interface" -s /desktop-tools/udhcpc-script
+
+$bb mkfifo /run/image-hash /run/image-count
+$bb sha256sum </run/image-hash >/run/image.sha256 &
+hash_pid=$!
+# Count complete 4 MiB records: small BusyBox wc builds can overflow at 4 GiB.
+$bb dd of=/dev/null bs=4M iflag=fullblock </run/image-count 2>/run/image.records &
+count_pid=$!
+echo "Flashing Desktop from $image_url"
+$bb wget -O - "$image_url" |
+    $bb tee /run/image-hash |
+    $bb gzip -dc |
+    $bb tee /run/image-count |
+    $bb dd of="$target_disk" bs=4M iflag=fullblock count=$((image_bytes / 4194304))
+wait "$hash_pid"
+hash_pid=
+wait "$count_pid"
+count_pid=
+actual_hash=$($bb cut -d ' ' -f 1 /run/image.sha256)
+read -r actual_records remainder </run/image.records
+[ "$actual_hash" = "$image_version" ] || die 'image checksum mismatch'
+[ "$actual_records" = "$((image_bytes / 4194304))+0" ] ||
+    die "image decompressed to an unexpected size ($actual_records records)"
+$bb sync
+$bb blockdev --rereadpt "$target_disk"
+target_root=${target_disk}${root_partition}
+attempt=0
+until [ -b "$target_root" ]; do
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 100 ] || die 'root partition did not appear'
+    $bb sleep 0.1
+done
+$bb mount -t ext4 "$target_root" "$check_dir"
+$bb grep -qx 'ID=ubuntu' "$check_dir/etc/os-release" || die 'flashed root is not Ubuntu'
+[ -f "$check_dir/boot/grub/grub.cfg" ] || die 'flashed root has no GRUB configuration'
+[ -f "$check_dir/usr/bin/cloud-init" ] || die 'flashed root has no cloud-init'
+$bb mkdir -p "$check_dir/var/lib/cloud/seed/nocloud"
+$bb cp /desktop-tools/user-data "$check_dir/var/lib/cloud/seed/nocloud/user-data"
+instance_id=$($bb cat /proc/sys/kernel/random/uuid)
+printf 'instance-id: desktop-%s\nlocal-hostname: flashed-ubuntu\n' "$instance_id" \
+    >"$check_dir/var/lib/cloud/seed/nocloud/meta-data"
+printf 'desktop-image-v1\nsha256=%s\ninstance-id=desktop-%s\n' "$image_version" "$instance_id" \
+    >"$check_dir$marker"
+$bb sync
+$bb umount "$check_dir"
+echo 'Desktop flashed successfully; rebooting into the local installation.'
+boot_local

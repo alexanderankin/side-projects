@@ -11,15 +11,20 @@ autoinstall:
     id: ubuntu-desktop
     search_drivers: false
   identity:
-    hostname: ubuntu-desktop
+    hostname: autoinstalled-ubuntu
     username: ubuntu
     # Demo password: ubuntu
     password: '$6$qemu-demo$.zRBsXSmsJH.F64fxshwfg0Wt33sIWjrOnij8TeNlb//a8hNYw1Rlf6e61Z9O6gTwn4rvH.HUXdELvyPsUH7s1'
   ssh:
     install-server: true
     allow-pw: true
+  packages:
+    - cloud-init
+  late-commands:
+    - curtin in-target -- cloud-init clean --logs --machine-id --seed
+    - curtin in-target -- rm -f /etc/cloud/cloud-init.disabled
   storage:
     layout:
       name: direct
-  # # The demo always boots from PXE; power off instead of reinstalling on reboot.
-  # shutdown: poweroff
+  # Finish the template before its first normal boot, ready for offline capture.
+  shutdown: poweroff

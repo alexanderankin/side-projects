@@ -14,6 +14,7 @@ item --gap --    ------------------------- Operating systems -------------------
 item ubuntu          Deploy/boot Ubuntu cloud image
 item ubuntu-iso      Install Ubuntu Server unattended
 item ubuntu-desktop  Install Ubuntu Desktop unattended
+item desktop-image   Flash cached Ubuntu Desktop (once per disk)
 item --gap --    ------------------------------ Utilities ---------------------------------
 item shell       Enter iPXE shell
 item reboot      Reboot
@@ -41,6 +42,13 @@ boot || goto failed
 :ubuntu-desktop
 kernel tftp://${next-server}/desktop-installer-vmlinuz initrd=desktop-installer-initrd boot=casper noprompt ip=dhcp iso-url=http://${next-server}:8000/ubuntu-26.04-desktop-amd64.iso autoinstall cloud-config-url=/dev/null ds=nocloud-net;s=http://${next-server}:8000/autoinstall-desktop/ console=tty0 console=ttyS0,115200n8 ---
 initrd --name desktop-installer-initrd tftp://${next-server}/desktop-installer-initrd
+boot || goto failed
+
+:desktop-image
+chain --autofree tftp://${next-server}/desktop-image.ipxe || goto failed
+kernel tftp://${next-server}/desktop-installer-vmlinuz initrd=desktop-installer-initrd rdinit=/desktop-tools/deploy desktop-image-url=http://${next-server}:8000/${desktop-image-path} desktop-image-version=${desktop-image-version} desktop-image-bytes=${desktop-image-bytes} desktop-root-partition=${desktop-root-partition} console=tty0 console=ttyS0,115200n8
+initrd --name desktop-installer-initrd tftp://${next-server}/desktop-installer-initrd
+initrd tftp://${next-server}/desktop-deploy-overlay.cpio.gz
 boot || goto failed
 
 :failed

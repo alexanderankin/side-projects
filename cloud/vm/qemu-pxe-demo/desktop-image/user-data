@@ -1,0 +1,11 @@
+#cloud-config
+hostname: flashed-ubuntu
+preserve_hostname: false
+manage_etc_hosts: true
+growpart:
+  mode: 'off'
+resize_rootfs: false
+users: []
+ssh_pwauth: true
+ssh_deletekeys: true
+ssh_genkeytypes: [rsa, ecdsa, ed25519]

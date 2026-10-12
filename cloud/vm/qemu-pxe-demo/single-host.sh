@@ -74,9 +74,9 @@ esac
 #  -nodefaults \
 exec "${qemu_system[@]}" \
   -smp 4 -m "${MEMORY:-8192}" \
-  -drive file="${DISK_IMAGE:-build/disk.img}",format=qcow2,if=virtio \
+  -drive file="${DISK_IMAGE:-build/disk.img}",format=qcow2,if=virtio${DRIVE_OPTIONS:-} \
   -nodefaults -vga virtio \
-  -boot n \
+  -boot "${BOOT_CONFIG:-n}" \
   -device "${NIC_MODEL:-e1000}",netdev=n1 \
   -netdev user,id=n1,tftp=build,bootfile=/ipxe.pxe${net_dev_modifier} \
   -display ${display} -serial mon:stdio

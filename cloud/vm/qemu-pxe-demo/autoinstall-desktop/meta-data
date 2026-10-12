@@ -1,2 +1,2 @@
 instance-id: qemu-ubuntu-desktop-autoinstall
-local-hostname: ubuntu-desktop
+local-hostname: autoinstalled-ubuntu
