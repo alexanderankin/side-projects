@@ -1,0 +1,11 @@
+plugins {
+    id 'spring-conventions'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+
+    itestImplementation 'org.testcontainers:testcontainers'
+    itestImplementation 'org.testcontainers:testcontainers-nginx'
+}

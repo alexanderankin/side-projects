@@ -120,6 +120,7 @@ include 'misc:scratch:rxjava3-scratch'
 include 'misc:scratch:scratch-ffi'
 include 'misc:scratch:send-email-mailgun'
 include 'misc:scratch:sentry-demo:sentry-demo-logback-appender'
+include 'misc:scratch:ssl:ssl-security:ssl-security-java'
 include 'misc:scratch:terraform-statefile-scripts'
 
 // android :(((((
