@@ -1,0 +1,154 @@
+// file:noinspection VulnerableLibrariesLocal
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+application.mainClass = 'org.example.ExampleApplication'
+
+boolean creatingCache = Boolean.parseBoolean(findProperty('creatingCache') as String ?: 'true')
+
+if (creatingCache) {
+    repositories.mavenCentral()
+} else {
+    repositories.mavenLocal()
+}
+
+dependencies {
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    implementation platform('org.springframework.cloud:spring-cloud-dependencies:2025.1.4')
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    implementation 'info.picocli:picocli:4.7.7'
+    implementation 'info.picocli:picocli-codegen:4.7.7'
+
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
+    implementation 'org.springframework.boot:spring-boot-micrometer-tracing-brave'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.xerial:sqlite-jdbc:3.53.4.0'
+    implementation 'org.postgresql:postgresql'
+    implementation 'org.liquibase:liquibase-core'
+
+    implementation 'com.fasterxml.uuid:java-uuid-generator:5.2.0'
+    implementation 'org.hibernate.orm:hibernate-core'
+    implementation 'org.hibernate.orm:hibernate-community-dialects'
+    implementation 'org.komamitsu:spring-data-sqlite:1.4.0'
+
+    // commons
+    implementation 'commons-codec:commons-codec:1.23.0'
+    implementation 'commons-io:commons-io:2.22.0'
+    implementation 'commons-net:commons-net:3.13.0'
+    implementation 'org.apache.commons:commons-compress:1.28.0'
+    implementation 'org.apache.commons:commons-collections4:4.6.0'
+    implementation 'org.apache.commons:commons-csv:1.14.1'
+    implementation 'org.apache.commons:commons-lang3:3.21.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-amqp-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-restclient-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+    testImplementation 'org.testcontainers:testcontainers-rabbitmq'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.6.1'
+    implementation 'com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.6.1@pom'
+
+    implementation 'org.springframework.boot:spring-boot-gradle-plugin:4.0.2'
+    implementation 'org.springframework.boot:org.springframework.boot.gradle.plugin:4.0.2@pom'
+}
+
+if (creatingCache) {
+    tasks.register('goOfflineMavenLocal') {
+        group = 'build setup'
+        description = 'Resolve dependencies and populate ~/.m2/repository for offline mavenLocal() builds'
+
+        def m2 = findProperty('maven.repo.local') != null || System.hasProperty('maven.repo.local')
+            ? new File(findProperty('maven.repo.local') as String ?: System.getProperty('maven.repo.local'))
+            : new File(System.getProperty('user.home'), '.m2/repository')
+
+        doLast {
+            configurations.toList()
+                .findAll { it.canBeResolved }
+                .each { configuration ->
+                    logger.info('Resolving {}...', configuration.name)
+                    configuration.resolve()
+                    configuration.incoming.resolutionResult.allComponents.each { component ->
+                        if (!(component.id instanceof ModuleComponentIdentifier))
+                            return
+
+                        def id = (ModuleComponentIdentifier) component.id
+                        def modulePath = "${id.group.replace('.', '/')}/${id.module}/${id.version}"
+                        def targetDir = new File(m2, modulePath)
+                        targetDir.mkdirs()
+
+                        // Copy all resolved artifacts for this module.
+                        configuration.incoming.artifactView {
+                            componentFilter {
+                                it == component.id
+                            }
+                        }.artifacts.artifactFiles.files.forEach {
+                            Files.copy it.toPath(), new File(targetDir, it.name).toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
+                        }
+
+                        // Resolve and copy the Maven POM.
+                        def pomQuery = dependencies.createArtifactResolutionQuery()
+                            .forComponents(component.id)
+                            .withArtifacts(MavenModule, MavenPomArtifact)
+                            .execute()
+
+                        pomQuery.resolvedComponents.each { resolved ->
+                            resolved.getArtifacts(MavenPomArtifact).each { pom ->
+                                if (pom instanceof ResolvedArtifactResult) {
+                                    Files.copy pom.file.toPath(), new File(targetDir, "${id.module}-${id.version}.pom").toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
+                                }
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+
+    tasks.register('goOffline') {
+        group = 'build setup'
+
+        doLast {
+            configurations
+                .toList()
+                .findAll { it.canBeResolved }
+                .each {
+                    println "Resolving ${it.name}"
+                    it.resolve()
+                }
+        }
+    }
+}

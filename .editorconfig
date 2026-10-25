@@ -14,7 +14,7 @@ ij_any_block_comment_at_first_column = false
 ij_java_align_multiline_binary_operation = false
 ij_java_space_inside_one_line_enum_braces = true
 
-[*.sh]
+[{*.sh,*.yml,*.yaml}]
 tab_width = 2
 indent_size = 2
 ij_shell_tab_width = 2
