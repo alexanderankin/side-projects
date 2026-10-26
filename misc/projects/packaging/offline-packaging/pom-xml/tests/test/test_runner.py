@@ -80,9 +80,11 @@ def test_seed_contains_project_and_packaged_guest_files(tmp_path):
     for name in ("src", "gradle"):
         (project / name).mkdir()
 
+    (tmp_path / "ssh_ed25519.pub").write_text("ssh-ed25519 test-public-key\n")
     runner.seed_files(tmp_path, "test-run", project)
 
     config = json.loads((tmp_path / "user-data").read_text().split("\n", 1)[1])
+    assert config["ssh_authorized_keys"] == ["ssh-ed25519 test-public-key"]
     payloads = {entry["path"]: base64.b64decode(entry["content"]) for entry in config["write_files"]}
     assert payloads["/opt/offline-test/run-id"] == b"test-run"
     assert b"-DcreatingCache=true" in payloads["/opt/offline-test/guest.sh"]

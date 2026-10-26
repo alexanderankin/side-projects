@@ -16,15 +16,19 @@ import tempfile
 import threading
 import time
 import uuid
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElT
 from importlib.resources import files
 from io import BufferedWriter
 from pathlib import Path
+
 from textwrap import dedent
 from typing import AnyStr, IO
 
+from qemu_offline.runs import SSH_KEY, list_runs, print_exploration, select_run, xml_text
+
 logger = logging.getLogger(__name__)
 
+POM_XML_FOLDER = Path(__file__).parent.parent.parent.parent
 DEFAULT_IMAGE = (
     Path(__file__).parent
     / ".."
@@ -84,6 +88,7 @@ def seed_files(run_dir: Path, run_id: str, project: Path):
     config = {
         "package_update": False,
         "ssh_pwauth": False,
+        "ssh_authorized_keys": [(run_dir / f"{SSH_KEY}.pub").read_text().strip()],
         "write_files": [
             {
                 "path": path,
@@ -205,8 +210,13 @@ def run_phase(command: list[str], run_dir: Path, run_id: str, phase: str, timeou
 
     lines = output.replace("\r", "").splitlines()
     marker = f"QEMU_TEST:{run_id}:{phase}: "
-    if code != 0 or marker + "PASS" not in lines or any(line.startswith(marker + "FAIL") for line in lines):
-        raise RuntimeError(f"{phase} failed (QEMU exit {code}); see {paths}\n" + "\n".join(lines[-70:]))
+    errs = {
+        'err_bad_exit_code': code != 0,
+        'err_pass_missing': marker + "PASS" not in lines,
+        'err_fail_present': any(line.startswith(marker + "FAIL") for line in lines),
+    }
+    if any(errs.values()):
+        raise RuntimeError(f"phase '{phase}' failed (QEMU exit {code}): {errs}; see {paths}")
 
     duration = datetime.timedelta(seconds=time.monotonic() - started)
     logger.info("phase %s passed in %s, logs: %s", phase, duration, paths)
@@ -226,7 +236,7 @@ def our_qemu_system_binary() -> str:
     return qemu_commands[our_ubuntu_arch()]
 
 
-def main():
+def main() -> int:
     from enum import Enum
 
     class L(Enum):
@@ -239,11 +249,14 @@ def main():
     parser.add_argument("--log-level", type=L, choices=list(L), default=L.INFO)
 
     parser.add_argument(
-        "--project",
-        type=Path,
-        default=Path(__file__).parent.parent.parent.parent,
-        help="Gradle project directory (default: current directory)",
+        "command",
+        nargs="?",
+        choices=("run", "list", "test"),
+        help="Run the suite (default), list runs, or print an offline exploration command",
     )
+    parser.add_argument("run_name", nargs="?", help="Run directory name for 'test'")
+    parser.add_argument("--ssh-port", type=int, default=2222, help="Localhost SSH port for exploration (default: 2222)")
+    parser.add_argument("--project", type=Path, default=POM_XML_FOLDER, help="pom-xml folder")
     parser.add_argument(
         "--image",
         type=Path,
@@ -256,13 +269,33 @@ def main():
     parser.add_argument("--cpus", type=int, default=2)
     parser.add_argument("--timeout", type=int, default=1800, help="Seconds allowed per boot")
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level.value, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=args.log_level.value, format="%(asctime)s - %(levelname)s - %(message)s")
 
     project = args.project.resolve()
     if not (project / "build.gradle").is_file():
         parser.error(f"Gradle project not found: {project}; supply --project PATH")
 
-    for executable in (args.qemu, "qemu-img", "xorriso"):
+    output_dir = project / "build/qemu-tests"
+    if args.command == "list":
+        list_runs(output_dir)
+        return 0
+    elif args.command == "test":
+        if not args.run_name:
+            parser.error("'test' requires a run directory name from 'list'")
+        try:
+            print_exploration(select_run(output_dir, args.run_name), args.ssh_port)
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        return 0
+    elif args.command == "run":
+        pass
+    else:
+        parser.error("need args.command")
+
+    if not 1 <= args.ssh_port <= 65535:
+        parser.error("SSH port must be between 1 and 65535")
+
+    for executable in (args.qemu, "qemu-img", "xorriso", "ssh-keygen"):
         if not shutil.which(executable):
             parser.error(f"Missing required executable: {executable}")
 
@@ -281,7 +314,6 @@ def main():
 
     logger.info("parsed args: %s", args)
 
-    output_dir = project / "build/qemu-tests"
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info("output (build/qemu-tests) directory: %s", output_dir)
 
@@ -292,9 +324,13 @@ def main():
     logger.info("run id: %s", run_id)
 
     n = parser.prog
-    suite = ET.Element("testsuite", name=n, tests="2", failures="0", skipped="0")
+    suite = ElT.Element("testsuite", name=n, tests="2", failures="0", skipped="0")
     failure = None
     try:
+        ssh_key_file = str(run_dir / SSH_KEY)
+        logger.info("generating ssh key in %s", ssh_key_file)
+        subprocess.run(["ssh-keygen", "-N", "", "-C", run_id, "-f", ssh_key_file], check=True)
+
         logger.info("creating vm image 'disk.qcow2' with 'qemu-img create -b'")
         info = json.loads(subprocess.check_output(["qemu-img", "info", "--output=json", str(image)]))
         subprocess.run(
@@ -335,7 +371,7 @@ def main():
         )
         for phase in ("online", "offline"):
             logger.info("starting phase %s", phase)
-            case = ET.SubElement(suite, "testcase", name=phase, classname="qemu.offline_packaging")
+            case = ElT.SubElement(suite, "testcase", name=phase, classname="qemu.offline_packaging")
             started = time.monotonic()
             try:
                 firmware_resolved = firmware.resolve() if firmware else None
@@ -343,7 +379,7 @@ def main():
                 logger.info("running phase %s with command %s", phase, phase_command)
                 run_phase(phase_command, run_dir, run_id, phase, args.timeout)
             except (Exception, KeyboardInterrupt) as exc:
-                ET.SubElement(case, "failure", message=str(exc)).text = str(exc)
+                ElT.SubElement(case, "failure", message=xml_text(str(exc))).text = xml_text(str(exc))
                 raise
             finally:
                 case.set("time", f"{time.monotonic() - started:.3f}")
@@ -351,11 +387,11 @@ def main():
         # CLI boundary: record every failure in JUnit and return a nonzero exit.
         failure = exc
         if len(suite) == 0:
-            case = ET.SubElement(suite, "testcase", name="setup", classname="qemu.offline_packaging")
-            ET.SubElement(case, "failure", message=str(exc))
+            case = ElT.SubElement(suite, "testcase", name="setup", classname="qemu.offline_packaging")
+            ElT.SubElement(case, "failure", message=xml_text(str(exc)))
         if not any(case.get("name") == "offline" for case in suite):
-            ET.SubElement(
-                ET.SubElement(suite, "testcase", name="offline"),
+            ElT.SubElement(
+                ElT.SubElement(suite, "testcase", name="offline"),
                 "skipped",
                 message="Online/setup failed",
             )
@@ -363,11 +399,13 @@ def main():
         suite.set("tests", str(len(suite)))
         suite.set("failures", str(len(suite.findall("./testcase/failure"))))
         suite.set("skipped", str(len(suite.findall("./testcase/skipped"))))
-        ET.ElementTree(suite).write(run_dir / "junit.xml", encoding="utf-8", xml_declaration=True)
+        ElT.ElementTree(suite).write(run_dir / "junit.xml", encoding="utf-8", xml_declaration=True)
     if failure is not None:
         print(f"FAIL: {failure}\nArtifacts: {run_dir}", file=sys.stderr)
         return 1
     print(f"PASS: online cache creation and offline rebuild. Report: {run_dir / 'junit.xml'}")
+    (run_dir / "explore-ready").write_text("Offline test passed; guest test service disabled; SSH provisioned.\n")
+    print_exploration(run_dir, args.ssh_port)
     return 0
 
 

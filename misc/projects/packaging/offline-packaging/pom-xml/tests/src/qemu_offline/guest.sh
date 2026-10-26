@@ -100,6 +100,9 @@ elif [[ $phase == offline ]]; then
   cat /opt/offline-test/negative.log | pr -to 2
 
   log 'Verified: empty Maven repository fails dependency resolution.'
+  # A later -snapshot boot is an interactive exploration session. Do not rerun
+  # the tests (or power off) now that their outputs are intentionally retained.
+  systemctl disable offline-packaging.service
 else
   log "Unknown phase: $phase"
   exit 1
