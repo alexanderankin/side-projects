@@ -1,0 +1,2 @@
+# Install from the project root; dependencies are declared in pyproject.toml.
+-e .[test]

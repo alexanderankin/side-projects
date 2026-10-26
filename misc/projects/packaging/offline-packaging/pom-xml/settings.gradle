@@ -1,1 +1,18 @@
+pluginManagement {
+    boolean creatingCache = Boolean.parseBoolean(
+        providers.systemProperty('creatingCache')
+            .orElse(providers.gradleProperty('creatingCache'))
+            .getOrElse('true')
+    )
+
+    repositories {
+        if (creatingCache) {
+            mavenCentral()
+            gradlePluginPortal()
+        } else {
+            mavenLocal()
+        }
+    }
+}
+
 rootProject.name = 'pom-xml'

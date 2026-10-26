@@ -1,0 +1,24 @@
+gradle.projectsEvaluated {
+    rootProject.tasks.register('verifyOfflineDependencies') {
+        doLast {
+            assert System.getProperty('creatingCache') == 'false'
+            assert rootProject.tasks.findByName('goOfflineMavenLocal') == null : 'Offline mode was ignored'
+            assert rootProject.repositories.size() == 1
+            assert rootProject.repositories.first().url.scheme == 'file' : 'Expected mavenLocal()'
+            assert gradle.settings.pluginManagement.repositories.size() == 1
+            assert gradle.settings.pluginManagement.repositories.first().url.scheme == 'file'
+            ['org.springframework.boot', 'com.gradleup.shadow'].each {
+                assert rootProject.plugins.hasPlugin(it) : "Plugin was not applied: ${it}"
+            }
+            ['bootJar', 'shadowJar'].each {
+                def archive = rootProject.tasks.named(it).get().archiveFile.get().asFile
+                assert archive.isFile() && archive.length() > 0 : "Missing plugin output: ${archive}"
+                println "Verified plugin output: ${archive.name} (${archive.length()} bytes)"
+            }
+            rootProject.configurations.findAll { it.canBeResolved }.each {
+                println "Verifying offline configuration: ${it.name}"
+                it.resolve()
+            }
+        }
+    }
+}

@@ -6,6 +6,8 @@ import java.nio.file.StandardCopyOption
 plugins {
     id 'java'
     id 'application'
+    id 'org.springframework.boot' version '4.1.2'
+    id 'com.gradleup.shadow' version '9.5.2'
 }
 
 java {
@@ -14,8 +16,13 @@ java {
 }
 
 application.mainClass = 'org.example.ExampleApplication'
+springBoot.mainClass = application.mainClass
 
-boolean creatingCache = Boolean.parseBoolean(findProperty('creatingCache') as String ?: 'true')
+boolean creatingCache = Boolean.parseBoolean(
+    providers.systemProperty('creatingCache')
+        .orElse(providers.gradleProperty('creatingCache'))
+        .getOrElse('true')
+)
 
 if (creatingCache) {
     repositories.mavenCentral()
@@ -79,11 +86,6 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest:2.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.6.1'
-    implementation 'com.gradleup.shadow:com.gradleup.shadow.gradle.plugin:9.6.1@pom'
-
-    implementation 'org.springframework.boot:spring-boot-gradle-plugin:4.0.2'
-    implementation 'org.springframework.boot:org.springframework.boot.gradle.plugin:4.0.2@pom'
 }
 
 if (creatingCache) {
@@ -91,49 +93,66 @@ if (creatingCache) {
         group = 'build setup'
         description = 'Resolve dependencies and populate ~/.m2/repository for offline mavenLocal() builds'
 
-        def m2 = findProperty('maven.repo.local') != null || System.hasProperty('maven.repo.local')
-            ? new File(findProperty('maven.repo.local') as String ?: System.getProperty('maven.repo.local'))
-            : new File(System.getProperty('user.home'), '.m2/repository')
+        def m2 = file(
+            providers.systemProperty('maven.repo.local')
+                .orElse(providers.gradleProperty('maven.repo.local'))
+                .getOrElse(new File(System.getProperty('user.home'), '.m2/repository').path)
+        )
 
         doLast {
-            configurations.toList()
-                .findAll { it.canBeResolved }
-                .each { configuration ->
-                    logger.info('Resolving {}...', configuration.name)
+            // Plugin DSL markers and implementations live on the buildscript
+            // classpath, not on the application's runtimeClasspath.
+            [
+                [configurations: project.configurations, dependencies: project.dependencies],
+                [configurations: project.buildscript.configurations, dependencies: project.buildscript.dependencies]
+            ].each { scope ->
+                def components = [] as Set
+                scope.configurations.toList().findAll { it.canBeResolved }.each { configuration ->
+                    logger.lifecycle('Resolving {}...', configuration.name)
                     configuration.resolve()
                     configuration.incoming.resolutionResult.allComponents.each { component ->
-                        if (!(component.id instanceof ModuleComponentIdentifier))
-                            return
-
-                        def id = (ModuleComponentIdentifier) component.id
-                        def modulePath = "${id.group.replace('.', '/')}/${id.module}/${id.version}"
-                        def targetDir = new File(m2, modulePath)
-                        targetDir.mkdirs()
-
-                        // Copy all resolved artifacts for this module.
-                        configuration.incoming.artifactView {
-                            componentFilter {
-                                it == component.id
-                            }
-                        }.artifacts.artifactFiles.files.forEach {
-                            Files.copy it.toPath(), new File(targetDir, it.name).toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
+                        if (component.id instanceof ModuleComponentIdentifier) {
+                            components.add(component.id)
                         }
-
-                        // Resolve and copy the Maven POM.
-                        def pomQuery = dependencies.createArtifactResolutionQuery()
-                            .forComponents(component.id)
-                            .withArtifacts(MavenModule, MavenPomArtifact)
-                            .execute()
-
-                        pomQuery.resolvedComponents.each { resolved ->
-                            resolved.getArtifacts(MavenPomArtifact).each { pom ->
-                                if (pom instanceof ResolvedArtifactResult) {
-                                    Files.copy pom.file.toPath(), new File(targetDir, "${id.module}-${id.version}.pom").toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES
-                                }
+                    }
+                }
+                if (!components.empty) {
+                    // A module resolved through Gradle metadata may not yet have
+                    // its POM downloaded. Maven local needs that POM too.
+                    def result = scope.dependencies.createArtifactResolutionQuery()
+                        .forComponents(components)
+                        .withArtifacts(MavenModule, MavenPomArtifact)
+                        .execute()
+                    result.resolvedComponents.each { component ->
+                        component.getArtifacts(MavenPomArtifact).each { artifact ->
+                            if (artifact instanceof UnresolvedArtifactResult) {
+                                throw new GradleException("Cannot export POM for ${component.id}", artifact.failure)
                             }
                         }
                     }
                 }
+            }
+
+            // Parent POMs, imported BOMs and plugin markers are not necessarily
+            // graph components. Mirror the downloaded module files as well, in
+            // Maven layout, including .module metadata and classifier artifacts.
+            // Use a dedicated GRADLE_USER_HOME to avoid exporting unrelated files.
+            def moduleCache = new File(gradle.gradleUserHomeDir, 'caches/modules-2/files-2.1')
+            int exported = 0
+            fileTree(moduleCache).files.sort().each { artifact ->
+                def parts = moduleCache.toPath().relativize(artifact.toPath()).collect { it.toString() }
+                if (parts.size() != 5) {
+                    throw new GradleException("Unexpected Gradle module cache path: ${artifact}")
+                }
+                def target = new File(m2, "${parts[0].replace('.', '/')}/${parts[1]}/${parts[2]}/${parts[4]}")
+                target.parentFile.mkdirs()
+                Files.copy(artifact.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                exported++
+            }
+            if (exported == 0) {
+                throw new GradleException("No module artifacts found in ${moduleCache}")
+            }
+            logger.lifecycle('Exported {} module files (including plugin metadata) to {}', exported, m2)
         }
     }
 
