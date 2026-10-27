@@ -7,10 +7,10 @@ application.mainClass = 'info.ankin.simplebackups.SimpleBackups'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-logging'
-    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'tools.jackson.core:jackson-databind'
     implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'com.github.luben:zstd-jni:1.5.7-24'
-    implementation 'com.hierynomus:sshj:0.41.2'
+    implementation 'com.github.mwiede:jsch:2.27.7'
     implementation 'info.ankin.projects:exec:0.0.2'
     // implementation platform('software.amazon.awssdk:bom:2.57.4')
     implementation 'software.amazon.awssdk:s3'

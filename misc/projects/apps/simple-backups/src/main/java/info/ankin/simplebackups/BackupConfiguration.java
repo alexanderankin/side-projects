@@ -1,5 +1,8 @@
 package info.ankin.simplebackups;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -11,13 +14,16 @@ import java.util.UUID;
 
 @Data
 @Accessors(fluent = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public final class BackupConfiguration {
     private final UUID id;
     private final String name;
     private final URI from;
     private final URI to;
 
-    public BackupConfiguration(UUID id, String name, URI from, URI to) {
+    @JsonCreator
+    public BackupConfiguration(@JsonProperty("id") UUID id, @JsonProperty("name") String name,
+                               @JsonProperty("from") URI from, @JsonProperty("to") URI to) {
         Objects.requireNonNull(id, "Backup ID is required");
         if (name == null || name.isBlank()) throw new IllegalArgumentException("A backup name is required");
         validateUri(from, Set.of("file", "ssh"), "Source");

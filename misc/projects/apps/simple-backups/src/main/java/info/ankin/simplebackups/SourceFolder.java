@@ -1,10 +1,11 @@
 package info.ankin.simplebackups;
 
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.sftp.FileMode;
-import net.schmizz.sshj.sftp.SFTPClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,19 +29,31 @@ final class SourceFolder implements AutoCloseable {
             return new SourceFolder(path, false);
         }
         Path staging = Files.createTempDirectory("simple-backups-ssh-");
-        try (var ssh = new SSHClient()) {
-            ssh.loadKnownHosts();
-            ssh.setConnectTimeout(15_000);
-            ssh.setTimeout(60_000);
+        Session session = null;
+        ChannelSftp sftp = null;
+        try {
+            var ssh = new JSch();
+            // Use app policy only: no ~/.ssh/config and no SSH_AUTH_SOCK / agent repository.
+            ssh.setConfigRepository(null);
+            ssh.setIdentityRepository(null);
+            ssh.setHostKeyRepository(new AcceptNewHostKeys(ssh, FilesSupport.expandHome("~/.ssh/known_hosts")));
+            ssh.addIdentity(FilesSupport.expandHome(settings.sshPrivateKey()).toString());
             progress.accept("Connecting to " + source.getHost());
-            ssh.connect(source.getHost(), source.getPort() == -1 ? 22 : source.getPort());
             String username = source.getUserInfo() == null ? settings.sshUsername() : source.getUserInfo();
-            ssh.authPublickey(username, FilesSupport.expandHome(settings.sshPrivateKey()).toString());
-            try (var sftp = ssh.newSFTPClient()) {
-                if (sftp.lstat(source.getPath()).getType() != FileMode.Type.DIRECTORY)
-                    throw new IOException("SSH source must be a directory, not a symlink or file");
-                download(sftp, source.getPath(), staging, progress);
-            }
+            session = ssh.getSession(username, source.getHost(), source.getPort() == -1 ? 22 : source.getPort());
+            // The repository accepts new keys; strict checking still rejects changed/revoked keys.
+            session.setConfig("StrictHostKeyChecking", "yes");
+            session.setConfig("HashKnownHosts", "no");
+            session.setConfig("PreferredAuthentications", "publickey");
+            session.setServerAliveInterval(5_000);
+            session.setServerAliveCountMax(6);
+            session.connect(15_000);
+            sftp = (ChannelSftp) session.openChannel("sftp");
+            sftp.setAgentForwarding(false);
+            sftp.connect(15_000);
+            if (!sftp.lstat(literalPath(source.getPath())).isDir())
+                throw new IOException("SSH source must be a directory, not a symlink or file");
+            download(sftp, source.getPath(), staging, progress);
             return new SourceFolder(staging, true);
         } catch (Exception failure) {
             try {
@@ -48,31 +61,40 @@ final class SourceFolder implements AutoCloseable {
             } catch (IOException cleanup) {
                 failure.addSuppressed(cleanup);
             }
-            throw failure;
+            if (failure instanceof IOException io) throw io;
+            throw new IOException("Could not read SSH folder " + source + ": " + failure.getMessage(), failure);
+        } finally {
+            if (sftp != null) sftp.disconnect();
+            if (session != null) session.disconnect();
         }
     }
 
-    private static void download(SFTPClient sftp, String remote, Path local, Consumer<String> progress) throws IOException {
-        for (var entry : sftp.ls(remote)) {
-            String name = entry.getName();
+    private static void download(ChannelSftp sftp, String remote, Path local, Consumer<String> progress) throws IOException, SftpException {
+        for (var entry : sftp.ls(literalPath(remote))) {
+            String name = entry.getFilename();
             if (name.equals(".") || name.equals("..")) continue;
             if (name.contains("/") || name.contains("\\") || name.isBlank())
                 throw new IOException("Invalid remote filename: " + name);
             String child = remote + (remote.endsWith("/") ? "" : "/") + name;
             Path target = local.resolve(name);
-            switch (entry.getAttributes().getType()) {
-                case DIRECTORY -> {
-                    Files.createDirectory(target);
-                    download(sftp, child, target, progress);
+            var attributes = entry.getAttrs();
+            if (attributes.isDir()) {
+                Files.createDirectory(target);
+                download(sftp, child, target, progress);
+            } else if (attributes.isReg()) {
+                progress.accept("Reading SSH file: " + child);
+                try (var output = Files.newOutputStream(target)) {
+                    sftp.get(literalPath(child), output);
                 }
-                case REGULAR -> {
-                    progress.accept("Reading SSH file: " + child);
-                    sftp.get(child, target.toString());
-                }
-                default ->
-                    throw new IOException("Unsupported SSH entry (links and special files are not followed): " + child);
+            } else {
+                throw new IOException("Unsupported SSH entry (links and special files are not followed): " + child);
             }
         }
+    }
+
+    private static String literalPath(String path) {
+        // JSch's SFTP methods accept glob patterns; configured URIs and listed names are literal.
+        return path.replace("\\", "\\\\").replace("*", "\\*").replace("?", "\\?");
     }
 
     @Override

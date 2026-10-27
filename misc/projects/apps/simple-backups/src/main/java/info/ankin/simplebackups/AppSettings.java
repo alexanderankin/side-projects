@@ -1,11 +1,15 @@
 package info.ankin.simplebackups;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Data
 @Accessors(fluent = true)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public final class AppSettings {
     private final AwsAuthMethod awsAuthMethod;
     private final String awsProfile;
@@ -19,9 +23,15 @@ public final class AppSettings {
 
     public enum AwsAuthMethod { profile, basic }
 
-    public AppSettings(AwsAuthMethod awsAuthMethod, String awsProfile, String awsAccessKeyId,
-                       String awsSecretAccessKey, String awsRegion, String sshUsername,
-                       String sshPrivateKey, BackupMethod preferredMethod) {
+    @JsonCreator
+    public AppSettings(@JsonProperty("awsAuthMethod") AwsAuthMethod awsAuthMethod,
+                       @JsonProperty("awsProfile") String awsProfile,
+                       @JsonProperty("awsAccessKeyId") String awsAccessKeyId,
+                       @JsonProperty("awsSecretAccessKey") String awsSecretAccessKey,
+                       @JsonProperty("awsRegion") String awsRegion,
+                       @JsonProperty("sshUsername") String sshUsername,
+                       @JsonProperty("sshPrivateKey") String sshPrivateKey,
+                       @JsonProperty("preferredMethod") BackupMethod preferredMethod) {
         this.awsAuthMethod = awsAuthMethod == null ? AwsAuthMethod.profile : awsAuthMethod;
         this.awsProfile = fallback(awsProfile, "default");
         this.awsAccessKeyId = fallback(awsAccessKeyId, "");

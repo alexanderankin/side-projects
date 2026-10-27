@@ -125,8 +125,10 @@ final class BackupFrame extends JFrame {
             Snapshot snapshot = snapshots.get(page * PAGE_SIZE + row);
             if (action.equals("Restore")) restore(snapshot);
             else
-                run("Comparing snapshot with current source", () -> service.diff(selectedBackup, settings, snapshot, this::report), changes ->
-                    showText("Diff against current source", changes.isEmpty() ? "No differences." : String.join("\n", changes)));
+                run("Comparing snapshot with current source",
+                    () -> service.diff(selectedBackup, settings, snapshot, this::report),
+                    changes -> showText("Diff against current source",
+                        changes.isEmpty() ? "No differences." : String.join("\n", changes)));
         });
         panel.add(new JScrollPane(snapshotTable), BorderLayout.CENTER);
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -161,7 +163,7 @@ final class BackupFrame extends JFrame {
             selectedBackup = backup;
             snapshots = loaded;
             page = 0;
-            snapshotTitle.setText(backup.name() + " — latest first");
+            snapshotTitle.setText("Backup '" + backup.name() + "' (latest first)");
             renderPage();
             cards.show(backupCards, "snapshots");
         });
@@ -291,6 +293,7 @@ final class BackupFrame extends JFrame {
         field(form, "SSH private key file", keyPanel);
         field(form, "Preferred backup method", method);
         field(form, "", new JLabel("SSH uses ~/.ssh/known_hosts; a URI username overrides the default."));
+        field(form, "", new JLabel("SSH accepts new host keys, rejects changed keys, and ignores ~/.ssh/config and agents."));
         field(form, "", new JLabel("Credentials are saved as plain JSON in config.json. Restic uses a fixed password."));
         field(form, "", button("Save settings", () -> {
             var updated = new AppSettings((AppSettings.AwsAuthMethod) auth.getSelectedItem(), profile.getText().trim(),

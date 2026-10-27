@@ -1,9 +1,10 @@
 package info.ankin.simplebackups;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -14,7 +15,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class ConfigurationStore {
-    static final Gson JSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    static final JsonMapper JSON = JsonMapper.builder()
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
     private final Path root;
 
     public ConfigurationStore(Path root) throws IOException {
@@ -77,17 +81,10 @@ public final class ConfigurationStore {
 
     static <T> T read(Reader reader, Class<T> type) throws IOException {
         try {
-            T raw = JSON.fromJson(reader, type);
-            // Gson fills fields directly; reconstruct models to apply validation and defaults.
-            Object value = switch (raw) {
-                case BackupConfiguration b -> new BackupConfiguration(b.id(), b.name(), b.from(), b.to());
-                case AppSettings s -> new AppSettings(s.awsAuthMethod(), s.awsProfile(), s.awsAccessKeyId(),
-                    s.awsSecretAccessKey(), s.awsRegion(), s.sshUsername(), s.sshPrivateKey(), s.preferredMethod());
-                case Snapshot s -> new Snapshot(s.backupId(), s.epochMillis(), s.durationMillis(), s.method());
-                case null -> throw new IOException("JSON must contain an object");
-                default -> throw new IOException("Unsupported JSON model: " + type);
-            };
-            return type.cast(value);
+            // Jackson uses each model's validating constructor, including settings defaults.
+            T value = JSON.readValue(reader, type);
+            if (value == null) throw new IOException("JSON must contain an object");
+            return value;
         } catch (RuntimeException e) {
             throw new IOException("Invalid JSON: " + e.getMessage(), e);
         }
@@ -99,7 +96,7 @@ public final class ConfigurationStore {
         Path temporary = Files.createTempFile(path.getParent(), ".json-", ".tmp");
         try {
             FilesSupport.privatePermissions(temporary, false);
-            Files.writeString(temporary, JSON.toJson(value) + "\n");
+            Files.writeString(temporary, JSON.writeValueAsString(value) + "\n");
             FilesSupport.move(temporary, path);
         } finally {
             Files.deleteIfExists(temporary);

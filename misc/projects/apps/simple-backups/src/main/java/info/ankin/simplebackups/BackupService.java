@@ -93,10 +93,17 @@ final class BackupService {
     List<String> diff(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, Consumer<String> progress) throws IOException {
         requireOwner(backup, snapshot);
         var engine = BackupEngine.forMethod(snapshot.method());
-        if (snapshot.method() == BackupMethod.restic) return engine.diff(null, snapshot, null);
-        try (var source = SourceFolder.open(backup.from(), settings, progress);
-             var store = SnapshotStore.open(backup.to(), settings)) {
-            return engine.diff(store, snapshot, source.path());
+        switch (snapshot.method()) {
+            case restic -> {
+                return engine.diff(null, snapshot, null);
+            }
+            case tar -> {
+                try (var source = SourceFolder.open(backup.from(), settings, progress);
+                     var store = SnapshotStore.open(backup.to(), settings)) {
+                    return engine.diff(store, snapshot, source.path());
+                }
+            }
+            case null, default -> throw new UnsupportedOperationException();
         }
     }
 

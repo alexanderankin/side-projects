@@ -1,10 +1,12 @@
 package info.ankin.simplebackups;
 
+import lombok.SneakyThrows;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
+import org.jspecify.annotations.NonNull;
 
 import java.io.*;
 import java.nio.file.*;
@@ -99,10 +101,16 @@ final class TarBackupEngine implements BackupEngine {
             while ((entry = tar.getNextEntry()) != null) {
                 String name = entry.getName();
                 Path target = root.resolve(name).normalize();
-                if (name.contains("\\") || name.matches("^[A-Za-z]:.*") || name.startsWith("/")
-                    || !target.startsWith(root) || target.equals(root) || !seen.add(target))
+                if (name.contains("\\") ||
+                    name.matches("^[A-Za-z]:.*") ||
+                    name.startsWith("/") ||
+                    !target.startsWith(root) ||
+                    target.equals(root) ||
+                    !seen.add(target))
                     throw new IOException("Unsafe or duplicate archive path: " + name);
-                if (!tar.canReadEntryData(entry) || entry.isLink() || entry.isSymbolicLink()
+                if (!tar.canReadEntryData(entry) ||
+                    entry.isLink() ||
+                    entry.isSymbolicLink()
                     || (!entry.isDirectory() && !entry.isFile()))
                     throw new IOException("Unsupported archive entry: " + name);
                 if (entry.isDirectory()) {
@@ -111,7 +119,8 @@ final class TarBackupEngine implements BackupEngine {
                     Files.createDirectories(target.getParent());
                     try (var out = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW)) {
                         long copied = tar.transferTo(out);
-                        if (copied != entry.getSize()) throw new IOException("Truncated archive entry: " + name);
+                        if (copied != entry.getSize())
+                            throw new IOException("Truncated archive entry: " + name);
                     }
                     Files.setLastModifiedTime(target, FileTime.fromMillis(entry.getModTime().getTime()));
                 }
@@ -126,13 +135,18 @@ final class TarBackupEngine implements BackupEngine {
             extract(store, snapshot, staging);
             Map<String, String> before = fingerprint(staging);
             Map<String, String> after = fingerprint(source);
+
             Set<String> names = new TreeSet<>(before.keySet());
             names.addAll(after.keySet());
+
             var changes = new ArrayList<String>();
             for (String name : names) {
-                if (!before.containsKey(name)) changes.add("ADDED    " + name);
-                else if (!after.containsKey(name)) changes.add("REMOVED  " + name);
-                else if (!before.get(name).equals(after.get(name))) changes.add("CHANGED  " + name);
+                if (!before.containsKey(name))
+                    changes.add("ADDED    " + name);
+                else if (!after.containsKey(name))
+                    changes.add("REMOVED  " + name);
+                else if (!before.get(name).equals(after.get(name)))
+                    changes.add("CHANGED  " + name);
             }
             return changes;
         } finally {
@@ -143,21 +157,21 @@ final class TarBackupEngine implements BackupEngine {
     private Map<String, String> fingerprint(Path root) throws IOException {
         Map<String, String> result = new TreeMap<>();
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
+            @NonNull
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                if (!dir.equals(root)) result.put(relative(root, dir), "directory");
+            public FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) {
+                if (!dir.equals(root))
+                    result.put(relative(root, dir), "directory");
                 return FileVisitResult.CONTINUE;
             }
 
+            @SneakyThrows
+            @NonNull
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!attrs.isRegularFile()) throw new IOException("Cannot compare link or special file: " + file);
-                MessageDigest digest;
-                try {
-                    digest = MessageDigest.getInstance("SHA-256");
-                } catch (NoSuchAlgorithmException impossible) {
-                    throw new IllegalStateException(impossible);
-                }
+            public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) {
+                if (!attrs.isRegularFile())
+                    throw new IOException("Cannot compare link or special file: " + file);
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 try (var input = new DigestInputStream(Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS), digest)) {
                     input.transferTo(OutputStream.nullOutputStream());
                 }
