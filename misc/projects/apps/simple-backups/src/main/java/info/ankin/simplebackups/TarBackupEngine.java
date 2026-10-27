@@ -142,11 +142,11 @@ final class TarBackupEngine implements BackupEngine {
             var changes = new ArrayList<String>();
             for (String name : names) {
                 if (!before.containsKey(name))
-                    changes.add("ADDED    " + name);
+                    changes.add("SOURCE ONLY:     " + name);
                 else if (!after.containsKey(name))
-                    changes.add("REMOVED  " + name);
+                    changes.add("BACKUP ONLY:     " + name);
                 else if (!before.get(name).equals(after.get(name)))
-                    changes.add("CHANGED  " + name);
+                    changes.add("CONTENT CHANGED: " + name);
             }
             return changes;
         } finally {

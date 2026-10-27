@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URI;
@@ -25,13 +26,6 @@ final class BackupFrame extends JFrame {
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS z").withZone(ZoneId.systemDefault());
     private final ConfigurationStore configurations;
     private final BackupService service = new BackupService();
-    private AppSettings settings = AppSettings.defaults();
-    private List<BackupConfiguration> backups = List.of();
-    private List<Snapshot> snapshots = List.of();
-    private BackupConfiguration selectedBackup;
-    private int page;
-    private boolean busy;
-    private volatile String progressText = "Ready";
     private final JLabel status = new JLabel("Ready");
     private final JProgressBar progress = new JProgressBar();
     private final JTabbedPane tabs = new JTabbedPane();
@@ -47,6 +41,13 @@ final class BackupFrame extends JFrame {
     private final JButton previous = new JButton("Previous");
     private final JButton next = new JButton("Next");
     private final Timer statusTimer;
+    private AppSettings settings = AppSettings.defaults();
+    private List<BackupConfiguration> backups = List.of();
+    private List<Snapshot> snapshots = List.of();
+    private BackupConfiguration selectedBackup;
+    private int page;
+    private boolean busy;
+    private volatile String progressText = "Ready";
 
     BackupFrame(ConfigurationStore configurations) {
         super("Simple Backups");
@@ -362,12 +363,26 @@ final class BackupFrame extends JFrame {
     private void error(Throwable error) {
         log.warn("Backup operation failed: {}", error.getMessage());
         log.debug("Backup operation failure", error);
-        JOptionPane.showMessageDialog(this, error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
-            error instanceof UnsupportedOperationException ? "Not implemented" : "Operation failed", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(
+            this,
+            error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
+            error instanceof UnsupportedOperationException ? "Not implemented" : "Operation failed",
+            JOptionPane.ERROR_MESSAGE
+        );
     }
 
     private void showText(String title, String text) {
         var dialog = new JDialog(this, title, false);
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        for (var shortcut : List.of(
+            KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()),
+            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
+        )) {
+            dialog.getRootPane().registerKeyboardAction(
+                _ -> dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING)),
+                shortcut,
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
         var area = new JTextArea(text);
         area.setEditable(false);
         area.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
@@ -389,7 +404,7 @@ final class BackupFrame extends JFrame {
 
     private static JButton button(String label, Runnable action) {
         var button = new JButton(label);
-        button.addActionListener(e -> action.run());
+        button.addActionListener(_ -> action.run());
         return button;
     }
 
@@ -415,7 +430,8 @@ final class BackupFrame extends JFrame {
     private static void enabled(Component component, boolean enabled) {
         component.setEnabled(enabled);
         if (component instanceof Container container)
-            for (Component child : container.getComponents()) enabled(child, enabled);
+            for (Component child : container.getComponents())
+                enabled(child, enabled);
     }
 
 }
