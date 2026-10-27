@@ -193,18 +193,20 @@ final class BackupFrame extends JFrame {
         JPanel panel = new JPanel(new BorderLayout(4, 0));
         panel.add(text, BorderLayout.CENTER);
         panel.add(button("Browse…", () -> {
-            var chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
-                text.setText(chooser.getSelectedFile().toPath().toUri().toString());
+            Path initial = null;
+            try {
+                URI uri = URI.create(text.getText().trim());
+                if ("file".equals(uri.getScheme())) initial = Path.of(uri);
+            } catch (IllegalArgumentException ignored) { /* A new or unfinished URI has no initial folder. */ }
+            Path selected = FileDialogs.folder(text, "Choose a local folder", initial);
+            if (selected != null) text.setText(selected.toUri().toString());
         }), BorderLayout.EAST);
         return panel;
     }
 
     private void importBackup() {
-        var chooser = jsonChooser();
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        Path path = chooser.getSelectedFile().toPath();
+        Path path = FileDialogs.open(this, "Import backup configuration", null, true);
+        if (path == null) return;
         run("Reading configuration", () -> ConfigurationStore.read(path, BackupConfiguration.class), backup -> {
             if (backups.stream().anyMatch(b -> b.id().equals(backup.id())) && JOptionPane.showConfirmDialog(this,
                     "Replace the existing configuration with ID " + backup.id() + "?", "Import backup", JOptionPane.OK_CANCEL_OPTION)
@@ -214,10 +216,8 @@ final class BackupFrame extends JFrame {
     }
 
     private void exportBackup(BackupConfiguration backup) {
-        var chooser = jsonChooser();
-        chooser.setSelectedFile(new java.io.File(backup.id() + ".json"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        Path file = chooser.getSelectedFile().toPath();
+        Path file = FileDialogs.saveJson(this, backup.id() + ".json");
+        if (file == null) return;
         if (Files.exists(file) && JOptionPane.showConfirmDialog(this, "Replace " + file.getFileName() + "?",
                 "Export backup", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
         run("Exporting configuration", () -> { ConfigurationStore.write(file, backup); return file; }, ignored -> {});
@@ -228,11 +228,8 @@ final class BackupFrame extends JFrame {
             run("Restoring snapshot", () -> { service.restore(selectedBackup, settings, snapshot, null); return null; }, ignored -> {});
             return;
         }
-        var chooser = new JFileChooser();
-        chooser.setDialogTitle("Restore into an empty local folder");
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
-        Path destination = chooser.getSelectedFile().toPath();
+        Path destination = FileDialogs.folder(this, "Restore into an empty local folder", null);
+        if (destination == null) return;
         run("Restoring snapshot", () -> { service.restore(selectedBackup, settings, snapshot, destination); return destination; },
                 restored -> JOptionPane.showMessageDialog(this, "Restored to " + restored));
     }
@@ -258,8 +255,9 @@ final class BackupFrame extends JFrame {
         JPanel keyPanel = new JPanel(new BorderLayout(4, 0));
         keyPanel.add(privateKey, BorderLayout.CENTER);
         keyPanel.add(button("Browse…", () -> {
-            var chooser = new JFileChooser();
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) privateKey.setText(chooser.getSelectedFile().getAbsolutePath());
+            Path selected = FileDialogs.open(privateKey, "Choose SSH private key",
+                    FilesSupport.expandHome(privateKey.getText().trim()), false);
+            if (selected != null) privateKey.setText(selected.toAbsolutePath().toString());
         }), BorderLayout.EAST);
         field(form, "SSH private key file", keyPanel);
         field(form, "Preferred backup method", method);
@@ -320,6 +318,7 @@ final class BackupFrame extends JFrame {
 
     private void error(Throwable error) {
         log.warn("Backup operation failed: {}", error.getMessage());
+        log.debug("Backup operation failure", error);
         JOptionPane.showMessageDialog(this, error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
                 error instanceof UnsupportedOperationException ? "Not implemented" : "Operation failed", JOptionPane.ERROR_MESSAGE);
     }
@@ -373,9 +372,4 @@ final class BackupFrame extends JFrame {
             for (Component child : container.getComponents()) enabled(child, enabled);
     }
 
-    private static JFileChooser jsonChooser() {
-        var chooser = new JFileChooser();
-        chooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Backup configuration (*.json)", "json"));
-        return chooser;
-    }
 }
