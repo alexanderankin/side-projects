@@ -36,17 +36,22 @@ final class TableActions extends AbstractCellEditor implements javax.swing.table
         table.setRowHeight(cells.renderer.getPreferredSize().height + 6);
     }
 
-    @Override public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int col) {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int col) {
         renderer.setBackground(selected ? table.getSelectionBackground() : table.getBackground());
         for (Component button : renderer.getComponents()) button.setEnabled(table.isEnabled());
         return renderer;
     }
 
-    @Override public Component getTableCellEditorComponent(JTable table, Object value, boolean selected, int row, int col) {
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean selected, int row, int col) {
         this.row = row;
         editor.setBackground(table.getSelectionBackground());
         return editor;
     }
 
-    @Override public Object getCellEditorValue() { return ""; }
+    @Override
+    public Object getCellEditorValue() {
+        return "";
+    }
 }

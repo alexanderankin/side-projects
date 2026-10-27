@@ -6,7 +6,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 
 final class FilesSupport {
-    private FilesSupport() {}
+    private FilesSupport() {
+    }
 
     static Path expandHome(String path) {
         return path.startsWith("~/") ? Path.of(System.getProperty("user.home"), path.substring(2)) : Path.of(path);
@@ -28,11 +29,14 @@ final class FilesSupport {
     static void deleteTree(Path root) throws IOException {
         if (!Files.exists(root, LinkOption.NOFOLLOW_LINKS)) return;
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
-            @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
-            @Override public FileVisitResult postVisitDirectory(Path dir, IOException failure) throws IOException {
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException failure) throws IOException {
                 if (failure != null) throw failure;
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;

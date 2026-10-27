@@ -10,11 +10,13 @@ public final class AppSettings {
     private final AwsAuthMethod awsAuthMethod;
     private final String awsProfile;
     private final String awsAccessKeyId;
-    @ToString.Exclude private final String awsSecretAccessKey;
+    @ToString.Exclude
+    private final String awsSecretAccessKey;
     private final String awsRegion;
     private final String sshUsername;
     private final String sshPrivateKey;
     private final BackupMethod preferredMethod;
+
     public enum AwsAuthMethod { profile, basic }
 
     public AppSettings(AwsAuthMethod awsAuthMethod, String awsProfile, String awsAccessKeyId,

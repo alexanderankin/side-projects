@@ -1,7 +1,10 @@
 package info.ankin.simplebackups;
 
-import org.apache.commons.compress.archivers.tar.*;
-import org.apache.commons.compress.compressors.zstandard.*;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
 
 import java.io.*;
 import java.nio.file.*;
@@ -16,7 +19,8 @@ import java.util.function.Consumer;
 final class TarBackupEngine implements BackupEngine {
     static final String ARCHIVE = "simple.tar.zst";
 
-    @Override public void create(Path source, Path output, Consumer<String> progress) throws IOException {
+    @Override
+    public void create(Path source, Path output, Consumer<String> progress) throws IOException {
         try (var file = new BufferedOutputStream(Files.newOutputStream(output.resolve(ARCHIVE)));
              var zstd = new ZstdCompressorOutputStream(file);
              var tar = new TarArchiveOutputStream(zstd)) {
@@ -35,18 +39,24 @@ final class TarBackupEngine implements BackupEngine {
                     entry.setModTime(attrs.lastModifiedTime().toMillis());
                     tar.putArchiveEntry(entry);
                     if (attrs.isRegularFile()) {
-                        try (var input = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) { input.transferTo(tar); }
+                        try (var input = Files.newInputStream(path, LinkOption.NOFOLLOW_LINKS)) {
+                            input.transferTo(tar);
+                        }
                         var after = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
                         if (after.size() != attrs.size() || !after.lastModifiedTime().equals(attrs.lastModifiedTime()))
                             throw new IOException("File changed during backup; retry when it is idle: " + path);
                     }
                     tar.closeArchiveEntry();
                 }
-                @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     if (!dir.equals(source)) add(dir, attrs);
                     return FileVisitResult.CONTINUE;
                 }
-                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     add(file, attrs);
                     return FileVisitResult.CONTINUE;
                 }
@@ -54,23 +64,29 @@ final class TarBackupEngine implements BackupEngine {
         }
     }
 
-    @Override public void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
+    @Override
+    public void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
         FilesSupport.requireEmptyDirectory(destination);
         // Validate and decompress completely before copying anything into the user's directory.
         Path staging = Files.createTempDirectory("simple-backups-restore-");
         try {
             extract(store, snapshot, staging);
             Files.walkFileTree(staging, new SimpleFileVisitor<>() {
-                @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     if (!dir.equals(staging)) Files.createDirectory(destination.resolve(staging.relativize(dir)));
                     return FileVisitResult.CONTINUE;
                 }
-                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.copy(file, destination.resolve(staging.relativize(file)), StandardCopyOption.COPY_ATTRIBUTES);
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } finally { FilesSupport.deleteTree(staging); }
+        } finally {
+            FilesSupport.deleteTree(staging);
+        }
     }
 
     private void extract(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
@@ -84,10 +100,10 @@ final class TarBackupEngine implements BackupEngine {
                 String name = entry.getName();
                 Path target = root.resolve(name).normalize();
                 if (name.contains("\\") || name.matches("^[A-Za-z]:.*") || name.startsWith("/")
-                        || !target.startsWith(root) || target.equals(root) || !seen.add(target))
+                    || !target.startsWith(root) || target.equals(root) || !seen.add(target))
                     throw new IOException("Unsafe or duplicate archive path: " + name);
                 if (!tar.canReadEntryData(entry) || entry.isLink() || entry.isSymbolicLink()
-                        || (!entry.isDirectory() && !entry.isFile()))
+                    || (!entry.isDirectory() && !entry.isFile()))
                     throw new IOException("Unsupported archive entry: " + name);
                 if (entry.isDirectory()) {
                     Files.createDirectories(target);
@@ -103,7 +119,8 @@ final class TarBackupEngine implements BackupEngine {
         }
     }
 
-    @Override public List<String> diff(SnapshotStore store, Snapshot snapshot, Path source) throws IOException {
+    @Override
+    public List<String> diff(SnapshotStore store, Snapshot snapshot, Path source) throws IOException {
         Path staging = Files.createTempDirectory("simple-backups-diff-");
         try {
             extract(store, snapshot, staging);
@@ -118,21 +135,29 @@ final class TarBackupEngine implements BackupEngine {
                 else if (!before.get(name).equals(after.get(name))) changes.add("CHANGED  " + name);
             }
             return changes;
-        } finally { FilesSupport.deleteTree(staging); }
+        } finally {
+            FilesSupport.deleteTree(staging);
+        }
     }
 
     private Map<String, String> fingerprint(Path root) throws IOException {
         Map<String, String> result = new TreeMap<>();
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
-            @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 if (!dir.equals(root)) result.put(relative(root, dir), "directory");
                 return FileVisitResult.CONTINUE;
             }
-            @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!attrs.isRegularFile()) throw new IOException("Cannot compare link or special file: " + file);
                 MessageDigest digest;
-                try { digest = MessageDigest.getInstance("SHA-256"); }
-                catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
+                try {
+                    digest = MessageDigest.getInstance("SHA-256");
+                } catch (NoSuchAlgorithmException impossible) {
+                    throw new IllegalStateException(impossible);
+                }
                 try (var input = new DigestInputStream(Files.newInputStream(file, LinkOption.NOFOLLOW_LINKS), digest)) {
                     input.transferTo(OutputStream.nullOutputStream());
                 }

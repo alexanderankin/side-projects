@@ -8,9 +8,10 @@ import java.awt.*;
 
 @Slf4j
 public final class SimpleBackups {
-    private SimpleBackups() {}
+    private SimpleBackups() {
+    }
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         if (GraphicsEnvironment.isHeadless()) {
             System.err.println("Simple Backups needs a desktop display to run its Swing interface.");
             return;

@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -15,7 +18,8 @@ final class BackupService {
         if (backup.from().getScheme().equals("file") && backup.to().getScheme().equals("file")) {
             Path source = Path.of(backup.from()).toRealPath();
             Path target = FilesSupport.realLocation(Path.of(backup.to()));
-            if (target.startsWith(source)) throw new IOException("The backup destination cannot be inside its source folder");
+            if (target.startsWith(source))
+                throw new IOException("The backup destination cannot be inside its source folder");
         }
         long start = System.nanoTime();
         Path work = Files.createTempDirectory("simple-backups-run-");
@@ -43,11 +47,16 @@ final class BackupService {
                 log.info("Completed {} snapshot {} for {}", snapshot.method(), epoch, backup.id());
                 return snapshot;
             } catch (Exception failure) {
-                try { store.remove(prefix); }
-                catch (Exception cleanup) { failure.addSuppressed(cleanup); }
+                try {
+                    store.remove(prefix);
+                } catch (Exception cleanup) {
+                    failure.addSuppressed(cleanup);
+                }
                 throw failure;
             }
-        } finally { FilesSupport.deleteTree(work); }
+        } finally {
+            FilesSupport.deleteTree(work);
+        }
     }
 
     List<Snapshot> snapshots(BackupConfiguration backup, AppSettings settings) throws IOException {
@@ -58,7 +67,8 @@ final class BackupService {
                 if (!store.exists(key)) continue;
                 try (var reader = new InputStreamReader(store.open(key), StandardCharsets.UTF_8)) {
                     var snapshot = ConfigurationStore.read(reader, Snapshot.class);
-                    if (snapshot.epochMillis() != epoch) throw new IOException("Snapshot timestamp does not match its folder: " + epoch);
+                    if (snapshot.epochMillis() != epoch)
+                        throw new IOException("Snapshot timestamp does not match its folder: " + epoch);
                     if (snapshot.backupId().equals(backup.id())) snapshots.add(snapshot);
                 }
             }
@@ -71,8 +81,13 @@ final class BackupService {
         requireOwner(backup, snapshot);
         var engine = BackupEngine.forMethod(snapshot.method());
         // Let the engine surface its unsupported operation without requiring a network connection.
-        if (snapshot.method() == BackupMethod.restic) { engine.restore(null, snapshot, destination); return; }
-        try (var store = SnapshotStore.open(backup.to(), settings)) { engine.restore(store, snapshot, destination); }
+        if (snapshot.method() == BackupMethod.restic) {
+            engine.restore(null, snapshot, destination);
+            return;
+        }
+        try (var store = SnapshotStore.open(backup.to(), settings)) {
+            engine.restore(store, snapshot, destination);
+        }
     }
 
     List<String> diff(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, Consumer<String> progress) throws IOException {
@@ -86,6 +101,7 @@ final class BackupService {
     }
 
     private void requireOwner(BackupConfiguration backup, Snapshot snapshot) {
-        if (!backup.id().equals(snapshot.backupId())) throw new IllegalArgumentException("Snapshot belongs to a different backup");
+        if (!backup.id().equals(snapshot.backupId()))
+            throw new IllegalArgumentException("Snapshot belongs to a different backup");
     }
 }

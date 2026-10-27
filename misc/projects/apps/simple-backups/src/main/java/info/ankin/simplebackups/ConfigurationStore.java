@@ -1,9 +1,9 @@
 package info.ankin.simplebackups;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -63,7 +63,9 @@ public final class ConfigurationStore {
         return Files.exists(path) ? read(path, AppSettings.class) : AppSettings.defaults();
     }
 
-    public void saveSettings(AppSettings settings) throws IOException { write(root.resolve("config.json"), settings); }
+    public void saveSettings(AppSettings settings) throws IOException {
+        write(root.resolve("config.json"), settings);
+    }
 
     static <T> T read(Path path, Class<T> type) throws IOException {
         try (var reader = Files.newBufferedReader(path)) {
@@ -80,7 +82,7 @@ public final class ConfigurationStore {
             Object value = switch (raw) {
                 case BackupConfiguration b -> new BackupConfiguration(b.id(), b.name(), b.from(), b.to());
                 case AppSettings s -> new AppSettings(s.awsAuthMethod(), s.awsProfile(), s.awsAccessKeyId(),
-                        s.awsSecretAccessKey(), s.awsRegion(), s.sshUsername(), s.sshPrivateKey(), s.preferredMethod());
+                    s.awsSecretAccessKey(), s.awsRegion(), s.sshUsername(), s.sshPrivateKey(), s.preferredMethod());
                 case Snapshot s -> new Snapshot(s.backupId(), s.epochMillis(), s.durationMillis(), s.method());
                 case null -> throw new IOException("JSON must contain an object");
                 default -> throw new IOException("Unsupported JSON model: " + type);

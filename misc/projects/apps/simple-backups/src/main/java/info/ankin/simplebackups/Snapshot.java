@@ -2,6 +2,7 @@ package info.ankin.simplebackups;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+
 import java.util.UUID;
 
 @Data
@@ -21,5 +22,7 @@ public final class Snapshot {
         this.method = method;
     }
 
-    public String prefix() { return "snapshots/" + epochMillis + "/"; }
+    public String prefix() {
+        return "snapshots/" + epochMillis + "/";
+    }
 }

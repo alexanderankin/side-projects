@@ -53,7 +53,8 @@ final class BackupFrame extends JFrame {
         this.configurations = configurations;
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
-            @Override public void windowClosing(WindowEvent e) {
+            @Override
+            public void windowClosing(WindowEvent e) {
                 if (busy) {
                     JOptionPane.showMessageDialog(BackupFrame.this, "An operation is running. Wait for it to finish before closing.");
                     return;
@@ -101,7 +102,7 @@ final class BackupFrame extends JFrame {
             var backup = backups.get(row);
             switch (action) {
                 case "Run" -> run("Starting backup", () -> service.backup(backup, settings, this::report), snapshot ->
-                        JOptionPane.showMessageDialog(this, "Backup complete: " + snapshot.prefix()));
+                    JOptionPane.showMessageDialog(this, "Backup complete: " + snapshot.prefix()));
                 case "Edit" -> editBackup(backup);
                 case "Export" -> exportBackup(backup);
                 case "Snapshots" -> showSnapshots(backup);
@@ -123,13 +124,20 @@ final class BackupFrame extends JFrame {
         TableActions.install(snapshotTable, new String[]{"Restore", "Diff"}, (row, action) -> {
             Snapshot snapshot = snapshots.get(page * PAGE_SIZE + row);
             if (action.equals("Restore")) restore(snapshot);
-            else run("Comparing snapshot with current source", () -> service.diff(selectedBackup, settings, snapshot, this::report), changes ->
+            else
+                run("Comparing snapshot with current source", () -> service.diff(selectedBackup, settings, snapshot, this::report), changes ->
                     showText("Diff against current source", changes.isEmpty() ? "No differences." : String.join("\n", changes)));
         });
         panel.add(new JScrollPane(snapshotTable), BorderLayout.CENTER);
         JPanel pagination = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        previous.addActionListener(e -> { page--; renderPage(); });
-        next.addActionListener(e -> { page++; renderPage(); });
+        previous.addActionListener(e -> {
+            page--;
+            renderPage();
+        });
+        next.addActionListener(e -> {
+            page++;
+            renderPage();
+        });
         pagination.add(previous);
         pagination.add(pageLabel);
         pagination.add(next);
@@ -141,8 +149,10 @@ final class BackupFrame extends JFrame {
         run("Loading backup configurations", configurations::list, listing -> {
             backups = listing.backups();
             backupModel.setRowCount(0);
-            for (var backup : backups) backupModel.addRow(new Object[]{backup.id(), backup.name(), backup.from(), backup.to(), ""});
-            if (!listing.errors().isEmpty()) showText("Some configurations could not be loaded", String.join("\n", listing.errors()));
+            for (var backup : backups)
+                backupModel.addRow(new Object[]{backup.id(), backup.name(), backup.from(), backup.to(), ""});
+            if (!listing.errors().isEmpty())
+                showText("Some configurations could not be loaded", String.join("\n", listing.errors()));
         });
     }
 
@@ -160,10 +170,10 @@ final class BackupFrame extends JFrame {
     private void renderPage() {
         snapshotModel.setRowCount(0);
         snapshots.stream().skip((long) page * PAGE_SIZE).limit(PAGE_SIZE).forEach(snapshot ->
-                snapshotModel.addRow(new Object[]{TIME.format(Instant.ofEpochMilli(snapshot.epochMillis())),
-                        String.format("%.3f s", snapshot.durationMillis() / 1000.0), snapshot.method(), ""}));
+            snapshotModel.addRow(new Object[]{TIME.format(Instant.ofEpochMilli(snapshot.epochMillis())),
+                String.format("%.3f s", snapshot.durationMillis() / 1000.0), snapshot.method(), ""}));
         pageLabel.setText(snapshots.isEmpty() ? "No snapshots yet" : "Page " + (page + 1) + " of "
-                + ((snapshots.size() + PAGE_SIZE - 1) / PAGE_SIZE) + " • " + snapshots.size() + " snapshots");
+            + ((snapshots.size() + PAGE_SIZE - 1) / PAGE_SIZE) + " • " + snapshots.size() + " snapshots");
         previous.setEnabled(!busy && page > 0);
         next.setEnabled(!busy && (page + 1) * PAGE_SIZE < snapshots.size());
     }
@@ -179,13 +189,18 @@ final class BackupFrame extends JFrame {
         field(form, "Source formats", new JLabel("file:///folder or ssh://user@host:22/folder"));
         field(form, "Destination formats", new JLabel("file:///folder or s3://bucket/prefix"));
         while (JOptionPane.showConfirmDialog(this, form, existing == null ? "New backup" : "Edit backup",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             try {
                 var backup = new BackupConfiguration(existing == null ? UUID.randomUUID() : existing.id(),
-                        name.getText().trim(), URI.create(from.getText().trim()), URI.create(to.getText().trim()));
-                run("Saving backup configuration", () -> { configurations.save(backup); return backup; }, ignored -> reloadBackups());
+                    name.getText().trim(), URI.create(from.getText().trim()), URI.create(to.getText().trim()));
+                run("Saving backup configuration", () -> {
+                    configurations.save(backup);
+                    return backup;
+                }, ignored -> reloadBackups());
                 return;
-            } catch (Exception e) { error(e); }
+            } catch (Exception e) {
+                error(e);
+            }
         }
     }
 
@@ -209,9 +224,12 @@ final class BackupFrame extends JFrame {
         if (path == null) return;
         run("Reading configuration", () -> ConfigurationStore.read(path, BackupConfiguration.class), backup -> {
             if (backups.stream().anyMatch(b -> b.id().equals(backup.id())) && JOptionPane.showConfirmDialog(this,
-                    "Replace the existing configuration with ID " + backup.id() + "?", "Import backup", JOptionPane.OK_CANCEL_OPTION)
-                    != JOptionPane.OK_OPTION) return;
-            run("Importing configuration", () -> { configurations.save(backup); return backup; }, ignored -> reloadBackups());
+                "Replace the existing configuration with ID " + backup.id() + "?", "Import backup", JOptionPane.OK_CANCEL_OPTION)
+                != JOptionPane.OK_OPTION) return;
+            run("Importing configuration", () -> {
+                configurations.save(backup);
+                return backup;
+            }, ignored -> reloadBackups());
         });
     }
 
@@ -219,19 +237,30 @@ final class BackupFrame extends JFrame {
         Path file = FileDialogs.saveJson(this, backup.id() + ".json");
         if (file == null) return;
         if (Files.exists(file) && JOptionPane.showConfirmDialog(this, "Replace " + file.getFileName() + "?",
-                "Export backup", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
-        run("Exporting configuration", () -> { ConfigurationStore.write(file, backup); return file; }, ignored -> {});
+            "Export backup", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return;
+        run("Exporting configuration", () -> {
+            ConfigurationStore.write(file, backup);
+            return file;
+        }, ignored -> {
+        });
     }
 
     private void restore(Snapshot snapshot) {
         if (snapshot.method() == BackupMethod.restic) {
-            run("Restoring snapshot", () -> { service.restore(selectedBackup, settings, snapshot, null); return null; }, ignored -> {});
+            run("Restoring snapshot", () -> {
+                service.restore(selectedBackup, settings, snapshot, null);
+                return null;
+            }, ignored -> {
+            });
             return;
         }
         Path destination = FileDialogs.folder(this, "Restore into an empty local folder", null);
         if (destination == null) return;
-        run("Restoring snapshot", () -> { service.restore(selectedBackup, settings, snapshot, destination); return destination; },
-                restored -> JOptionPane.showMessageDialog(this, "Restored to " + restored));
+        run("Restoring snapshot", () -> {
+                service.restore(selectedBackup, settings, snapshot, destination);
+                return destination;
+            },
+            restored -> JOptionPane.showMessageDialog(this, "Restored to " + restored));
     }
 
     private void rebuildSettings() {
@@ -256,7 +285,7 @@ final class BackupFrame extends JFrame {
         keyPanel.add(privateKey, BorderLayout.CENTER);
         keyPanel.add(button("Browse…", () -> {
             Path selected = FileDialogs.open(privateKey, "Choose SSH private key",
-                    FilesSupport.expandHome(privateKey.getText().trim()), false);
+                FilesSupport.expandHome(privateKey.getText().trim()), false);
             if (selected != null) privateKey.setText(selected.toAbsolutePath().toString());
         }), BorderLayout.EAST);
         field(form, "SSH private key file", keyPanel);
@@ -265,14 +294,17 @@ final class BackupFrame extends JFrame {
         field(form, "", new JLabel("Credentials are saved as plain JSON in config.json. Restic uses a fixed password."));
         field(form, "", button("Save settings", () -> {
             var updated = new AppSettings((AppSettings.AwsAuthMethod) auth.getSelectedItem(), profile.getText().trim(),
-                    accessKey.getText().trim(), new String(secret.getPassword()), region.getText().trim(),
-                    username.getText().trim(), privateKey.getText().trim(), (BackupMethod) method.getSelectedItem());
+                accessKey.getText().trim(), new String(secret.getPassword()), region.getText().trim(),
+                username.getText().trim(), privateKey.getText().trim(), (BackupMethod) method.getSelectedItem());
             if (updated.awsAuthMethod() == AppSettings.AwsAuthMethod.basic
-                    && (updated.awsAccessKeyId().isBlank() || updated.awsSecretAccessKey().isBlank())) {
+                && (updated.awsAccessKeyId().isBlank() || updated.awsSecretAccessKey().isBlank())) {
                 error(new IllegalArgumentException("Basic AWS authentication needs an access key ID and secret access key."));
                 return;
             }
-            run("Saving settings", () -> { configurations.saveSettings(updated); return updated; }, saved -> {
+            run("Saving settings", () -> {
+                configurations.saveSettings(updated);
+                return updated;
+            }, saved -> {
                 settings = saved;
                 report("Settings saved");
             });
@@ -284,7 +316,8 @@ final class BackupFrame extends JFrame {
     }
 
     private <T> void run(String description, Callable<T> task, Consumer<T> success) {
-        run(description, task, success, () -> {});
+        run(description, task, success, () -> {
+        });
     }
 
     private <T> void run(String description, Callable<T> task, Consumer<T> success, Runnable failure) {
@@ -294,8 +327,13 @@ final class BackupFrame extends JFrame {
         progress.setIndeterminate(true);
         enabled(tabs, false);
         new SwingWorker<T, Void>() {
-            @Override protected T doInBackground() throws Exception { return task.call(); }
-            @Override protected void done() {
+            @Override
+            protected T doInBackground() throws Exception {
+                return task.call();
+            }
+
+            @Override
+            protected void done() {
                 busy = false;
                 enabled(tabs, true);
                 progress.setIndeterminate(false);
@@ -314,13 +352,15 @@ final class BackupFrame extends JFrame {
         }.execute();
     }
 
-    private void report(String text) { progressText = text; }
+    private void report(String text) {
+        progressText = text;
+    }
 
     private void error(Throwable error) {
         log.warn("Backup operation failed: {}", error.getMessage());
         log.debug("Backup operation failure", error);
         JOptionPane.showMessageDialog(this, error.getMessage() == null ? error.getClass().getSimpleName() : error.getMessage(),
-                error instanceof UnsupportedOperationException ? "Not implemented" : "Operation failed", JOptionPane.ERROR_MESSAGE);
+            error instanceof UnsupportedOperationException ? "Not implemented" : "Operation failed", JOptionPane.ERROR_MESSAGE);
     }
 
     private void showText(String title, String text) {
@@ -337,7 +377,10 @@ final class BackupFrame extends JFrame {
 
     private static DefaultTableModel model(String... columns) {
         return new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return column == getColumnCount() - 1; }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == getColumnCount() - 1;
+            }
         };
     }
 

@@ -7,7 +7,9 @@ import java.util.function.Consumer;
 
 interface BackupEngine {
     void create(Path source, Path output, Consumer<String> progress) throws IOException;
+
     void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException;
+
     List<String> diff(SnapshotStore store, Snapshot snapshot, Path source) throws IOException;
 
     static BackupEngine forMethod(BackupMethod method) {

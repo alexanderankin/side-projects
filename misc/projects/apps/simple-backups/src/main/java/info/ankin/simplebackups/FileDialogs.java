@@ -6,12 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-/** Native file dialogs, including macOS's native directory picker. Call on the Swing EDT. */
+/**
+ * Native file dialogs, including macOS's native directory picker. Call on the Swing EDT.
+ */
 final class FileDialogs {
     private static final boolean MAC = System.getProperty("os.name").startsWith("Mac");
     private static final String DIRECTORIES_PROPERTY = "apple.awt.fileDialogForDirectories";
 
-    private FileDialogs() {}
+    private FileDialogs() {
+    }
 
     static Path folder(Component parent, String title, Path initial) {
         // AWT exposes native folder selection on macOS only. Keep folders selectable elsewhere.
@@ -21,7 +24,7 @@ final class FileDialogs {
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (initial != null) chooser.setCurrentDirectory(initial.toFile());
             return chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION
-                    ? chooser.getSelectedFile().toPath() : null;
+                ? chooser.getSelectedFile().toPath() : null;
         }
         return choose(parent, title, FileDialog.LOAD, true, initial, false);
     }
@@ -37,14 +40,15 @@ final class FileDialogs {
     private static Path choose(Component parent, String title, int mode, boolean directories, Path initial, boolean json) {
         Window owner = parent instanceof Window window ? window : SwingUtilities.getWindowAncestor(parent);
         FileDialog dialog = owner instanceof Dialog modal
-                ? new FileDialog(modal, title, mode) : new FileDialog((Frame) owner, title, mode);
+            ? new FileDialog(modal, title, mode) : new FileDialog((Frame) owner, title, mode);
         String previous = System.getProperty(DIRECTORIES_PROPERTY);
         try {
             if (MAC) System.setProperty(DIRECTORIES_PROPERTY, Boolean.toString(directories));
             if (initial != null) {
                 if (Files.isDirectory(initial)) dialog.setDirectory(initial.toAbsolutePath().toString());
                 else {
-                    if (initial.getParent() != null) dialog.setDirectory(initial.toAbsolutePath().getParent().toString());
+                    if (initial.getParent() != null)
+                        dialog.setDirectory(initial.toAbsolutePath().getParent().toString());
                     if (!directories) dialog.setFile(initial.getFileName().toString());
                 }
             }

@@ -8,15 +8,19 @@ import net.schmizz.sshj.sftp.SFTPClient;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 
-/** SSH inputs are staged locally; a local URI is used directly without adding path components. */
+/**
+ * SSH inputs are staged locally; a local URI is used directly without adding path components.
+ */
 @Data
 @Accessors(fluent = true)
 final class SourceFolder implements AutoCloseable {
     private final Path path;
     private final boolean temporary;
+
     static SourceFolder open(URI source, AppSettings settings, Consumer<String> progress) throws IOException {
         if ("file".equals(source.getScheme())) {
             Path path = Path.of(source).toRealPath();
@@ -39,7 +43,11 @@ final class SourceFolder implements AutoCloseable {
             }
             return new SourceFolder(staging, true);
         } catch (Exception failure) {
-            try { FilesSupport.deleteTree(staging); } catch (IOException cleanup) { failure.addSuppressed(cleanup); }
+            try {
+                FilesSupport.deleteTree(staging);
+            } catch (IOException cleanup) {
+                failure.addSuppressed(cleanup);
+            }
             throw failure;
         }
     }
@@ -61,10 +69,14 @@ final class SourceFolder implements AutoCloseable {
                     progress.accept("Reading SSH file: " + child);
                     sftp.get(child, target.toString());
                 }
-                default -> throw new IOException("Unsupported SSH entry (links and special files are not followed): " + child);
+                default ->
+                    throw new IOException("Unsupported SSH entry (links and special files are not followed): " + child);
             }
         }
     }
 
-    @Override public void close() throws IOException { if (temporary) FilesSupport.deleteTree(path); }
+    @Override
+    public void close() throws IOException {
+        if (temporary) FilesSupport.deleteTree(path);
+    }
 }
