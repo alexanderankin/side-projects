@@ -79,6 +79,8 @@ dependencies {
                 ['org.apache.commons:commons-csv', '1.14.1'],
                 // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
                 ['org.apache.commons:commons-lang3', '3.21.0'],
+                ['info.ankin.projects:picocli-logback-level-mixin', '0.0.3'],
+                ['info.ankin.projects:exec', '0.0.2'],
         ].each { l ->
             ['implementation'].each { String c ->
                 add(c, l.getFirst()) {
