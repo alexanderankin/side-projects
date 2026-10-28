@@ -61,10 +61,11 @@ final class SourceFolder implements AutoCloseable {
         } catch (Exception failure) {
             try {
                 FilesSupport.deleteTree(staging);
-            } catch (IOException cleanup) {
+            } catch (Exception cleanup) {
                 failure.addSuppressed(cleanup);
             }
-            if (failure instanceof IOException io) throw io;
+            if (failure instanceof IOException io)
+                throw io;
             throw new IOException("Could not read SSH folder " + source + ": " + failure.getMessage(), failure);
         } finally {
             if (sftp != null) sftp.disconnect();

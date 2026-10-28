@@ -1,5 +1,6 @@
 package info.ankin.simplebackups;
 
+import lombok.SneakyThrows;
 import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
@@ -15,12 +16,14 @@ public final class FilesSupport {
         return path.startsWith("~/") ? Path.of(System.getProperty("user.home"), path.substring(2)) : Path.of(path);
     }
 
-    public static void privatePermissions(Path path, boolean directory) throws IOException {
+    @SneakyThrows
+    public static void privatePermissions(Path path, boolean directory) {
         if (Files.getFileStore(path).supportsFileAttributeView("posix"))
             Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(directory ? "rwx------" : "rw-------"));
     }
 
-    public static void move(Path from, Path to) throws IOException {
+    @SneakyThrows
+    public static void move(Path from, Path to) {
         try {
             Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException e) {
@@ -28,19 +31,23 @@ public final class FilesSupport {
         }
     }
 
-    public static void deleteTree(Path root) throws IOException {
-        if (!Files.exists(root, LinkOption.NOFOLLOW_LINKS)) return;
+    @SneakyThrows
+    public static void deleteTree(Path root) {
+        if (!Files.exists(root, LinkOption.NOFOLLOW_LINKS))
+            return;
         Files.walkFileTree(root, new SimpleFileVisitor<>() {
             @NonNull
             @Override
-            public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
+            @SneakyThrows
+            public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @NonNull
             @Override
-            public FileVisitResult postVisitDirectory(@NonNull Path dir, IOException failure) throws IOException {
+            @SneakyThrows
+            public FileVisitResult postVisitDirectory(@NonNull Path dir, IOException failure) {
                 if (failure != null) throw failure;
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
@@ -48,7 +55,8 @@ public final class FilesSupport {
         });
     }
 
-    public static void requireEmptyDirectory(Path directory) throws IOException {
+    @SneakyThrows
+    public static void requireEmptyDirectory(Path directory) {
         if (Files.isSymbolicLink(directory))
             throw new IOException("Choose a real directory, not a symbolic link");
         Files.createDirectories(directory);
@@ -59,7 +67,8 @@ public final class FilesSupport {
     }
 
     // Resolve existing ancestors too, so a symlink cannot hide a destination inside the source.
-    public static Path realLocation(Path path) throws IOException {
+    @SneakyThrows
+    public static Path realLocation(Path path) {
         path = path.toAbsolutePath().normalize();
         if (Files.exists(path))
             return path.toRealPath();
