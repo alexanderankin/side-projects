@@ -22,9 +22,11 @@ final class FileDialogs {
             var chooser = new JFileChooser();
             chooser.setDialogTitle(title);
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (initial != null) chooser.setCurrentDirectory(initial.toFile());
+            if (initial != null)
+                chooser.setCurrentDirectory(initial.toFile());
             return chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION
-                ? chooser.getSelectedFile().toPath() : null;
+                    ? chooser.getSelectedFile().toPath()
+                    : null;
         }
         return choose(parent, title, FileDialog.LOAD, true, initial, false);
     }
@@ -40,10 +42,13 @@ final class FileDialogs {
     private static Path choose(Component parent, String title, int mode, boolean directories, Path initial, boolean json) {
         Window owner = parent instanceof Window window ? window : SwingUtilities.getWindowAncestor(parent);
         FileDialog dialog = owner instanceof Dialog modal
-            ? new FileDialog(modal, title, mode) : new FileDialog((Frame) owner, title, mode);
+                ? new FileDialog(modal, title, mode)
+                : new FileDialog((Frame) owner, title, mode);
         String previous = System.getProperty(DIRECTORIES_PROPERTY);
         try {
-            if (MAC) System.setProperty(DIRECTORIES_PROPERTY, Boolean.toString(directories));
+            if (MAC)
+                System.setProperty(DIRECTORIES_PROPERTY, Boolean.toString(directories));
+
             if (initial != null) {
                 if (Files.isDirectory(initial)) dialog.setDirectory(initial.toAbsolutePath().toString());
                 else {
@@ -52,14 +57,17 @@ final class FileDialogs {
                     if (!directories) dialog.setFile(initial.getFileName().toString());
                 }
             }
-            if (json) dialog.setFilenameFilter((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".json"));
+            if (json)
+                dialog.setFilenameFilter((_, name) -> name.toLowerCase(Locale.ROOT).endsWith(".json"));
             dialog.setVisible(true);
             return dialog.getFile() == null ? null : Path.of(dialog.getDirectory(), dialog.getFile());
         } finally {
             dialog.dispose();
             if (MAC) {
-                if (previous == null) System.clearProperty(DIRECTORIES_PROPERTY);
-                else System.setProperty(DIRECTORIES_PROPERTY, previous);
+                if (previous == null)
+                    System.clearProperty(DIRECTORIES_PROPERTY);
+                else
+                    System.setProperty(DIRECTORIES_PROPERTY, previous);
             }
         }
     }

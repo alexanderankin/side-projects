@@ -1,8 +1,9 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import info.ankin.simplebackups.config.BackupMethod;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

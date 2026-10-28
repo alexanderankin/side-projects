@@ -1,4 +1,4 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.HostKeyRepository;
@@ -6,6 +6,9 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
+import info.ankin.simplebackups.FilesSupport;
+import info.ankin.simplebackups.config.AppSettings;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -54,7 +57,7 @@ class SourceFolderTest {
             var hostKeys = ArgumentCaptor.forClass(HostKeyRepository.class);
             verify(ssh).setHostKeyRepository(hostKeys.capture());
             assertInstanceOf(AcceptNewHostKeys.class, hostKeys.getValue());
-            assertEquals(FilesSupport.expandHome("~/.ssh/known_hosts").toString(), hostKeys.getValue().getKnownHostsRepositoryID());
+            Assertions.assertEquals(FilesSupport.expandHome("~/.ssh/known_hosts").toString(), hostKeys.getValue().getKnownHostsRepositoryID());
             verify(ssh).setConfigRepository(null);
             verify(ssh).setIdentityRepository(null);
             verify(ssh).addIdentity(FilesSupport.expandHome(AppSettings.defaults().sshPrivateKey()).toString());

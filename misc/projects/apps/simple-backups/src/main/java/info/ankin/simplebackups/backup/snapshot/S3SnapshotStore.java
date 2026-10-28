@@ -1,5 +1,6 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup.snapshot;
 
+import info.ankin.simplebackups.config.AppSettings;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;

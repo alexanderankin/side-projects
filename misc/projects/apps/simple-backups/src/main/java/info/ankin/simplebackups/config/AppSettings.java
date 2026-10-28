@@ -1,4 +1,4 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;

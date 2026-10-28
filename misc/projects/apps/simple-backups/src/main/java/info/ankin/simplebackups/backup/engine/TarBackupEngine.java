@@ -1,5 +1,8 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup.engine;
 
+import info.ankin.simplebackups.FilesSupport;
+import info.ankin.simplebackups.backup.Snapshot;
+import info.ankin.simplebackups.backup.snapshot.SnapshotStore;
 import lombok.SneakyThrows;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -14,12 +17,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 
 final class TarBackupEngine implements BackupEngine {
     static final String ARCHIVE = "simple.tar.zst";
+
+    private static String relative(Path root, Path path) {
+        return root.relativize(path).toString().replace(File.separatorChar, '/');
+    }
 
     @Override
     public void create(Path source, Path output, Consumer<String> progress) throws IOException {
@@ -51,14 +57,16 @@ final class TarBackupEngine implements BackupEngine {
                     tar.closeArchiveEntry();
                 }
 
+                @NonNull
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) throws IOException {
                     if (!dir.equals(source)) add(dir, attrs);
                     return FileVisitResult.CONTINUE;
                 }
 
+                @NonNull
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
                     add(file, attrs);
                     return FileVisitResult.CONTINUE;
                 }
@@ -74,14 +82,16 @@ final class TarBackupEngine implements BackupEngine {
         try {
             extract(store, snapshot, staging);
             Files.walkFileTree(staging, new SimpleFileVisitor<>() {
+                @NonNull
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) throws IOException {
                     if (!dir.equals(staging)) Files.createDirectory(destination.resolve(staging.relativize(dir)));
                     return FileVisitResult.CONTINUE;
                 }
 
+                @NonNull
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
                     Files.copy(file, destination.resolve(staging.relativize(file)), StandardCopyOption.COPY_ATTRIBUTES);
                     return FileVisitResult.CONTINUE;
                 }
@@ -180,9 +190,5 @@ final class TarBackupEngine implements BackupEngine {
             }
         });
         return result;
-    }
-
-    private static String relative(Path root, Path path) {
-        return root.relativize(path).toString().replace(File.separatorChar, '/');
     }
 }

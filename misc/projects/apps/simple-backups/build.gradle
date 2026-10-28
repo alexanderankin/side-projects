@@ -1,18 +1,18 @@
 plugins {
     id 'spring-conventions'
-    id 'application'
+    id 'picocli-conventions'
 }
 
 application.mainClass = 'info.ankin.simplebackups.SimpleBackups'
 
 dependencies {
+    implementation 'org.springframework:spring-core'
     implementation 'org.springframework.boot:spring-boot-starter-logging'
     implementation 'tools.jackson.core:jackson-databind'
     implementation 'org.apache.commons:commons-compress:1.28.0'
     implementation 'com.github.luben:zstd-jni:1.5.7-24'
     implementation 'com.github.mwiede:jsch:2.27.7'
     implementation 'info.ankin.projects:exec:0.0.2'
-    // implementation platform('software.amazon.awssdk:bom:2.57.4')
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:sso'
     implementation 'software.amazon.awssdk:ssooidc'

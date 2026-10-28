@@ -1,9 +1,10 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup;
 
 import com.jcraft.jsch.HostKey;
 import com.jcraft.jsch.HostKeyRepository;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import info.ankin.simplebackups.FilesSupport;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;

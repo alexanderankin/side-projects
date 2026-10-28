@@ -1,5 +1,6 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.config;
 
+import info.ankin.simplebackups.backup.Snapshot;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -12,9 +13,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigurationStoreTest {
-    @TempDir Path root;
+    @TempDir
+    Path root;
 
-    @Test void savesAndImportsTheFourFieldConfiguration() throws Exception {
+    @Test
+    void savesAndImportsTheFourFieldConfiguration() throws Exception {
         var store = new ConfigurationStore(root);
         var backup = new BackupConfiguration(UUID.randomUUID(), "Remote folder", URI.create("ssh://alice@server:2222/path%20with%20spaces"),
                 URI.create("s3://example-bucket/backups"));
@@ -25,7 +28,8 @@ class ConfigurationStoreTest {
         assertEquals(backup, store.list().backups().getFirst());
     }
 
-    @Test void validatesImportedJsonAndKeepsOtherConfigurationsVisible() throws Exception {
+    @Test
+    void validatesImportedJsonAndKeepsOtherConfigurationsVisible() throws Exception {
         var store = new ConfigurationStore(root);
         var backup = new BackupConfiguration(UUID.randomUUID(), "Valid", root.toUri(), root.resolve("target").toUri());
         store.save(backup);
@@ -36,7 +40,8 @@ class ConfigurationStoreTest {
         assertEquals(1, store.list().errors().size());
     }
 
-    @Test void settingsRoundTripAndMissingFieldsUseDefaults() throws Exception {
+    @Test
+    void settingsRoundTripAndMissingFieldsUseDefaults() throws Exception {
         var store = new ConfigurationStore(root);
         assertEquals(BackupMethod.tar, store.settings().preferredMethod());
         var settings = new AppSettings(AppSettings.AwsAuthMethod.basic, "custom", "key", "secret", "eu-west-1", "alice", "~/key", BackupMethod.restic);
@@ -47,7 +52,8 @@ class ConfigurationStoreTest {
         assertEquals(AppSettings.defaults(), store.settings());
     }
 
-    @Test void readsExistingJsonDocumentsWithoutChangingTheirFormat() throws Exception {
+    @Test
+    void readsExistingJsonDocumentsWithoutChangingTheirFormat() throws Exception {
         UUID id = UUID.randomUUID();
         Path backupFile = root.resolve("backup.json");
         Files.writeString(backupFile, """
@@ -72,7 +78,8 @@ class ConfigurationStoreTest {
         assertEquals(new Snapshot(id, 1234, 56, BackupMethod.tar), ConfigurationStore.read(snapshotFile, Snapshot.class));
     }
 
-    @Test void rejectsUnknownMethodsAndInvalidSnapshotMetadata() throws Exception {
+    @Test
+    void rejectsUnknownMethodsAndInvalidSnapshotMetadata() throws Exception {
         Path file = root.resolve("config.json");
         Files.writeString(file, "{\"preferredMethod\":\"unknown\"}");
         assertThrows(IOException.class, () -> ConfigurationStore.read(file, AppSettings.class));

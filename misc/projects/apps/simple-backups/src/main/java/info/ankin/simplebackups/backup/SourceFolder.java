@@ -1,9 +1,11 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import info.ankin.simplebackups.FilesSupport;
+import info.ankin.simplebackups.config.AppSettings;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -25,7 +27,8 @@ final class SourceFolder implements AutoCloseable {
     static SourceFolder open(URI source, AppSettings settings, Consumer<String> progress) throws IOException {
         if ("file".equals(source.getScheme())) {
             Path path = Path.of(source).toRealPath();
-            if (!Files.isDirectory(path)) throw new IOException("Source is not a folder: " + path);
+            if (!Files.isDirectory(path))
+                throw new IOException("Source is not a folder: " + path);
             return new SourceFolder(path, false);
         }
         Path staging = Files.createTempDirectory("simple-backups-ssh-");

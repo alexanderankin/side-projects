@@ -14,6 +14,7 @@ ij_any_block_comment_at_first_column = false
 ij_java_align_multiline_binary_operation = false
 ij_java_space_inside_one_line_enum_braces = true
 ij_formatter_tags_enabled = true
+ij_continuation_indent_size = 8
 
 [{*.sh,*.yml,*.yaml}]
 tab_width = 2

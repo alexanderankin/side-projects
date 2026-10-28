@@ -1,6 +1,8 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup.engine;
 
 import info.ankin.projects.system.exec.Exec;
+import info.ankin.simplebackups.backup.Snapshot;
+import info.ankin.simplebackups.backup.snapshot.SnapshotStore;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;

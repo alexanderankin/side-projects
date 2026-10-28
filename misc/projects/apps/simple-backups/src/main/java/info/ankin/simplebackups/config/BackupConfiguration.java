@@ -1,10 +1,11 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -22,10 +23,15 @@ public final class BackupConfiguration {
     private final URI to;
 
     @JsonCreator
-    public BackupConfiguration(@JsonProperty("id") UUID id, @JsonProperty("name") String name,
-                               @JsonProperty("from") URI from, @JsonProperty("to") URI to) {
+    public BackupConfiguration(
+            @JsonProperty("id") UUID id,
+            @JsonProperty("name") String name,
+            @JsonProperty("from") URI from,
+            @JsonProperty("to") URI to
+    ) {
         Objects.requireNonNull(id, "Backup ID is required");
-        if (name == null || name.isBlank()) throw new IllegalArgumentException("A backup name is required");
+        if (!StringUtils.hasText(name))
+            throw new IllegalArgumentException("A backup name is required");
         validateUri(from, Set.of("file", "ssh"), "Source");
         validateUri(to, Set.of("file", "s3"), "Destination");
         this.id = id;
@@ -40,9 +46,11 @@ public final class BackupConfiguration {
         if (uri.getQuery() != null || uri.getFragment() != null || uri.isOpaque())
             throw new IllegalArgumentException(label + " must be a folder URI without a query or fragment");
         if ("file".equals(uri.getScheme())) {
-            if (!Path.of(uri).isAbsolute()) throw new IllegalArgumentException(label + " must be absolute");
+            if (!Path.of(uri).isAbsolute())
+                throw new IllegalArgumentException(label + " must be absolute");
         } else {
-            if (uri.getHost() == null) throw new IllegalArgumentException(label + " needs a host / bucket name");
+            if (uri.getHost() == null)
+                throw new IllegalArgumentException(label + " needs a host / bucket name");
             if ("s3".equals(uri.getScheme()) && (uri.getUserInfo() != null || uri.getPort() != -1))
                 throw new IllegalArgumentException("S3 URIs must be s3://bucket/prefix");
             if ("ssh".equals(uri.getScheme())) {

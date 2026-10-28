@@ -1,4 +1,4 @@
-package info.ankin.simplebackups;
+package info.ankin.simplebackups.backup;
 
 import com.jcraft.jsch.HostKey;
 import com.jcraft.jsch.HostKeyRepository;
