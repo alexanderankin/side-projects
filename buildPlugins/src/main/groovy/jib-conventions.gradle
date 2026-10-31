@@ -5,3 +5,14 @@ plugins {
 tasks.named('jibDockerBuild') {
     notCompatibleWithConfigurationCache("https://github.com/GoogleContainerTools/jib/issues/4468")
 }
+
+jib {
+    container {
+        jvmFlags = [
+                '-Dcom.sun.net.ssl.checkRevocation=true',
+                '-Dcom.sun.security.enableCRLDP=true',
+        ]
+        // JAVA_TOOL_OPTIONS="-Xmx512m"
+        // environment = ['JAVA_TOOL_OPTIONS': '-Xmx512m']
+    }
+}
