@@ -10,6 +10,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
@@ -129,9 +131,7 @@ class BackupServiceTest {
             store.put(snapshot.prefix() + BackupEngine.TAR_ARCHIVE_NAME, archive);
             assertThrows(IOException.class, () -> BackupEngine.forMethod(BackupMethod.tar).restore(store, snapshot, destination));
         }
-        try (var files = Files.list(destination)) {
-            assertEquals(0, files.count());
-        }
+        assertFalse(Files.exists(destination));
         assertFalse(Files.exists(root.resolve("outside.txt")));
     }
 
@@ -142,6 +142,36 @@ class BackupServiceTest {
         assertThrows(UnsupportedOperationException.class, () -> service.restore(backup, settings, snapshot, root.resolve("restore")));
         assertThrows(UnsupportedOperationException.class, () -> service.diff(backup, settings, snapshot, ignored -> {
         }));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void localRestoreHonorsDeletionFlagOnSuccessAndFailure(boolean allowDelete) throws Exception {
+        Path source = Files.createDirectory(root.resolve("source"));
+        Files.writeString(source.resolve("file"), "original content");
+        var backup = configuration(source, root.resolve("target"));
+        var snapshot = service.backup(backup, settings, ignored -> {});
+        var retained = new java.util.ArrayList<Path>();
+        java.util.function.Consumer<String> progress = message -> {
+            String prefix = "Retained restore staging folder: ";
+            if (message.startsWith(prefix)) retained.add(Path.of(message.substring(prefix.length())));
+        };
+        Path restored = root.resolve("restored");
+        service.restore(backup, settings, snapshot, restored.toUri(), allowDelete, progress);
+        assertEquals("original content", Files.readString(restored.resolve("file")));
+        assertEquals(allowDelete ? 0 : 1, retained.size());
+
+        Files.writeString(Path.of(backup.to()).resolve(snapshot.prefix()).resolve(BackupEngine.TAR_ARCHIVE_NAME), "broken archive");
+        var failure = assertThrows(IOException.class, () -> service.restore(backup, settings, snapshot,
+                root.resolve("failed").toUri(), allowDelete, progress));
+        assertEquals(allowDelete ? 0 : 2, retained.size());
+        if (!allowDelete) {
+            assertTrue(failure.getMessage().contains("staging files retained"));
+            for (Path path : retained) {
+                assertTrue(Files.exists(path));
+                info.ankin.simplebackups.FilesSupport.deleteTree(path); // Explicit fixture teardown.
+            }
+        }
     }
 
     private BackupConfiguration configuration(Path from, Path to) {

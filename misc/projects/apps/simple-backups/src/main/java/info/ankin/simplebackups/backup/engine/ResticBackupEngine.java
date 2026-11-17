@@ -49,7 +49,7 @@ final class ResticBackupEngine implements BackupEngine {
     }
 
     @Override
-    public void restore(SnapshotStore store, Snapshot snapshot, Path destination) {
+    public void restore(SnapshotStore store, Snapshot snapshot, Path destination, boolean allowDelete, Consumer<String> progress) {
         throw new UnsupportedOperationException("Restic restore is not implemented. Use the restic CLI with this snapshot's repository.");
     }
 

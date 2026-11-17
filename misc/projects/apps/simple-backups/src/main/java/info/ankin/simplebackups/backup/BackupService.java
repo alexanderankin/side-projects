@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,15 +98,71 @@ public final class BackupService {
     }
 
     public void restore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, Path destination) throws IOException {
+        restore(backup, settings, snapshot, destination == null ? null : destination.toUri(), ignored -> {});
+    }
+
+    public void restore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, URI destination, Consumer<String> progress) throws IOException {
+        restore(backup, settings, snapshot, destination, false, progress);
+    }
+
+    public void restore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, Path destination, boolean allowDelete) throws IOException {
+        restore(backup, settings, snapshot, destination == null ? null : destination.toUri(), allowDelete, ignored -> {});
+    }
+
+    public void restore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot, URI destination, boolean allowDelete, Consumer<String> progress) throws IOException {
         requireOwner(backup, snapshot);
         var engine = BackupEngine.forMethod(snapshot.method());
         // Let the engine surface its unsupported operation without requiring a network connection.
         if (snapshot.method() == BackupMethod.restic) {
-            engine.restore(null, snapshot, destination);
+            engine.restore(null, snapshot, null, allowDelete, progress);
             return;
         }
+        BackupConfiguration.validateRestoreDestination(destination);
+        RestorePlan plan = prepareRestore(backup, settings, snapshot, destination, allowDelete, progress);
+        executeRestore(plan, settings, allowDelete, progress);
+    }
+
+    public RestorePlan prepareRestore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot,
+                                      URI destination, Consumer<String> progress) throws IOException {
+        return prepareRestore(backup, settings, snapshot, destination, false, progress);
+    }
+
+    public RestorePlan prepareRestore(BackupConfiguration backup, AppSettings settings, Snapshot snapshot,
+                                      URI destination, boolean allowDelete, Consumer<String> progress) throws IOException {
+        requireOwner(backup, snapshot);
+        BackupConfiguration.validateRestoreDestination(destination);
+        Path contents = Files.createTempDirectory("simple-backups-restore-plan-");
         try (var store = SnapshotStore.open(backup.to(), settings)) {
-            engine.restore(store, snapshot, destination);
+            BackupEngine.forMethod(snapshot.method()).extractRestore(store, snapshot, contents);
+            var before = destination.getScheme().equals("file")
+                    ? RestoreComparison.inventory(Path.of(destination)) : RemoteRestore.inventory(destination, settings, progress);
+            var deletions = RestoreComparison.deletions(RestoreComparison.inventory(contents), before);
+            return new RestorePlan(contents, destination, java.util.Map.copyOf(before), List.copyOf(deletions));
+        } catch (Exception failure) {
+            FilesSupport.cleanupRestore(contents, allowDelete, progress);
+            if (!allowDelete)
+                throw new IOException("Restore preparation failed; staging files retained at " + contents + ": " + failure.getMessage(), failure);
+            throw failure;
+        }
+    }
+
+    public void executeRestore(RestorePlan plan, AppSettings settings, boolean allowDelete, Consumer<String> progress) throws IOException {
+        try {
+            var current = plan.destination().getScheme().equals("file")
+                    ? RestoreComparison.inventory(Path.of(plan.destination())) : RemoteRestore.inventory(plan.destination(), settings, progress);
+            if (!current.equals(plan.destinationInventory()))
+                throw new IOException("Destination changed after the restore preview. Run Restore again to review the new changes.");
+            RestoreComparison.requirePermission(plan.deletions(), allowDelete);
+            if (plan.destination().getScheme().equals("file"))
+                RestoreComparison.restoreLocal(plan.contents(), Path.of(plan.destination()), allowDelete, progress, plan.destinationInventory());
+            else
+                RemoteRestore.restore(plan.contents(), plan.destination(), settings, allowDelete, progress, plan.destinationInventory());
+        } catch (Exception failure) {
+            if (!allowDelete)
+                throw new IOException("Restore failed; staging files retained at " + plan.contents() + ": " + failure.getMessage(), failure);
+            throw failure;
+        } finally {
+            FilesSupport.cleanupRestore(plan.contents(), allowDelete, progress);
         }
     }
 

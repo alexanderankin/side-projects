@@ -8,7 +8,19 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 
+@lombok.extern.slf4j.Slf4j
 public final class FilesSupport {
+    public static void cleanupRestore(Path staging, boolean allowDelete, java.util.function.Consumer<String> progress) throws IOException {
+        if (allowDelete) {
+            progress.accept("Deleting restore staging folder: " + staging);
+            deleteTree(staging);
+        } else {
+            String message = "Retained restore staging folder: " + staging;
+            log.info(message);
+            progress.accept(message);
+        }
+    }
+
     private FilesSupport() {
     }
 

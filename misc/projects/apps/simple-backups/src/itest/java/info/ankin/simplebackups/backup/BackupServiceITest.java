@@ -12,19 +12,19 @@ import info.ankin.simplebackups.config.BackupMethod;
 import info.ankin.simplebackups.config.ConfigurationStore;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -32,7 +32,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -158,18 +158,10 @@ class BackupServiceITest extends SimpleBackupsITest {
                 backupService.diff(backup, settings, snapshot, messages::add),
                 "All original entries must now be missing");
 
-        // The UI restores to a local folder, including when the original source is remote.
-        Path restored = sourceScheme.equals("file") ? source : tempDir.resolve("restored");
-        backupService.restore(backup, settings, snapshot, restored);
-        assertRestored(restored, originalFiles, originalEntries);
-        var restoredBackup = new BackupConfiguration(backup.id(), backup.name(), restored.toUri(), backup.to());
-        assertEquals(List.of(), backupService.diff(restoredBackup, settings, snapshot, messages::add));
-
+        // Restore directly to the configured source, including the SSH cases.
+        backupService.restore(backup, settings, snapshot, backup.from(), true, messages::add);
+        assertRestored(source, originalFiles, originalEntries);
         if (sourceScheme.equals("ssh")) {
-            // TODO: fix this - Copy the restored contents back over SFTP; the application doesn't offer remote restore.
-            // TODO make application offer remote restore
-            copyTree(restored, source);
-            assertRestored(source, originalFiles, originalEntries);
             assertTrue(Files.readString(tempDir.resolve("home/.ssh/known_hosts")).contains(
                     "]:" + testcontainersConfig.getSftpContainer().getMappedPort(22)));
         }
@@ -184,6 +176,162 @@ class BackupServiceITest extends SimpleBackupsITest {
         try (var children = Files.list(root)) {
             children.forEach(FilesSupport::deleteTree);
         }
+    }
+
+    @SneakyThrows
+    @Test
+    void restoresLocalSnapshotToNewRemoteFolderWithLiteralFilenames() {
+        var backup = localBackup();
+        Path source = Path.of(backup.from());
+        Files.writeString(source.resolve("literal*?.txt"), "wildcards are literal");
+        Files.writeString(source.resolve("literalAA.txt"), "do not overwrite a glob match");
+        Map<String, byte[]> expected = new TreeMap<>(fixtureFiles());
+        expected.put("literal*?.txt", "wildcards are literal".getBytes(StandardCharsets.UTF_8));
+        expected.put("literalAA.txt", "do not overwrite a glob match".getBytes(StandardCharsets.UTF_8));
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path remote = sftp.getPath("/upload", UUID.randomUUID().toString(), "new parent", "restored*?");
+        URI destination = sourceUri("ssh", remote);
+        backupService.restore(backup, settings, snapshot, destination, true, ignored -> {});
+        try (var restored = SourceFolder.open(destination, settings, ignored -> {})) {
+            assertRestored(restored.path(), expected, entries(source));
+        }
+        var restoredBackup = new BackupConfiguration(backup.id(), backup.name(), destination, backup.to());
+        assertEquals(List.of(), backupService.diff(restoredBackup, settings, snapshot, ignored -> {}));
+    }
+
+    @SneakyThrows
+    @Test
+    void remoteRestoreRefusesToOverwriteExistingFiles() {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path remote = Files.createDirectories(sftp.getPath("/upload", UUID.randomUUID().toString()));
+        Files.writeString(remote.resolve("removed.txt"), "keep this remote content");
+        var error = assertThrows(IOException.class, () ->
+                backupService.restore(backup, settings, snapshot, sourceUri("ssh", remote), ignored -> {}));
+        assertTrue(error.getMessage().contains("requires deletion or replacement"));
+        assertEquals(List.of("removed.txt"), entries(remote));
+        assertEquals("keep this remote content", Files.readString(remote.resolve("removed.txt")));
+    }
+
+    @SneakyThrows
+    @Test
+    void remoteRestoreRejectsSymlinksInDestinationAndItsParents() {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path parent = Files.createDirectories(sftp.getPath("/upload", UUID.randomUUID().toString()));
+        Path real = Files.createDirectory(parent.resolve("real"));
+        Path alias = parent.resolve("alias");
+        // The absolute symlink target is interpreted inside the SFTP user's chroot.
+        var command = testcontainersConfig.getSftpContainer().execInContainer("ln", "-s", real.toString(), "/home/user" + alias);
+        assertEquals(0, command.getExitCode(), command.getStderr());
+        for (Path destination : List.of(alias, alias.resolve("nested"))) {
+            var error = assertThrows(IOException.class, () ->
+                    backupService.restore(backup, settings, snapshot, sourceUri("ssh", destination), ignored -> {}));
+            assertTrue(error.getMessage().contains("symlink or non-directory"));
+        }
+        assertTrue(Files.isSymbolicLink(alias));
+        assertEquals(List.of(), entries(real));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void interruptedUploadHonorsDeletionFlag(boolean allowDelete) {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path remote = sftp.getPath("/upload", UUID.randomUUID().toString());
+        var files = new AtomicInteger();
+        var retained = new ArrayList<Path>();
+        var error = assertThrows(Exception.class, () ->
+                backupService.restore(backup, settings, snapshot, sourceUri("ssh", remote), allowDelete, message -> {
+                    if (message.startsWith("Retained restore staging folder: "))
+                        retained.add(Path.of(message.substring("Retained restore staging folder: ".length())));
+                    if (message.startsWith("Restoring SSH file:") && files.incrementAndGet() == 2)
+                        throw new IllegalStateException("Simulated interruption after the first file");
+                }));
+        assertTrue(error.getMessage().contains("Simulated interruption after the first file"));
+        assertEquals(2, files.get());
+        if (allowDelete) {
+            assertFalse(entries(remote).isEmpty(), "Completed uploads survive failure even when deletion is allowed");
+            assertTrue(retained.isEmpty());
+        } else {
+            assertFalse(entries(remote).isEmpty(), "Partial uploaded files must be retained");
+            assertTrue(error.getMessage().contains(remote.toString()));
+            assertFalse(retained.isEmpty());
+            for (Path path : retained) {
+                assertTrue(Files.exists(path), "Local staging must also be retained");
+                FilesSupport.deleteTree(path); // Explicit test teardown, not restore cleanup.
+            }
+        }
+    }
+
+    @SneakyThrows
+    @Test
+    void invalidArchiveDoesNotCreateRemoteDestination() {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Files.writeString(Path.of(backup.to()).resolve(snapshot.prefix()).resolve(BackupEngine.TAR_ARCHIVE_NAME), "corrupted archive");
+        Path remote = sftp.getPath("/upload", UUID.randomUUID().toString());
+        assertThrows(IOException.class, () ->
+                backupService.restore(backup, settings, snapshot, sourceUri("ssh", remote), ignored -> {}));
+        assertFalse(Files.exists(remote));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @CsvSource({"file", "ssh"})
+    void restorePreviewsDeletionsAndRequiresPermission(String scheme) {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path destination = scheme.equals("ssh")
+                ? sftp.getPath("/upload", UUID.randomUUID().toString()) : tempDir.resolve("destination");
+        URI uri = sourceUri(scheme, destination);
+        backupService.restore(backup, settings, snapshot, uri, true, ignored -> {});
+        FilesSupport.deleteTree(destination.resolve("documents"));
+        Files.writeString(destination.resolve("documents"), "a file instead of a directory");
+        Files.delete(destination.resolve("removed.txt"));
+        Files.createDirectory(destination.resolve("removed.txt"));
+        Files.writeString(destination.resolve("removed.txt/extra"), "extra child");
+        Files.writeString(destination.resolve(".hidden"), "modified content");
+        Files.writeString(destination.resolve("extra-only.txt"), "extra file");
+
+        var plan = backupService.prepareRestore(backup, settings, snapshot, uri, ignored -> {});
+        assertEquals(List.of(".hidden", "documents", "extra-only.txt", "removed.txt", "removed.txt/extra"), plan.deletions());
+        List<String> before = entries(destination);
+        assertEquals("modified content", Files.readString(destination.resolve(".hidden")), "Preview must not write to the destination");
+        // Cancel means do not execute the prepared plan. An unapproved service call is also refused before writing.
+        assertThrows(IOException.class, () -> backupService.executeRestore(plan, settings, false, ignored -> {}));
+        assertEquals(before, entries(destination));
+        assertEquals("modified content", Files.readString(destination.resolve(".hidden")));
+        assertEquals("extra file", Files.readString(destination.resolve("extra-only.txt")));
+        backupService.executeRestore(plan, settings, true, ignored -> {});
+        assertRestored(destination, fixtureFiles(), entries(Path.of(backup.from())));
+        var restored = new BackupConfiguration(backup.id(), backup.name(), uri, backup.to());
+        assertEquals(List.of(), backupService.diff(restored, settings, snapshot, ignored -> {}));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @CsvSource({"file", "ssh"})
+    void restoreRejectsDestinationChangesAfterPreview(String scheme) {
+        var backup = localBackup();
+        var snapshot = backupService.backup(backup, settings, ignored -> {});
+        Path destination = scheme.equals("ssh")
+                ? sftp.getPath("/upload", UUID.randomUUID().toString()) : tempDir.resolve("destination");
+        Files.createDirectories(destination);
+        var plan = backupService.prepareRestore(backup, settings, snapshot, sourceUri(scheme, destination), ignored -> {});
+        assertEquals(List.of(), plan.deletions());
+        Files.writeString(destination.resolve("arrived-later"), "do not delete me");
+        var error = assertThrows(IOException.class, () -> backupService.executeRestore(plan, settings, true, ignored -> {}));
+        assertTrue(error.getMessage().contains("changed after the restore preview"));
+        assertEquals(List.of("arrived-later"), entries(destination));
+        assertEquals("do not delete me", Files.readString(destination.resolve("arrived-later")));
+    }
+
+    private BackupConfiguration localBackup() {
+        Path source = tempDir.resolve("local-source");
+        writeFixture(source, fixtureFiles());
+        return new BackupConfiguration(UUID.randomUUID(), "Local backup for remote restore", source.toUri(), tempDir.resolve("backups").toUri());
     }
 
     private Map<String, byte[]> fixtureFiles() {
@@ -220,7 +368,7 @@ class BackupServiceITest extends SimpleBackupsITest {
         assertEquals(List.of(), backupService.diff(backup, settings, snapshot, messages::add));
         clear(source);
         assertEquals(List.of("BACKUP ONLY:     large.bin"), backupService.diff(backup, settings, snapshot, messages::add));
-        backupService.restore(backup, settings, snapshot, source);
+        backupService.restore(backup, settings, snapshot, source, true);
         assertArrayEquals(bytes, Files.readAllBytes(source.resolve("large.bin")));
         assertEquals(List.of(), backupService.diff(backup, settings, snapshot, messages::add));
     }
@@ -272,15 +420,4 @@ class BackupServiceITest extends SimpleBackupsITest {
             assertArrayEquals(file.getValue(), Files.readAllBytes(root.resolve(file.getKey())), file.getKey());
     }
 
-    @SneakyThrows
-    private void copyTree(Path from, Path to) {
-        try (var paths = Files.walk(from)) {
-            for (Path path : paths.filter(p -> !p.equals(from)).toList()) {
-                // A Path from the local provider cannot be resolved directly against an SFTP Path.
-                Path target = to.resolve(from.relativize(path).toString());
-                if (Files.isDirectory(path)) Files.createDirectories(target);
-                else Files.copy(path, target);
-            }
-        }
-    }
 }

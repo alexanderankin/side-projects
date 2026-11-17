@@ -1,6 +1,7 @@
 this is a big monorepo do not assume the projects are connected. the conventions and learnings/findings are but projects typically not.
 
 prioritize writing the code in a simple to understand and maintain way.
+do not put "if () doThing()" on a single line. always let the eye go diagonally down and right to see the "then"
 
 use lombok not records
 also use Slf4j, Data, SneakyThrows

@@ -16,7 +16,7 @@ final class TableActions extends AbstractCellEditor implements javax.swing.table
         for (String action : actions) {
             renderer.add(new JButton(action));
             JButton button = new JButton(action);
-            button.addActionListener(e -> {
+            button.addActionListener(_ -> {
                 int selected = table.convertRowIndexToModel(row);
                 fireEditingStopped();
                 SwingUtilities.invokeLater(() -> handler.accept(selected, action));

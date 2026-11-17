@@ -40,8 +40,18 @@ public final class BackupConfiguration {
         this.to = to;
     }
 
+    public static void validateRestoreDestination(URI uri) {
+        validateUri(uri, Set.of("file", "ssh"), "Restore destination");
+        if ("ssh".equals(uri.getScheme())) {
+            for (String part : uri.getPath().split("/")) {
+                if (part.equals(".") || part.equals("..") || part.contains("\\"))
+                    throw new IllegalArgumentException("SSH restore requires a path without '.', '..', or backslashes");
+            }
+        }
+    }
+
     private static void validateUri(URI uri, Set<String> schemes, String label) {
-        if (uri == null || !schemes.contains(uri.getScheme()))
+        if (uri == null || uri.getScheme() == null || !schemes.contains(uri.getScheme()))
             throw new IllegalArgumentException(label + " must use " + schemes);
         if (uri.getQuery() != null || uri.getFragment() != null || uri.isOpaque())
             throw new IllegalArgumentException(label + " must be a folder URI without a query or fragment");

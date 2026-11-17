@@ -343,6 +343,10 @@ final class BackupFrame extends JFrame {
     }
 
     private void restore(Snapshot snapshot) {
+        restore(snapshot, selectedBackup.from().toString(), false);
+    }
+
+    private void restore(Snapshot snapshot, String initialDestination, boolean initiallyAllowDelete) {
         if (snapshot.method() == BackupMethod.restic) {
             run("Restoring snapshot",
                     () -> {
@@ -353,15 +357,55 @@ final class BackupFrame extends JFrame {
                     });
             return;
         }
-        Path destination = FileDialogs.folder(this, "Restore into an empty local folder", null);
-        if (destination == null)
-            return;
-        run("Restoring snapshot",
-                () -> {
-                    service.restore(selectedBackup, settings, snapshot, destination);
-                    return destination;
-                },
-                restored -> JOptionPane.showMessageDialog(this, "Restored to " + restored));
+        var destinationField = new JTextField(initialDestination, 48);
+        JPanel form = form();
+        var allowDelete = new JCheckBox("Allow deleting or replacing destination files", initiallyAllowDelete);
+        field(form, "Restore to", folderField(destinationField));
+        field(form, "Deletion", allowDelete);
+        field(form, "Formats", new JLabel("file:///folder or ssh://user@host:22/folder"));
+        field(form, "", new JLabel("Restore compares this folder with the snapshot before making changes."));
+        while (JOptionPane.showConfirmDialog(this, form, "Restore snapshot", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            try {
+                URI destination = URI.create(destinationField.getText().trim());
+                BackupConfiguration.validateRestoreDestination(destination);
+                boolean deletionInitiallyAllowed = allowDelete.isSelected();
+                run("Comparing restore destination", () -> service.prepareRestore(selectedBackup, settings, snapshot, destination, deletionInitiallyAllowed, this::report), plan -> {
+                    boolean deletionAllowed = deletionInitiallyAllowed;
+                    if (!deletionAllowed && !plan.deletions().isEmpty()) {
+                        var preview = new JTextArea("Destination: " + destination + "\n\nRestore requires deleting or replacing these destination entries:\n\n"
+                                + String.join("\n", plan.deletions())
+                                + "\n\nProceed with deletion allowed? Cancel returns to the restore form without changing the destination.");
+                        preview.setEditable(false);
+                        preview.setCaretPosition(0);
+                        var scroll = new JScrollPane(preview);
+                        scroll.setPreferredSize(new Dimension(700, 360));
+                        if (JOptionPane.showConfirmDialog(this, scroll, "Restore requires deletion", JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.WARNING_MESSAGE) != JOptionPane.OK_OPTION) {
+                            report("Restore canceled; staging retained at " + plan.contents());
+                            log.info("Restore canceled; staging retained at {}", plan.contents());
+                            restore(snapshot, destination.toString(), false);
+                            return;
+                        }
+                        deletionAllowed = true;
+                    }
+                    boolean finalDeletionAllowed = deletionAllowed;
+                    var retained = new java.util.ArrayList<String>();
+                    run("Restoring snapshot", () -> {
+                        service.executeRestore(plan, settings, finalDeletionAllowed, message -> {
+                            report(message);
+                            if (message.startsWith("Retained restore staging folder:"))
+                                retained.add(message);
+                        });
+                        return destination;
+                    }, restored -> JOptionPane.showMessageDialog(this, "Restored to " + restored
+                            + (retained.isEmpty() ? "" : "\n\n" + String.join("\n", retained))));
+                });
+                return;
+            } catch (IllegalArgumentException e) {
+                error(e);
+            }
+        }
     }
 
     private void rebuildSettings() {

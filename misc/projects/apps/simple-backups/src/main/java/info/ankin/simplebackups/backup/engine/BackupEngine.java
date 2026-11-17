@@ -14,9 +14,18 @@ public interface BackupEngine {
 
     void create(Path source, Path output, Consumer<String> progress) throws IOException;
 
-    void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException;
+    default void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
+        restore(store, snapshot, destination, false, ignored -> {});
+    }
+
+    void restore(SnapshotStore store, Snapshot snapshot, Path destination, boolean allowDelete,
+                 Consumer<String> progress) throws IOException;
 
     List<String> diff(SnapshotStore store, Snapshot snapshot, Path source) throws IOException;
+
+    default void extractRestore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
+        throw new UnsupportedOperationException("Restore planning is available for tar snapshots only");
+    }
 
     static BackupEngine forMethod(BackupMethod method) {
         return switch (method) {

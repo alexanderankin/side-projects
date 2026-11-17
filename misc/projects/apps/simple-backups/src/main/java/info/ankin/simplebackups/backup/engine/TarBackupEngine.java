@@ -38,7 +38,8 @@ final class TarBackupEngine implements BackupEngine {
             Files.walkFileTree(source, new SimpleFileVisitor<>() {
                 private void add(Path path, BasicFileAttributes attrs) throws IOException {
                     String name = relative(source, path);
-                    if (name.contains("\\")) throw new IOException("Backslash filenames are not supported: " + path);
+                    if (name.contains("\\"))
+                        throw new IOException("Backslash filenames are not supported: " + path);
                     if (!attrs.isDirectory() && !attrs.isRegularFile())
                         throw new IOException("Unsupported entry (links and special files are not followed): " + path);
                     progress.accept("Archiving: " + name);
@@ -75,30 +76,25 @@ final class TarBackupEngine implements BackupEngine {
     }
 
     @Override
-    public void restore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
-        FilesSupport.requireEmptyDirectory(destination);
+    public void restore(SnapshotStore store, Snapshot snapshot, Path destination, boolean allowDelete, Consumer<String> progress) throws IOException {
         // Validate and decompress completely before copying anything into the user's directory.
         Path staging = Files.createTempDirectory("simple-backups-restore-");
         try {
             extract(store, snapshot, staging);
-            Files.walkFileTree(staging, new SimpleFileVisitor<>() {
-                @NonNull
-                @Override
-                public FileVisitResult preVisitDirectory(@NonNull Path dir, @NonNull BasicFileAttributes attrs) throws IOException {
-                    if (!dir.equals(staging)) Files.createDirectory(destination.resolve(staging.relativize(dir)));
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @NonNull
-                @Override
-                public FileVisitResult visitFile(@NonNull Path file, @NonNull BasicFileAttributes attrs) throws IOException {
-                    Files.copy(file, destination.resolve(staging.relativize(file)), StandardCopyOption.COPY_ATTRIBUTES);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            info.ankin.simplebackups.backup.RestoreComparison.restoreLocal(staging, destination, allowDelete, progress);
+        } catch (Exception failure) {
+            if (!allowDelete)
+                throw new IOException("Restore failed; staging files retained at " + staging + ": " + failure.getMessage(), failure);
+            throw failure;
         } finally {
-            FilesSupport.deleteTree(staging);
+            FilesSupport.cleanupRestore(staging, allowDelete, progress);
         }
+    }
+
+    @Override
+    public void extractRestore(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
+        Files.createDirectories(destination);
+        extract(store, snapshot, destination);
     }
 
     private void extract(SnapshotStore store, Snapshot snapshot, Path destination) throws IOException {
