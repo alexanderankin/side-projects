@@ -3,20 +3,7 @@ plugins {
     id 'jib-conventions'
 }
 
-// ./gradlew jibDockerBuild
-jib {
-    from {
-        // docker image inspect eclipse-temurin:25-jre-alpine | jq .[0].RepoDigests[] -r
-        image = 'eclipse-temurin:25-jre-alpine@sha256:f10d6259d0798c1e12179b6bf3b63cea0d6843f7b09c9f9c9c422c50e44379ec'
-    }
-    // ./gradlew jibDockerBuild -Djib.from.platforms=linux/arm64
-    // from.platforms = [com.google.cloud.tools.jib.gradle.PlatformParameters.of('linux/arm64')]
-    container.entrypoint = [
-            'sh',
-            '-c',
-            'exec java $JAVA_OPTS -cp @/app/jib-classpath-file @/app/jib-main-class-file'
-    ]
-}
+// ./gradlew jibDockerBuild -Djib.to.image=example-casdoor-client
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
