@@ -1,0 +1,11 @@
+plugins {
+    id 'spring-conventions'
+    id 'application'
+}
+
+application.mainClass = 'side.scratch.opaque.server.OpaqueServerApplication'
+
+dependencies {
+    implementation 'com.codeheadsystems:hofmann-springboot:3.0.0'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+}

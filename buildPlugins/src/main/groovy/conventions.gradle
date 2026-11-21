@@ -170,3 +170,34 @@ tasks.configureEach {
 */
 tasks.withType(Test).configureEach { jvmArgs '--enable-native-access=ALL-UNNAMED' }
 tasks.withType(JavaExec).configureEach { jvmArgs '--enable-native-access=ALL-UNNAMED' }
+
+def jibJvmArgs = [
+        // Disable accelerated Base64 encoding/decoding: CVE-2026-114938
+        '-XX:-UseBASE64Intrinsics',
+
+        // Require TLS 1.3 by default; peers must support it. Applications can
+        // override JSSE defaults by explicitly configuring their SSL contexts.
+        '-Djdk.tls.client.protocols=TLSv1.3',
+        '-Djdk.tls.server.protocols=TLSv1.3',
+        '-Dhttps.protocols=TLSv1.3',
+        // '-Djdk.tls.rejectClientInitiatedRenegotiation=true', // not for TLS<v1.3
+        // '-Djdk.tls.namedGroups=X25519MLKEM768',
+
+        // lock down jdk (jmx, jndi, etc)
+        // '-Dcom.sun.management.jmxremote.authenticate=true',
+        // '-Dcom.sun.management.jmxremote.ssl=true',
+        // '-Dcom.sun.management.jmxremote.local.only=true',
+        // '-Dcom.sun.management.jmxremote.registry.ssl=true',
+        // '-Dcom.sun.management.jmxremote.ssl.need.client.auth=true',
+        '-Dcom.sun.jndi.ldap.object.trustSerialData=false',
+        '-Djdk.jndi.object.factoriesFilter=!*',
+        // '-XX:+DisableAttachMechanism',
+
+        // Request stapled OCSP responses alongside the existing revocation checks.
+        '-Djdk.tls.client.enableStatusRequestExtension=true',
+        '-Dcom.sun.net.ssl.checkRevocation=true',
+        '-Dcom.sun.security.enableCRLDP=true',
+]
+
+tasks.withType(Test).configureEach { jvmArgs jibJvmArgs }
+tasks.withType(JavaExec).configureEach { jvmArgs jibJvmArgs }

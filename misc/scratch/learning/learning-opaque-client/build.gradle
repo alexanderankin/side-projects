@@ -1,0 +1,14 @@
+plugins {
+    id 'picocli-conventions'
+}
+
+application.mainClass = 'side.scratch.opaque.client.OpaqueClientCli'
+
+dependencies {
+    implementation 'com.codeheadsystems:hofmann-client:3.0.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+}
+
+tasks.named('run', JavaExec) {
+    standardInput = System.in
+}

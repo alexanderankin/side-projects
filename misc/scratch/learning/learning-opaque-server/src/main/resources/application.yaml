@@ -1,0 +1,7 @@
+server:
+  address: 127.0.0.1
+
+hofmann:
+  context: learning-opaque-local-v1
+  allow-ephemeral-keys: true
+  oprf-master-key-hex: ${OPRF_MASTER_KEY_HEX}
